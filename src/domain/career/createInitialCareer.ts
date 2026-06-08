@@ -1,22 +1,27 @@
 import { sampleOpponents } from "../../data/sampleOpponents";
 import { lck2026Players } from "../../data/lck2026Players";
+import { getLckTeamProfile } from "../../data/lckTeams";
 import { createInitialSeasonState } from "../season";
 import type { CareerSave } from "../../types/game";
+import { createPreseasonStoveLeagueCareer } from "./preseasonStoveLeague";
 
 export function createInitialCareer(teamName: string): CareerSave {
   const userTeamName = teamName.trim() || "T1";
+  const userTeamProfile = getLckTeamProfile(userTeamName);
 
-  return {
+  const career: CareerSave = {
     currentSeason: 1,
     maxSeason: 20,
     userTeam: {
       name: userTeamName,
       region: "lck",
-      budget: 1200,
+      budget: userTeamProfile?.budget ?? 1500,
       rosterSettings: {
         minPlayers: 10,
         maxPlayers: 15,
         freeMovementBetweenMainAndAcademy: true,
+        minMainRosterPlayers: 5,
+        minAcademyRosterPlayers: 5,
       },
       roster: {},
       mainRosterPlayerIds: [],
@@ -24,7 +29,7 @@ export function createInitialCareer(teamName: string): CareerSave {
       contracts: [],
       wins: 0,
       losses: 0,
-      elo: 1500,
+      elo: userTeamProfile?.baseElo ?? 1670,
     },
     lckPlayers: lck2026Players,
     internationalOpponents: sampleOpponents,
@@ -38,4 +43,6 @@ export function createInitialCareer(teamName: string): CareerSave {
     }),
     seasonHistory: [],
   };
+
+  return createPreseasonStoveLeagueCareer(career);
 }

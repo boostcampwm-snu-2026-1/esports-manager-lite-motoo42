@@ -12,12 +12,16 @@ const roles: Role[] = ["top", "jungle", "mid", "bot", "support"];
 export function MatchResultPanel({ result, onViewCalendar }: MatchResultPanelProps) {
   return (
     <Card>
-      <h2>Result log</h2>
-      {!result && <p className="muted">No match simulated yet.</p>}
+      <h2>최근 경기 기록</h2>
+      {!result && (
+        <p className="muted">
+          아직 최근 경기 결과가 없습니다. 경기일에는 상단 진행 버튼이 플레이 흐름으로 전환됩니다.
+        </p>
+      )}
       {result && (
         <>
           <p>
-            Winner: <strong>{result.winner === "user" ? "Your team" : "Opponent"}</strong>
+            승리 팀: <strong>{result.winner === "user" ? "우리 팀" : "상대 팀"}</strong>
           </p>
           <ul>
             {result.log.map((line) => (
@@ -26,16 +30,19 @@ export function MatchResultPanel({ result, onViewCalendar }: MatchResultPanelPro
           </ul>
           {result.draft && (
             <section className="draft-summary">
-              <h3>Draft indicators</h3>
+              <h3>밴픽 지표</h3>
               <div className="draft-score-row">
-                <span>Your draft: {result.draft.blueDraftPower}</span>
-                <span>Opponent draft: {result.draft.redDraftPower}</span>
+                <span>우리 밴픽: {result.draft.blueDraftPower}</span>
+                <span>상대 밴픽: {result.draft.redDraftPower}</span>
                 <strong>
                   Net: {result.draft.netDraftPower >= 0 ? "+" : ""}
                   {result.draft.netDraftPower}
                 </strong>
               </div>
-              <p className="muted">Bans: {result.draft.blueBans.join(", ")} / {result.draft.redBans.join(", ")}</p>
+              <p className="muted">
+                밴: {result.draft.blueBans.join(", ")} /{" "}
+                {result.draft.redBans.join(", ")}
+              </p>
               <div className="draft-grid">
                 {roles.map((role) => {
                   const bluePick = result.draft?.bluePicks[role];
@@ -47,12 +54,12 @@ export function MatchResultPanel({ result, onViewCalendar }: MatchResultPanelPro
                       <span>
                         {bluePick
                           ? `${bluePick.championName} (${bluePick.fitScore})`
-                          : "No pick"}
+                          : "픽 없음"}
                       </span>
                       <span>
                         {redPick
                           ? `${redPick.championName} (${redPick.fitScore})`
-                          : "No pick"}
+                          : "픽 없음"}
                       </span>
                     </div>
                   );
@@ -65,7 +72,7 @@ export function MatchResultPanel({ result, onViewCalendar }: MatchResultPanelPro
               </ul>
             </section>
           )}
-          <Button onClick={onViewCalendar}>View season calendar</Button>
+          <Button onClick={onViewCalendar}>시즌 일정 보기</Button>
         </>
       )}
     </Card>

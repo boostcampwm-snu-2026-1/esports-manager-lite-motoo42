@@ -1,4 +1,5 @@
 import type { CareerSave, CompetitionId } from "../types/game";
+import { normalizeCareerSave } from "../domain/career/normalizeCareerSave";
 
 export type CareerSaveSummary = {
   teamName: string;
@@ -35,8 +36,9 @@ type SaveListResponse = {
   saves: CareerSaveDto[];
 };
 
-const defaultApiBaseUrl = "http://127.0.0.1:4000/api";
+const defaultApiBaseUrl = "/api";
 const defaultOwnerId = "local-dev";
+const browserOwnerIdStorageKey = "moba-esports-manager-lite.betaOwnerId";
 
 export class SaveConflictError extends Error {
   currentRevision?: number;
@@ -56,12 +58,64 @@ function getApiBaseUrl() {
   return import.meta.env.VITE_API_BASE_URL ?? defaultApiBaseUrl;
 }
 
-function createUrl(path: string) {
-  const url = new URL(`${getApiBaseUrl()}${path}`);
+function createBrowserOwnerId() {
+  const randomPart =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
-  url.searchParams.set("ownerId", defaultOwnerId);
+  return `beta-${randomPart}`;
+}
+
+export function getSaveOwnerId() {
+  const configuredOwnerId = import.meta.env.VITE_SAVE_OWNER_ID?.trim();
+
+  if (configuredOwnerId) {
+    return configuredOwnerId;
+  }
+
+  if (import.meta.env.MODE !== "production" || typeof window === "undefined") {
+    return defaultOwnerId;
+  }
+
+  const existingOwnerId = window.localStorage.getItem(browserOwnerIdStorageKey);
+
+  if (existingOwnerId) {
+    return existingOwnerId;
+  }
+
+  const nextOwnerId = createBrowserOwnerId();
+
+  window.localStorage.setItem(browserOwnerIdStorageKey, nextOwnerId);
+
+  return nextOwnerId;
+}
+
+function createUrl(path: string) {
+  const baseUrl = getApiBaseUrl();
+  const ownerId = getSaveOwnerId();
+
+  if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+    const url = `${baseUrl}${path}`;
+    const separator = url.includes("?") ? "&" : "?";
+
+    return `${url}${separator}ownerId=${encodeURIComponent(ownerId)}`;
+  }
+
+  const url = new URL(`${baseUrl}${path}`);
+
+  url.searchParams.set("ownerId", ownerId);
 
   return url.toString();
+}
+
+function normalizeCareerSaveDto(save: CareerSaveDto): CareerSaveDto {
+  return save.career
+    ? {
+        ...save,
+        career: normalizeCareerSave(save.career),
+      }
+    : save;
 }
 
 async function parseResponse<T>(response: Response): Promise<T> {
@@ -94,7 +148,7 @@ export async function getCareerSave(saveId: string) {
   const response = await fetch(createUrl(`/saves/${saveId}`));
   const body = await parseResponse<SaveResponse>(response);
 
-  return body.save;
+  return normalizeCareerSaveDto(body.save);
 }
 
 export async function createCareerSave({
@@ -107,7 +161,7 @@ export async function createCareerSave({
   const response = await fetch(createUrl("/saves"), {
     body: JSON.stringify({
       career,
-      ownerId: defaultOwnerId,
+      ownerId: getSaveOwnerId(),
       saveName,
     }),
     headers: {
@@ -117,7 +171,7 @@ export async function createCareerSave({
   });
   const body = await parseResponse<SaveResponse>(response);
 
-  return body.save;
+  return normalizeCareerSaveDto(body.save);
 }
 
 export async function updateCareerSave({
@@ -135,7 +189,7 @@ export async function updateCareerSave({
     body: JSON.stringify({
       career,
       expectedRevision,
-      ownerId: defaultOwnerId,
+      ownerId: getSaveOwnerId(),
       saveName,
     }),
     headers: {
@@ -145,5 +199,5 @@ export async function updateCareerSave({
   });
   const body = await parseResponse<SaveResponse>(response);
 
-  return body.save;
+  return normalizeCareerSaveDto(body.save);
 }

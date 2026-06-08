@@ -239,10 +239,14 @@ export function formatDateRange(
 ) {
   const start = getCompetitionStartDate(year, competitionId, calendarType);
   const end = getCompetitionEndDate(year, competitionId, calendarType);
+  const startMonth = start.getMonth() + 1;
+  const endMonth = end.getMonth() + 1;
 
-  return `${start.getMonth() + 1}/${start.getDate()} - ${
-    end.getMonth() + 1
-  }/${end.getDate()}`;
+  if (startMonth === endMonth) {
+    return `${startMonth}/${start.getDate()} - ${end.getDate()}`;
+  }
+
+  return `${startMonth}/${start.getDate()} - ${endMonth}/${end.getDate()}`;
 }
 
 export function getMatchDisplayDate({

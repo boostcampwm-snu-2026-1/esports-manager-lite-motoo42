@@ -1,14 +1,12 @@
-import type {
-  ContractType,
-  Player,
-  PlayerContract,
-  Role,
-  Team,
-} from "../../types/game";
+import type { Player, Role, Team } from "../../types/game";
+import {
+  createPlayerContractsForRoster,
+  type ContractTypeSelections,
+} from "../players";
+
+export type { ContractTypeSelections } from "../players";
 
 const requiredRoles: Role[] = ["top", "jungle", "mid", "bot", "support"];
-
-export type ContractTypeSelections = Record<string, ContractType>;
 
 export type FullRosterValidation = {
   isValid: boolean;
@@ -34,31 +32,6 @@ export function calculateRosterSalary(playerIds: string[], players: Player[]) {
   }, 0);
 }
 
-function getContractYears(type: ContractType): Pick<
-  PlayerContract,
-  "guaranteedYears" | "optionYear" | "remainingYears"
-> {
-  if (type === "two-year") {
-    return {
-      guaranteedYears: 2,
-      remainingYears: 2,
-    };
-  }
-
-  if (type === "one-plus-one") {
-    return {
-      guaranteedYears: 1,
-      optionYear: true,
-      remainingYears: 2,
-    };
-  }
-
-  return {
-    guaranteedYears: 1,
-    remainingYears: 1,
-  };
-}
-
 export function createContractsForRoster({
   playerIds,
   players,
@@ -67,17 +40,11 @@ export function createContractsForRoster({
   playerIds: string[];
   players: Player[];
   contractTypes: ContractTypeSelections;
-}): PlayerContract[] {
-  return playerIds.map((playerId) => {
-    const player = players.find((candidate) => candidate.id === playerId);
-    const type = contractTypes[playerId] ?? "one-year";
-
-    return {
-      playerId,
-      salary: player?.salaryExpectation ?? 0,
-      type,
-      ...getContractYears(type),
-    };
+}) {
+  return createPlayerContractsForRoster({
+    playerIds,
+    players,
+    contractTypes,
   });
 }
 

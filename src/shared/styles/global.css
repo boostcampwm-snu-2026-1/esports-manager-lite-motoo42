@@ -23,6 +23,42 @@ body {
   overflow: hidden;
 }
 
+.small-screen-guard {
+  display: none;
+}
+
+.small-screen-guard-panel {
+  width: min(420px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid #38445f;
+  border-radius: 8px;
+  background: #101827;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 45%);
+  text-align: center;
+}
+
+.small-screen-guard-panel span {
+  display: block;
+  margin-bottom: 8px;
+  color: #9fb0cd;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.small-screen-guard-panel strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 1.2rem;
+}
+
+.small-screen-guard-panel p {
+  margin: 12px 0 0;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+
 button,
 input,
 select {
@@ -31,7 +67,7 @@ select {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 72px 176px minmax(0, 1fr);
+  grid-template-columns: 248px minmax(0, 1fr);
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
@@ -73,13 +109,41 @@ select {
 .shell-sidebar {
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 24px;
+  gap: 18px;
   height: 100dvh;
   min-height: 0;
-  overflow: hidden;
-  padding: 16px 10px;
+  overflow: auto;
+  padding: 16px 14px;
   border-right: 1px solid #2a3245;
   background: #0b1020;
+  scrollbar-gutter: stable;
+}
+
+.shell-sidebar-header {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.shell-sidebar-header span {
+  display: block;
+  margin-bottom: 2px;
+  color: #9aa7bd;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shell-sidebar-header strong {
+  display: block;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.98rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .club-mark {
@@ -95,23 +159,49 @@ select {
   letter-spacing: 0.04em;
 }
 
-.shell-icon-menu {
+.shell-menu-groups {
   display: grid;
   align-content: start;
-  gap: 10px;
+  gap: 18px;
+}
+
+.shell-menu-group {
+  display: grid;
+  gap: 8px;
+}
+
+.shell-menu-group h2 {
+  margin: 0;
+  padding: 0 6px;
+  color: #9aa7bd;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.shell-menu-list,
+.shell-menu-block {
+  display: grid;
+  gap: 7px;
 }
 
 .shell-menu-button {
   display: grid;
-  width: 48px;
-  height: 48px;
-  place-items: center;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #202a40;
+  border-radius: 8px;
+  padding: 6px 10px 6px 6px;
   background: #11172a;
   color: #cfd7e6;
   cursor: pointer;
-  font-size: 1.16rem;
+  font-size: 0.92rem;
+  font-weight: 900;
+  text-align: left;
 }
 
 .shell-menu-button:disabled,
@@ -120,11 +210,37 @@ select {
   opacity: 0.55;
 }
 
+.shell-menu-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid #2d3750;
+  border-radius: 7px;
+  background: #0d1424;
+  color: #d8d2ff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.shell-menu-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .shell-menu-button-active {
   border-color: #f43f9d;
   background: #211736;
   color: #ffffff;
   box-shadow: inset 0 0 0 1px #f43f9d;
+}
+
+.shell-menu-button-active .shell-menu-icon {
+  border-color: #f43f9d;
+  background: #31194a;
+  color: #ffffff;
 }
 
 .shell-submenu {
@@ -146,6 +262,12 @@ select {
   gap: 8px;
 }
 
+.shell-inline-submenu {
+  margin: -2px 0 4px 46px;
+  padding-left: 10px;
+  border-left: 1px solid #303a52;
+}
+
 .submenu-item {
   min-height: 36px;
   border: 1px solid #2a3245;
@@ -156,9 +278,26 @@ select {
   text-align: left;
 }
 
+.shell-inline-submenu .submenu-item {
+  min-height: 30px;
+  border-color: transparent;
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: transparent;
+  color: #9aa7bd;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .submenu-item-active {
   border-color: #475569;
   background: #182033;
+  color: #ffffff;
+}
+
+.shell-inline-submenu .submenu-item-active {
+  border-color: #3b4761;
+  background: #172033;
   color: #ffffff;
 }
 
@@ -174,8 +313,7 @@ select {
 .shell-topbar {
   display: grid;
   grid-template-columns:
-    minmax(160px, 0.7fr) minmax(0, 1.05fr) minmax(260px, 0.8fr)
-    auto;
+    minmax(160px, 0.7fr) minmax(0, 1.2fr) minmax(120px, auto) auto;
   gap: 18px;
   align-items: center;
   min-height: 86px;
@@ -203,6 +341,40 @@ select {
   background: #11182a;
   color: #cfd7e6;
   font-size: 0.86rem;
+}
+
+.shell-save-status {
+  justify-self: end;
+  max-width: 180px;
+  overflow: hidden;
+  border: 1px solid #303a52;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #0d1424;
+  color: #cfd7e6;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shell-save-status-saving {
+  border-color: #67e8f9;
+  background: #0b2430;
+  color: #cffafe;
+}
+
+.shell-save-status-saved {
+  border-color: #22c55e;
+  background: #12301f;
+  color: #bbf7d0;
+}
+
+.shell-save-status-failed,
+.shell-save-status-conflict {
+  border-color: #ef4444;
+  background: #361717;
+  color: #fecaca;
 }
 
 .shell-progress-button {
@@ -233,6 +405,8 @@ select {
 }
 
 .save-manager-panel {
+  display: grid;
+  gap: 10px;
   border: 1px solid #303a52;
   border-radius: 8px;
   padding: 16px;
@@ -335,6 +509,14 @@ select {
   border-color: #ef4444;
   background: #361717;
   color: #fecaca;
+}
+
+.save-manager-page {
+  align-content: start;
+}
+
+.save-manager-layout {
+  align-items: start;
 }
 
 .app-shell-busy .shell-content .app-main,
@@ -482,6 +664,47 @@ select {
   opacity: 0.5;
 }
 
+.player-portrait {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #303a52;
+  border-radius: 6px;
+  background:
+    linear-gradient(145deg, rgb(107 77 255 / 18%), transparent),
+    #0c1220;
+  color: #d8d2ff;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.player-portrait-sm {
+  width: 44px;
+  height: 54px;
+  font-size: 0.82rem;
+}
+
+.player-portrait-md {
+  width: 56px;
+  height: 70px;
+  font-size: 1rem;
+}
+
+.player-portrait-lg {
+  width: 82px;
+  height: 104px;
+  font-size: 1.24rem;
+}
+
+.player-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .eyebrow {
   margin: 0 0 6px;
   color: #9aa7bd;
@@ -570,6 +793,21 @@ h1 {
   color: #9aa7bd;
 }
 
+.slot-player-identity {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.slot-player-identity strong {
+  overflow: hidden;
+  color: #ffffff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .player-card {
   display: grid;
   gap: 12px;
@@ -582,12 +820,42 @@ h1 {
   text-align: left;
 }
 
+.player-card-identity,
+.signed-player-identity {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
 .player-card-header,
 .pill-row {
   display: flex;
   gap: 10px;
   align-items: center;
   justify-content: space-between;
+}
+
+.player-card-identity .player-card-header {
+  display: grid;
+  gap: 3px;
+  justify-content: stretch;
+  min-width: 0;
+}
+
+.player-card-identity .player-card-header strong,
+.player-card-identity .player-card-header small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-card-identity .player-card-header > span {
+  color: #d8d2ff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .player-card-actions,
@@ -671,16 +939,11 @@ h1 {
 }
 
 .starter-photo {
-  display: grid;
-  place-items: center;
-  border: 1px solid #303a52;
+  width: 100%;
+  height: 100%;
+  min-height: 126px;
   border-radius: 4px;
-  background:
-    linear-gradient(145deg, rgb(107 77 255 / 18%), transparent),
-    #0c1220;
-  color: #d8d2ff;
   font-size: 1.65rem;
-  font-weight: 900;
 }
 
 .starter-name {
@@ -818,6 +1081,42 @@ h1 {
 .match-side-stack {
   display: grid;
   gap: 12px;
+}
+
+.match-week-report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.match-week-report-grid article {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid #253048;
+  border-radius: 6px;
+  padding: 9px 10px;
+  background: #0d1424;
+}
+
+.match-week-report-grid span {
+  color: #9aa7bd;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.match-week-report-grid strong {
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-week-report-wide {
+  grid-column: 1 / -1;
 }
 
 .weekly-match-list {
@@ -3472,6 +3771,33 @@ h1 {
   font-size: 0.9rem;
 }
 
+.roster-management-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.roster-management-metric {
+  display: grid;
+  gap: 5px;
+  border: 1px solid #253048;
+  border-radius: 8px;
+  padding: 12px;
+  background: #0d1424;
+}
+
+.roster-management-metric span {
+  color: #9aa7bd;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.roster-management-metric strong {
+  color: #ffffff;
+  font-size: 1rem;
+}
+
 .lineup-board,
 .bench-board {
   display: grid;
@@ -3541,11 +3867,70 @@ h1 {
   scrollbar-gutter: stable;
 }
 
+.roster-management-wide-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.roster-management-main-bench-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.roster-management-wide-grid .roster-management-card {
+  min-height: 222px;
+  align-content: start;
+}
+
+.roster-empty-notice {
+  grid-column: 1 / -1;
+  min-height: 132px;
+}
+
+.roster-management-filter-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.roster-management-filter-row label {
+  display: grid;
+  gap: 6px;
+}
+
+.roster-management-filter-row label span {
+  color: #9aa7bd;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.roster-management-filter-row input,
+.roster-management-filter-row select {
+  width: 100%;
+  border: 1px solid #303a52;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #0d1424;
+  color: #ffffff;
+  font: inherit;
+}
+
+.roster-management-filter-row > strong {
+  display: grid;
+  min-height: 42px;
+  place-items: center;
+  border: 1px solid #303a52;
+  border-radius: 8px;
+  padding: 0 14px;
+  background: #111827;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
 .roster-management-card {
   position: relative;
   display: grid;
   gap: 10px;
-  min-height: 136px;
+  min-height: 156px;
   border: 1px solid #253048;
   border-radius: 8px;
   padding: 12px;
@@ -3568,7 +3953,7 @@ h1 {
 }
 
 .roster-management-card-compact {
-  min-height: 144px;
+  min-height: 188px;
 }
 
 .roster-management-card-dragging {
@@ -3592,12 +3977,45 @@ h1 {
   box-shadow: 0 24px 56px rgb(0 0 0 / 46%);
 }
 
-.roster-management-card-main,
+.roster-management-card-identity {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.roster-management-card-compact .roster-management-card-identity {
+  grid-template-columns: 1fr;
+}
+
+.roster-management-card-portrait {
+  width: 76px;
+  height: 94px;
+}
+
+.roster-management-card-compact .roster-management-card-portrait {
+  width: 100%;
+  height: 108px;
+}
+
+.roster-management-card-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
 .roster-management-card-meta {
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: space-between;
+}
+
+.roster-management-ovr {
+  color: #ffffff !important;
+  font-size: 1.05rem !important;
+  font-weight: 900;
 }
 
 .roster-management-card-main strong {
@@ -3638,6 +4056,62 @@ h1 {
   gap: 5px;
 }
 
+.roster-card-action-button {
+  min-height: 34px;
+  justify-content: center;
+  padding: 7px 10px;
+}
+
+.roster-contract-table {
+  display: grid;
+  gap: 8px;
+}
+
+.roster-contract-table-header,
+.roster-contract-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(100px, 0.8fr) minmax(150px, 1fr) minmax(120px, 0.8fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.roster-contract-table-header {
+  border-bottom: 1px solid #253048;
+  padding: 0 12px 8px;
+  color: #9aa7bd;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.roster-contract-row {
+  border: 1px solid #253048;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #0d1424;
+}
+
+.roster-contract-row span {
+  min-width: 0;
+  color: #cfd7e6;
+  font-size: 0.86rem;
+}
+
+.roster-contract-row span:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.roster-contract-row strong {
+  overflow: hidden;
+  color: #ffffff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-contract-row small {
+  color: #9aa7bd;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -3660,6 +4134,23 @@ h1 {
   padding: 20px;
   background: #111827;
   box-shadow: 0 28px 80px rgb(0 0 0 / 48%);
+}
+
+.player-detail-hero {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding-right: 40px;
+}
+
+.player-detail-portrait {
+  width: 112px;
+  height: 142px;
+}
+
+.player-detail-hero h2 {
+  margin-bottom: 6px;
 }
 
 .modal-close-button {
@@ -3952,6 +4443,43 @@ h1 {
   background: #101827;
 }
 
+.season-history-timeline {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.season-history-card {
+  display: grid;
+  gap: 6px;
+  min-height: 112px;
+  border: 1px solid #2a3245;
+  border-radius: 8px;
+  padding: 14px;
+  background: #0f1626;
+  color: #e8edf6;
+  text-align: left;
+  cursor: pointer;
+}
+
+.season-history-card:hover,
+.season-history-card-active {
+  border-color: #60a5fa;
+  background: #132036;
+}
+
+.season-history-card span,
+.season-history-card small,
+.season-summary-empty-note,
+.season-offseason-log-row span,
+.season-player-change-group span {
+  color: #9aa7bd;
+}
+
+.season-history-card strong {
+  font-size: 1.06rem;
+}
+
 .season-summary-status span,
 .season-summary-metric span,
 .season-summary-metric small,
@@ -3968,6 +4496,10 @@ h1 {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 20px;
+}
+
+.season-summary-detail-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
 }
 
 .season-summary-card-title {
@@ -4001,8 +4533,14 @@ h1 {
   line-height: 1.25;
 }
 
+.season-offseason-metrics .season-summary-metric {
+  min-height: 76px;
+}
+
 .season-competition-results,
-.season-renewal-list {
+.season-renewal-list,
+.season-offseason-log-list,
+.season-player-change-list {
   display: grid;
   gap: 10px;
 }
@@ -4027,6 +4565,21 @@ h1 {
   gap: 4px;
 }
 
+.season-offseason-log-row,
+.season-player-change-group {
+  display: grid;
+  gap: 5px;
+  border: 1px solid #2a3245;
+  border-radius: 8px;
+  padding: 11px 12px;
+  background: #0f1626;
+}
+
+.season-offseason-log-row strong,
+.season-player-change-group strong {
+  line-height: 1.35;
+}
+
 .season-renewal-panel {
   display: grid;
   gap: 12px;
@@ -4034,6 +4587,17 @@ h1 {
 
 .season-renewal-row .contract-select {
   min-width: 150px;
+}
+
+.signed-player-identity > div {
+  min-width: 0;
+}
+
+.signed-player-identity strong,
+.signed-player-identity p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .season-renewed-label {
@@ -4047,6 +4611,10 @@ h1 {
   border-radius: 8px;
   padding: 14px;
   background: #0f1626;
+}
+
+.season-summary-empty-note {
+  margin: 0;
 }
 
 .season-summary-actions {
@@ -4158,6 +4726,48 @@ h1 {
   padding-right: 4px;
 }
 
+.offseason-filter-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) repeat(3, minmax(120px, 0.8fr)) auto;
+  gap: 10px;
+  align-items: end;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.offseason-filter-row label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.offseason-filter-row span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.offseason-filter-row input,
+.offseason-filter-row select {
+  min-width: 0;
+  min-height: 36px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: rgba(15, 23, 42, 0.85);
+  color: var(--text);
+}
+
+.offseason-filter-row > strong {
+  min-width: 54px;
+  color: var(--accent);
+  text-align: right;
+  white-space: nowrap;
+}
+
 .offseason-player-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -4264,6 +4874,122 @@ h1 {
 
 .offseason-log-blocked {
   border-color: rgba(248, 113, 113, 0.45);
+}
+
+.offseason-log-rejection {
+  border-color: rgba(251, 191, 36, 0.42);
+}
+
+.offseason-log-retirement,
+.offseason-log-military {
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.contract-offer-modal {
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(86vh, 720px);
+  overflow: auto;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 8px;
+  background: #0d1424;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+  color: var(--text);
+  padding: 18px;
+}
+
+.contract-offer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.contract-offer-header h2 {
+  margin: 2px 0 6px;
+}
+
+.contract-offer-header span,
+.contract-offer-grid span,
+.contract-offer-summary span,
+.contract-offer-history-note {
+  color: var(--muted);
+}
+
+.contract-offer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.contract-offer-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.contract-offer-grid select,
+.contract-offer-grid input {
+  min-height: 38px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.92);
+  color: var(--text);
+  padding: 0 10px;
+}
+
+.contract-offer-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 10px;
+  margin: 16px 0 12px;
+}
+
+.contract-offer-summary article {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.42);
+  padding: 10px;
+}
+
+.contract-offer-mood-card {
+  min-width: 0;
+}
+
+.negotiation-mood-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.negotiation-mood-track {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.88);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16);
+}
+
+.negotiation-mood-fill {
+  height: 100%;
+  min-width: 4px;
+  border-radius: inherit;
+  box-shadow: 0 0 18px currentColor;
+  transition:
+    background-color 140ms ease,
+    width 140ms ease;
+}
+
+.contract-offer-history-note {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.4);
+  margin-bottom: 14px;
+  padding: 9px 10px;
 }
 
 .stat-pill {
@@ -4747,6 +5473,20 @@ h1 {
   color: #9f2f2f;
 }
 
+@media (max-width: 899px), (orientation: portrait) and (max-width: 1023px) {
+  .small-screen-guard {
+    position: fixed;
+    z-index: 3000;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background:
+      linear-gradient(180deg, rgb(5 8 14 / 92%), rgb(8 13 23 / 96%)),
+      #090d17;
+  }
+}
+
 @media (max-width: 1100px) {
   .msi-bracket-board {
     grid-template-areas:
@@ -4839,6 +5579,7 @@ h1 {
   .calendar-list li,
   .signed-player-row,
   .season-summary-header,
+  .season-history-timeline,
   .season-summary-grid,
   .season-summary-metrics,
   .season-competition-result,
@@ -4848,10 +5589,15 @@ h1 {
   .season-calendar-header,
   .season-calendar-grid-layout,
   .season-roadmap-summary-grid,
-  .roster-management-header,
-  .lineup-board,
-  .bench-player-grid,
-  .player-detail-grid,
+    .roster-management-header,
+    .lineup-board,
+    .roster-management-filter-row,
+    .roster-management-metrics,
+    .roster-contract-table-header,
+    .roster-contract-row,
+    .bench-player-grid,
+    .player-detail-hero,
+    .player-detail-grid,
   .competition-summary-grid,
   .competition-overview-grid,
   .competition-schedule-columns,
@@ -4905,6 +5651,7 @@ h1 {
   }
 
   .offseason-player-row,
+  .offseason-filter-row,
   .offseason-log-grid {
     grid-template-columns: 1fr;
   }
@@ -4923,10 +5670,20 @@ h1 {
     justify-content: stretch;
   }
 
+  .match-week-report-grid {
+    grid-template-columns: 1fr;
+  }
+
   .offseason-offer-controls select,
   .offseason-offer-controls input,
-  .offseason-offer-controls .button {
+  .offseason-offer-controls .button,
+  .offseason-filter-row input,
+  .offseason-filter-row select {
     width: 100%;
+  }
+
+  .offseason-filter-row > strong {
+    text-align: left;
   }
 
   .offseason-list,
@@ -4934,4 +5691,49 @@ h1 {
   .offseason-offer-history {
     max-height: none;
   }
+
+  .contract-offer-grid,
+  .contract-offer-summary {
+    grid-template-columns: 1fr;
+  }
+
+.contract-offer-header {
+    gap: 10px;
+  }
+}
+
+.app-error-boundary,
+.career-required-fallback {
+  display: grid;
+  gap: 12px;
+}
+
+.app-error-boundary {
+  max-width: 560px;
+  padding: 28px;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  border-radius: 8px;
+  background: rgba(127, 29, 29, 0.18);
+}
+
+.app-error-boundary h1,
+.career-required-fallback h1 {
+  margin: 0;
+}
+
+.app-error-boundary p,
+.career-required-fallback p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.app-error-boundary button {
+  width: fit-content;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  border-radius: 6px;
+  background: rgba(248, 113, 113, 0.16);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+  padding: 10px 14px;
 }

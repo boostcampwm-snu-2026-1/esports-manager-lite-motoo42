@@ -7,6 +7,7 @@ import type {
   Player,
   SeasonState,
   StandingEntry,
+  TeamBalanceAdjustment,
 } from "../../types/game";
 import { createAsianGamesSetup } from "./asianGamesFormat";
 import { createFirstStandSetup } from "./firstStandFormat";
@@ -36,9 +37,12 @@ import {
 
 const stoveLeagueWeeks = 4;
 
-function findUserTeamId(userTeamName: string) {
+function findUserTeamId(
+  userTeamName: string,
+  teamBalanceAdjustments: TeamBalanceAdjustment[] = [],
+) {
   const normalizedUserTeamName = userTeamName.trim().toLowerCase();
-  const teams = createPlayableLckTeams(userTeamName);
+  const teams = createPlayableLckTeams(userTeamName, teamBalanceAdjustments);
 
   return (
     teams.find(
@@ -49,9 +53,12 @@ function findUserTeamId(userTeamName: string) {
   );
 }
 
-export function createInitialLckStandings(userTeamName: string): StandingEntry[] {
-  const teams = createPlayableLckTeams(userTeamName);
-  const userTeamId = findUserTeamId(userTeamName);
+export function createInitialLckStandings(
+  userTeamName: string,
+  teamBalanceAdjustments: TeamBalanceAdjustment[] = [],
+): StandingEntry[] {
+  const teams = createPlayableLckTeams(userTeamName, teamBalanceAdjustments);
+  const userTeamId = findUserTeamId(userTeamName, teamBalanceAdjustments);
 
   return teams.map((team, index) => ({
     teamId: team.id,
@@ -72,6 +79,7 @@ export function createInitialLckStandings(userTeamName: string): StandingEntry[]
 function createCompetitionState(
   competition: Competition,
   userTeamName: string,
+  teamBalanceAdjustments: TeamBalanceAdjustment[] = [],
 ): CompetitionState {
   return {
     competitionId: competition.id,
@@ -79,7 +87,10 @@ function createCompetitionState(
     status: "locked",
     currentStageName: competition.stages[0]?.name ?? "Not started",
     currentWeek: 0,
-    standings: competition.scope === "lck" ? createInitialLckStandings(userTeamName) : [],
+    standings:
+      competition.scope === "lck"
+        ? createInitialLckStandings(userTeamName, teamBalanceAdjustments)
+        : [],
     schedule: [],
     qualifiedTeamIds: [],
     qualifiedTeamNames: [],
@@ -89,14 +100,16 @@ function createCompetitionState(
 
 export function createInitialSeasonState({
   seasonNumber,
+  teamBalanceAdjustments = [],
   userTeamName,
 }: {
   seasonNumber: number;
+  teamBalanceAdjustments?: TeamBalanceAdjustment[];
   userTeamName: string;
 }): SeasonState {
   const profile = getSeasonProfile(seasonNumber);
   const competitions = getSeasonCompetitionsForProfile(profile).map((competition) =>
-    createCompetitionState(competition, userTeamName),
+    createCompetitionState(competition, userTeamName, teamBalanceAdjustments),
   );
 
   return {
@@ -117,6 +130,7 @@ export function createInitialSeasonState({
       completed: false,
     },
     competitions,
+    teamBalanceAdjustments,
     scheduledMatches: [],
     matchRecords: [],
     nextMatchIds: [],
@@ -216,7 +230,9 @@ export function activateLckRounds12(seasonState: SeasonState): SeasonState {
     (competition) => competition.competitionId === competitionId,
   );
   const baseStandings =
-    lckRounds?.standings.length ? lckRounds.standings : createInitialLckStandings("T1");
+    lckRounds?.standings.length
+      ? lckRounds.standings
+      : createInitialLckStandings("T1", seasonState.teamBalanceAdjustments);
   const schedule = createLckRounds12Schedule(baseStandings, {
     calendarType: seasonState.calendarType,
     year: seasonState.yearLabel,
@@ -411,7 +427,7 @@ export function activateLckRounds34(seasonState: SeasonState): SeasonState {
   );
   const baseStandings = lckRounds12?.standings.length
     ? lckRounds12.standings
-    : createInitialLckStandings("T1");
+    : createInitialLckStandings("T1", seasonState.teamBalanceAdjustments);
   const lckRounds34Setup = createLckRounds34Setup(baseStandings, {
     calendarType: seasonState.calendarType,
     year: seasonState.yearLabel,
@@ -483,7 +499,9 @@ export function activateLckRounds35(seasonState: SeasonState): SeasonState {
     (competition) => competition.competitionId === "lck-rounds-1-2",
   );
   const baseStandings =
-    lckRounds12?.standings.length ? lckRounds12.standings : createInitialLckStandings("T1");
+    lckRounds12?.standings.length
+      ? lckRounds12.standings
+      : createInitialLckStandings("T1", seasonState.teamBalanceAdjustments);
   const lckRounds35Setup = createLckRounds35Setup(baseStandings, {
     calendarType: seasonState.calendarType,
     year: seasonState.yearLabel,

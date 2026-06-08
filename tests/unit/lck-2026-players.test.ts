@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { lck2026Players } from "../../src/data/lck2026Players";
+import { lck2026MainPortraitCount } from "../../src/data/lck2026PlayerPortraits";
 import { lck2026Teams } from "../../src/data/lckTeams";
 import { offseasonFreeAgentSeeds } from "../../src/data/offseasonFreeAgents";
 import { samplePlayers } from "../../src/data/samplePlayers";
@@ -31,6 +32,25 @@ describe("lck2026Players", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  it("attaches local portraits to every 2026 LCK main roster player only", () => {
+    const mainPlayers = lck2026Players.filter(
+      (player) => player.rosterTier === "main",
+    );
+    const academyPlayers = lck2026Players.filter(
+      (player) => player.rosterTier === "academy",
+    );
+
+    expect(mainPlayers).toHaveLength(lck2026MainPortraitCount);
+    expect(mainPlayers.every((player) => player.portraitUrl)).toBe(true);
+    expect(mainPlayers.every((player) => player.portraitSourceUrl)).toBe(true);
+    expect(
+      mainPlayers.every((player) =>
+        player.portraitUrl?.startsWith("/assets/players/lck/2026/main/"),
+      ),
+    ).toBe(true);
+    expect(academyPlayers.some((player) => player.portraitUrl)).toBe(false);
+  });
+
   it("preserves existing sample player ids while allowing rating overrides", () => {
     const sampleFaker = samplePlayers.find((player) => player.name === "Faker");
     const lckFaker = lck2026Players.find((player) => player.name === "Faker");
@@ -56,8 +76,32 @@ describe("lck2026Players", () => {
       ability: 86,
       overall: 86,
       potential: 87,
-      salaryExpectation: 128,
+      salaryExpectation: 132,
     });
+  });
+
+  it("uses the S-C team balance tier model for 2026", () => {
+    expect(
+      lck2026Teams.map((team) => [team.name, team.tier]),
+    ).toEqual([
+      ["Gen.G", "S"],
+      ["Hanwha Life Esports", "S"],
+      ["T1", "S"],
+      ["KT Rolster", "A"],
+      ["Dplus KIA", "A"],
+      ["Hanjin BRION", "B"],
+      ["BNK FEARX", "B"],
+      ["Nongshim RedForce", "B"],
+      ["Kiwoom DRX", "C"],
+      ["DN SOOPers", "C"],
+    ]);
+  });
+
+  it("starts new careers from the selected team balance profile", () => {
+    const career = createInitialCareer("T1");
+
+    expect(career.userTeam.budget).toBe(1500);
+    expect(career.userTeam.elo).toBe(1670);
   });
 
   it("deduplicates names that also exist in the offseason free agent seed", () => {

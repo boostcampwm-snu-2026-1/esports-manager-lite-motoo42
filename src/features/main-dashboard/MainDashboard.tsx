@@ -3,6 +3,7 @@ import {
   getStrategyLabel,
   getTrainingIntensityLabel,
 } from "../../domain/weekly-plan";
+import { PlayerPortrait } from "../../shared/ui/PlayerPortrait";
 import { analyzeOpponent, type OpponentAnalysis } from "../../domain/opponent-analysis";
 import { createLckOpponentFromSchedule } from "../../domain/opponents";
 import {
@@ -64,14 +65,6 @@ function getStarter(career: CareerSave, role: Role): Player | undefined {
   return playerId
     ? career.lckPlayers.find((player) => player.id === playerId)
     : undefined;
-}
-
-function getPlayerInitials(player: Player | undefined) {
-  if (!player) {
-    return "--";
-  }
-
-  return player.name.slice(0, 2).toUpperCase();
 }
 
 function getUserTeamId(career: CareerSave) {
@@ -473,9 +466,11 @@ export function MainDashboard({
             return (
               <article className="starter-card" key={slot.role}>
                 <strong className="starter-role">{slot.label}</strong>
-                <div className="starter-photo" aria-hidden="true">
-                  {getPlayerInitials(player)}
-                </div>
+                <PlayerPortrait
+                  className="starter-photo"
+                  player={player}
+                  size="lg"
+                />
                 <div className="starter-name">{player?.name ?? "Open"}</div>
               </article>
             );

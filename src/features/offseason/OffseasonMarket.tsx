@@ -1,13 +1,22 @@
 import { useMemo, useState } from "react";
 import {
-  getOffseasonContractDemand,
+  getOffseasonNegotiationSnapshot,
+  getOffseasonVisibleDemandSalary,
   getUnresolvedExpiredPlayerIds,
   validateOffseasonRoster,
   type OffseasonContractOfferInput,
 } from "../../domain/season";
+import { formatSalaryAmount, formatSalaryRange } from "../../shared/format/money";
 import { Button } from "../../shared/ui/Button";
 import { Card } from "../../shared/ui/Card";
-import type { CareerSave, ContractType, Player } from "../../types/game";
+import type {
+  CareerSave,
+  ContractType,
+  OffseasonNegotiationContext,
+  OffseasonOffer,
+  Player,
+  Role,
+} from "../../types/game";
 
 type OffseasonMarketProps = {
   career: CareerSave;
@@ -18,6 +27,13 @@ type OffseasonMarketProps = {
 };
 
 type OffseasonTab = "contracts" | "free-agents" | "roster" | "log";
+
+type NegotiationMode = "renewal" | "free-agent";
+
+type NegotiationTarget = {
+  mode: NegotiationMode;
+  playerId: string;
+};
 
 const contractOptions: Array<{ value: ContractType; label: string }> = [
   { value: "one-year", label: "1년" },
@@ -32,6 +48,30 @@ const tabs: Array<{ id: OffseasonTab; label: string }> = [
   { id: "log", label: "이적 로그" },
 ];
 
+const roleOptions: Array<{ value: Role; label: string }> = [
+  { value: "top", label: "탑" },
+  { value: "jungle", label: "정글" },
+  { value: "mid", label: "미드" },
+  { value: "bot", label: "원딜" },
+  { value: "support", label: "서폿" },
+];
+
+function getRosterTierLabel(player: Player) {
+  if (player.rosterTier === "main") {
+    return "1군";
+  }
+
+  if (player.rosterTier === "academy") {
+    return "2군";
+  }
+
+  return "FA";
+}
+
+function getMarketTeamLabel(player: Player) {
+  return player.currentTeam ? `${player.currentTeam} 소속` : "무소속 FA";
+}
+
 function getPlayer(players: Player[], playerId: string) {
   return players.find((player) => player.id === playerId);
 }
@@ -40,54 +80,79 @@ function getPlayerLabel(player: Player) {
   return `${player.role.toUpperCase()} · OVR ${player.overall} · POT ${player.potential} · ${player.age}세`;
 }
 
-function getDefaultSalary(player: Player, contractType: ContractType) {
-  return getOffseasonContractDemand(player, contractType);
+function getNegotiationContext(mode: NegotiationMode): OffseasonNegotiationContext {
+  return mode === "renewal" ? "renewal" : "free-agent";
 }
 
-function useOfferInputs(players: Player[]) {
-  const [contractTypes, setContractTypes] = useState<Record<string, ContractType>>(
-    {},
+function getCurrentOffseasonDay(career: CareerSave) {
+  return career.seasonState.offseason?.currentDay ?? 1;
+}
+
+function getVisibleDemand({
+  career,
+  context,
+  contractType,
+  player,
+}: {
+  career: CareerSave;
+  context: OffseasonNegotiationContext;
+  contractType: ContractType;
+  player: Player;
+}) {
+  return getOffseasonVisibleDemandSalary({
+    context,
+    contractType,
+    day: getCurrentOffseasonDay(career),
+    player,
+  });
+}
+
+function getOfferStatusLabel(status: OffseasonOffer["status"]) {
+  if (status === "accepted") {
+    return "수락";
+  }
+
+  if (status === "rejected") {
+    return "거절";
+  }
+
+  if (status === "lost") {
+    return "경쟁 패배";
+  }
+
+  if (status === "withdrawn") {
+    return "철회";
+  }
+
+  return "대기";
+}
+
+function findLatestOffer(
+  career: CareerSave,
+  playerId: string,
+  context: OffseasonNegotiationContext,
+) {
+  const offers = [
+    ...(career.seasonState.offseason?.pendingOffers ?? []),
+    ...(career.seasonState.offseason?.resolvedOffers ?? []),
+  ].filter(
+    (offer) =>
+      offer.playerIds.includes(playerId) &&
+      (offer.negotiationContext ?? "free-agent") === context &&
+      offer.fromTeamName === career.userTeam.name,
   );
-  const [salaryOffers, setSalaryOffers] = useState<Record<string, number>>({});
 
-  function getContractType(playerId: string) {
-    return contractTypes[playerId] ?? "one-year";
-  }
+  return offers.sort((left, right) => {
+    const dayDiff =
+      (right.resolvedDay ?? right.createdDay) -
+      (left.resolvedDay ?? left.createdDay);
 
-  function getSalaryOffer(player: Player) {
-    const contractType = getContractType(player.id);
-
-    return salaryOffers[player.id] ?? getDefaultSalary(player, contractType);
-  }
-
-  function setContractType(playerId: string, contractType: ContractType) {
-    setContractTypes((current) => ({
-      ...current,
-      [playerId]: contractType,
-    }));
-    const player = getPlayer(players, playerId);
-
-    if (player) {
-      setSalaryOffers((current) => ({
-        ...current,
-        [playerId]: current[playerId] ?? getDefaultSalary(player, contractType),
-      }));
+    if (dayDiff !== 0) {
+      return dayDiff;
     }
-  }
 
-  function setSalaryOffer(playerId: string, salaryOffer: number) {
-    setSalaryOffers((current) => ({
-      ...current,
-      [playerId]: salaryOffer,
-    }));
-  }
-
-  return {
-    getContractType,
-    getSalaryOffer,
-    setContractType,
-    setSalaryOffer,
-  };
+    return right.id.localeCompare(left.id);
+  })[0];
 }
 
 function WeekTimeline({ career }: { career: CareerSave }) {
@@ -131,16 +196,180 @@ function WeekTimeline({ career }: { career: CareerSave }) {
   );
 }
 
-function ContractTab({
+function ContractOfferModal({
   career,
-  offerInputs,
-  onReleaseExpiredPlayer,
-  onSubmitRenewalOffer,
+  onClose,
+  onSubmit,
+  target,
 }: {
   career: CareerSave;
-  offerInputs: ReturnType<typeof useOfferInputs>;
+  onClose: () => void;
+  onSubmit: (offer: OffseasonContractOfferInput) => void;
+  target: NegotiationTarget;
+}) {
+  const player = getPlayer(career.lckPlayers, target.playerId);
+  const [contractType, setContractType] = useState<ContractType>("one-year");
+  const [salaryOffer, setSalaryOffer] = useState(() =>
+    player
+      ? getVisibleDemand({
+          career,
+          context: getNegotiationContext(target.mode),
+          contractType: "one-year",
+          player,
+        })
+      : 0,
+  );
+
+  if (!player) {
+    return null;
+  }
+
+  const modalPlayer = player;
+  const context = getNegotiationContext(target.mode);
+  const negotiation = getOffseasonNegotiationSnapshot({
+    career,
+    context,
+    contractType,
+    player: modalPlayer,
+    salaryOffer,
+  });
+  const latestOffer = findLatestOffer(career, modalPlayer.id, context);
+  const title = target.mode === "renewal" ? "재계약 협상" : "FA 계약 협상";
+
+  function handleContractTypeChange(nextContractType: ContractType) {
+    setContractType(nextContractType);
+    setSalaryOffer(
+      getVisibleDemand({
+        career,
+        context,
+        contractType: nextContractType,
+        player: modalPlayer,
+      }),
+    );
+  }
+
+  return (
+    <div className="modal-backdrop" onMouseDown={onClose} role="presentation">
+      <section
+        aria-label={title}
+        aria-modal="true"
+        className="contract-offer-modal"
+        onMouseDown={(event) => event.stopPropagation()}
+        role="dialog"
+      >
+        <div className="contract-offer-header">
+          <div>
+            <p className="eyebrow">{title}</p>
+            <h2>{modalPlayer.name}</h2>
+            <span>{getPlayerLabel(modalPlayer)}</span>
+          </div>
+          <button
+            aria-label="닫기"
+            className="modal-close-button"
+            onClick={onClose}
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <div className="contract-offer-grid">
+          <label>
+            <span>계약 형태</span>
+            <select
+              value={contractType}
+              onChange={(event) =>
+                handleContractTypeChange(event.target.value as ContractType)
+              }
+            >
+              {contractOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>제안 연봉</span>
+            <input
+              aria-label="제안 연봉"
+              min={0}
+              step={5}
+              type="number"
+              value={salaryOffer}
+              onChange={(event) => setSalaryOffer(Number(event.target.value))}
+            />
+            <small>현재 제안: {formatSalaryAmount(salaryOffer)}</small>
+          </label>
+        </div>
+        <div className="contract-offer-summary">
+          <article>
+            <span>선수 측 요구액</span>
+            <strong>{formatSalaryAmount(negotiation.visibleDemand)}</strong>
+          </article>
+          <article className="contract-offer-mood-card">
+            <span>협상 분위기</span>
+            <div className="negotiation-mood-value">
+              <strong
+                data-testid="negotiation-mood-score"
+                style={{ color: negotiation.moodColor }}
+              >
+                {negotiation.moodScore}%
+              </strong>
+            </div>
+            <div
+              aria-label={`협상 분위기 ${negotiation.moodScore}%`}
+              className="negotiation-mood-track"
+            >
+              <div
+                className="negotiation-mood-fill"
+                style={{
+                  backgroundColor: negotiation.moodColor,
+                  color: negotiation.moodColor,
+                  width: `${negotiation.moodScore}%`,
+                }}
+              />
+            </div>
+          </article>
+        </div>
+        {latestOffer && (
+          <div className="contract-offer-history-note">
+            최근 제안: {getOfferStatusLabel(latestOffer.status)} ·{" "}
+            {formatSalaryAmount(latestOffer.salaryOffer)}
+            {latestOffer.moodScore !== undefined
+              ? ` · 분위기 ${latestOffer.moodScore}%`
+              : ""}
+          </div>
+        )}
+        <div className="season-summary-actions">
+          <Button
+            onClick={() => {
+              onSubmit({
+                playerId: modalPlayer.id,
+                contractType,
+                salaryOffer,
+              });
+              onClose();
+            }}
+          >
+            제안 보내기
+          </Button>
+          <Button variant="ghost" onClick={onClose}>
+            닫기
+          </Button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ContractTab({
+  career,
+  onOpenNegotiation,
+  onReleaseExpiredPlayer,
+}: {
+  career: CareerSave;
+  onOpenNegotiation: (target: NegotiationTarget) => void;
   onReleaseExpiredPlayer: (playerId: string) => void;
-  onSubmitRenewalOffer: (offer: OffseasonContractOfferInput) => void;
 }) {
   const offseason = career.seasonState.offseason;
   const unresolvedIds = new Set(getUnresolvedExpiredPlayerIds(career));
@@ -160,56 +389,44 @@ function ContractTab({
   return (
     <div className="offseason-list">
       {expiredPlayers.map((player) => {
-        const contractType = offerInputs.getContractType(player.id);
-        const salaryOffer = offerInputs.getSalaryOffer(player);
-        const demand = getOffseasonContractDemand(player, contractType);
         const resolved = !unresolvedIds.has(player.id);
+        const latestOffer = findLatestOffer(career, player.id, "renewal");
+        const isPending = latestOffer?.status === "pending";
 
         return (
           <article className="offseason-player-row" key={player.id}>
             <div className="offseason-player-main">
               <strong>{player.name}</strong>
               <span>{getPlayerLabel(player)}</span>
-              <small>요구액 {demand} · 수락 기준 {Math.ceil(demand * 0.9)}</small>
+              <small>
+                {latestOffer
+                  ? `최근 재계약 제안 ${getOfferStatusLabel(
+                      latestOffer.status,
+                    )} · ${formatSalaryAmount(latestOffer.salaryOffer)}`
+                  : `선수 측 요구액 ${formatSalaryAmount(
+                      getVisibleDemand({
+                        career,
+                        context: "renewal",
+                        contractType: "one-year",
+                        player,
+                      }),
+                    )}`}
+              </small>
             </div>
             {resolved ? (
               <strong className="offseason-status-label">처리 완료</strong>
             ) : (
               <div className="offseason-offer-controls">
-                <select
-                  value={contractType}
-                  onChange={(event) =>
-                    offerInputs.setContractType(
-                      player.id,
-                      event.target.value as ContractType,
-                    )
-                  }
-                >
-                  {contractOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  min={0}
-                  step={5}
-                  type="number"
-                  value={salaryOffer}
-                  onChange={(event) =>
-                    offerInputs.setSalaryOffer(player.id, Number(event.target.value))
-                  }
-                />
                 <Button
+                  disabled={isPending}
                   onClick={() =>
-                    onSubmitRenewalOffer({
+                    onOpenNegotiation({
+                      mode: "renewal",
                       playerId: player.id,
-                      contractType,
-                      salaryOffer,
                     })
                   }
                 >
-                  제안
+                  {isPending ? "제안 대기" : "재계약 협상"}
                 </Button>
                 <Button
                   variant="ghost"
@@ -228,13 +445,17 @@ function ContractTab({
 
 function FreeAgentTab({
   career,
-  offerInputs,
-  onSubmitFreeAgentOffer,
+  onOpenNegotiation,
 }: {
   career: CareerSave;
-  offerInputs: ReturnType<typeof useOfferInputs>;
-  onSubmitFreeAgentOffer: (offer: OffseasonContractOfferInput) => void;
+  onOpenNegotiation: (target: NegotiationTarget) => void;
 }) {
+  const [query, setQuery] = useState("");
+  const [teamFilter, setTeamFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
+  const [tierFilter, setTierFilter] = useState<
+    "all" | "main" | "academy" | "free-agent"
+  >("all");
   const offseason = career.seasonState.offseason;
   const currentDay = offseason?.currentDay ?? 1;
   const canOffer = currentDay >= 8 && currentDay < 28;
@@ -247,6 +468,28 @@ function FreeAgentTab({
     .map((playerId) => getPlayer(career.lckPlayers, playerId))
     .filter((player): player is Player => Boolean(player))
     .sort((left, right) => right.overall - left.overall);
+  const normalizedQuery = query.trim().toLowerCase();
+  const teamOptions = [
+    ...new Set(
+      freeAgents
+        .map((player) => player.currentTeam)
+        .filter((teamName): teamName is string => Boolean(teamName)),
+    ),
+  ].sort((left, right) => left.localeCompare(right));
+  const filteredPlayers = freeAgents.filter((player) => {
+    const matchesQuery =
+      normalizedQuery.length === 0 ||
+      player.name.toLowerCase().includes(normalizedQuery) ||
+      (player.realName ?? "").toLowerCase().includes(normalizedQuery) ||
+      (player.nativeName ?? "").toLowerCase().includes(normalizedQuery);
+    const matchesTeam =
+      teamFilter === "all" || player.currentTeam === teamFilter;
+    const matchesRole = roleFilter === "all" || player.role === roleFilter;
+    const matchesTier =
+      tierFilter === "all" || (player.rosterTier ?? "free-agent") === tierFilter;
+
+    return matchesQuery && matchesTeam && matchesRole && matchesTier;
+  });
 
   if (freeAgents.length === 0) {
     return (
@@ -259,63 +502,118 @@ function FreeAgentTab({
 
   return (
     <div className="offseason-list">
+      <div className="offseason-filter-row">
+        <label>
+          <span>검색</span>
+          <input
+            aria-label="시장 선수 검색"
+            placeholder="선수명"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
+        <label>
+          <span>팀</span>
+          <select
+            aria-label="시장 팀 필터"
+            value={teamFilter}
+            onChange={(event) => setTeamFilter(event.target.value)}
+          >
+            <option value="all">전체 팀</option>
+            {teamOptions.map((teamName) => (
+              <option key={teamName} value={teamName}>
+                {teamName}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>포지션</span>
+          <select
+            aria-label="시장 포지션 필터"
+            value={roleFilter}
+            onChange={(event) =>
+              setRoleFilter(event.target.value as "all" | Role)
+            }
+          >
+            <option value="all">전체 포지션</option>
+            {roleOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>구분</span>
+          <select
+            aria-label="시장 1군 2군 필터"
+            value={tierFilter}
+            onChange={(event) =>
+              setTierFilter(
+                event.target.value as "all" | "main" | "academy" | "free-agent",
+              )
+            }
+          >
+            <option value="all">전체</option>
+            <option value="main">1군</option>
+            <option value="academy">2군</option>
+            <option value="free-agent">무소속</option>
+          </select>
+        </label>
+        <strong>{filteredPlayers.length}명</strong>
+      </div>
       {!canOffer && (
         <p className="muted">
           FA 제안은 2주차부터 4주차 27일차까지 가능합니다. 28일차에는 최종
           등록만 진행됩니다.
         </p>
       )}
-      {freeAgents.map((player) => {
-        const contractType = offerInputs.getContractType(player.id);
-        const salaryOffer = offerInputs.getSalaryOffer(player);
-        const demand = getOffseasonContractDemand(player, contractType);
+      {filteredPlayers.length === 0 && (
+        <div className="offseason-empty">
+          <strong>필터에 맞는 선수가 없습니다.</strong>
+          <span>검색어 또는 필터를 조정해 보세요.</span>
+        </div>
+      )}
+      {filteredPlayers.map((player) => {
+        const demand = getVisibleDemand({
+          career,
+          context: "free-agent",
+          contractType: "one-year",
+          player,
+        });
         const isPending = pendingPlayerIds.has(player.id);
+        const latestOffer = findLatestOffer(career, player.id, "free-agent");
 
         return (
           <article className="offseason-player-row" key={player.id}>
             <div className="offseason-player-main">
               <strong>{player.name}</strong>
               <span>{getPlayerLabel(player)}</span>
-              <small>요구액 {demand} · 현재 FA</small>
+              <small>
+                {latestOffer
+                  ? `최근 FA 제안 ${getOfferStatusLabel(
+                      latestOffer.status,
+                    )} · ${formatSalaryAmount(latestOffer.salaryOffer)}`
+                  : `선수 측 요구액 ${formatSalaryAmount(
+                      demand,
+                    )} · ${getMarketTeamLabel(player)} · ${getRosterTierLabel(
+                      player,
+                    )}`}
+              </small>
             </div>
             <div className="offseason-offer-controls">
-              <select
-                disabled={!canOffer || isPending}
-                value={contractType}
-                onChange={(event) =>
-                  offerInputs.setContractType(
-                    player.id,
-                    event.target.value as ContractType,
-                  )
-                }
-              >
-                {contractOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <input
-                disabled={!canOffer || isPending}
-                min={0}
-                step={5}
-                type="number"
-                value={salaryOffer}
-                onChange={(event) =>
-                  offerInputs.setSalaryOffer(player.id, Number(event.target.value))
-                }
-              />
               <Button
                 disabled={!canOffer || isPending}
                 onClick={() =>
-                  onSubmitFreeAgentOffer({
+                  onOpenNegotiation({
+                    mode: "free-agent",
                     playerId: player.id,
-                    contractType,
-                    salaryOffer,
                   })
                 }
               >
-                {isPending ? "제안 대기" : "FA 제안"}
+                {isPending ? "제안 대기" : "FA 협상"}
               </Button>
             </div>
           </article>
@@ -334,8 +632,16 @@ function RosterTab({
 }) {
   const validation = validateOffseasonRoster(career);
   const rosteredPlayers = career.userTeam.contracts
+    .filter((contract) => contract.remainingYears > 0)
     .map((contract) => getPlayer(career.lckPlayers, contract.playerId))
-    .filter((player): player is Player => Boolean(player));
+    .filter(
+      (player): player is Player =>
+        player !== undefined && player.availableForRoster,
+    );
+  const minMainRosterPlayers =
+    career.userTeam.rosterSettings.minMainRosterPlayers ?? 5;
+  const minAcademyRosterPlayers =
+    career.userTeam.rosterSettings.minAcademyRosterPlayers ?? 5;
 
   return (
     <div className="offseason-roster-panel">
@@ -343,13 +649,28 @@ function RosterTab({
         <article className="season-summary-metric">
           <span>계약 선수</span>
           <strong>{validation.contractedPlayerIds.length}명</strong>
-          <small>최소 10명 / 최대 15명</small>
+          <small>
+            최소 {career.userTeam.rosterSettings.minPlayers}명 / 최대{" "}
+            {career.userTeam.rosterSettings.maxPlayers}명
+          </small>
+        </article>
+        <article className="season-summary-metric">
+          <span>1군 등록</span>
+          <strong>
+            {validation.mainRosterPlayerIds.length}/{minMainRosterPlayers}
+          </strong>
+          <small>선발 5인 + 1군 후보</small>
+        </article>
+        <article className="season-summary-metric">
+          <span>2군 등록</span>
+          <strong>
+            {validation.academyPlayerIds.length}/{minAcademyRosterPlayers}
+          </strong>
+          <small>2군 계약 선수</small>
         </article>
         <article className="season-summary-metric">
           <span>연봉 총액</span>
-          <strong>
-            {validation.yearlySalary} / {career.userTeam.budget}
-          </strong>
+          <strong>{formatSalaryRange(validation.yearlySalary, career.userTeam.budget)}</strong>
           <small>예산 기준</small>
         </article>
         <article className="season-summary-metric">
@@ -425,7 +746,7 @@ function LogTab({ career }: { career: CareerSave }) {
                 {offer.fromTeamName} · {offer.status}
               </strong>
               <span>
-                {playerNames} · {offer.salaryOffer}
+                {playerNames} · {formatSalaryAmount(offer.salaryOffer)}
               </span>
             </article>
           );
@@ -443,7 +764,8 @@ export function OffseasonMarket({
   onViewRoster,
 }: OffseasonMarketProps) {
   const [activeTab, setActiveTab] = useState<OffseasonTab>("contracts");
-  const offerInputs = useOfferInputs(career.lckPlayers);
+  const [negotiationTarget, setNegotiationTarget] =
+    useState<NegotiationTarget | null>(null);
   const offseason = career.seasonState.offseason;
   const validationErrors = offseason?.validationErrors ?? [];
 
@@ -452,9 +774,8 @@ export function OffseasonMarket({
       return (
         <ContractTab
           career={career}
-          offerInputs={offerInputs}
+          onOpenNegotiation={setNegotiationTarget}
           onReleaseExpiredPlayer={onReleaseExpiredPlayer}
-          onSubmitRenewalOffer={onSubmitRenewalOffer}
         />
       );
     }
@@ -463,8 +784,7 @@ export function OffseasonMarket({
       return (
         <FreeAgentTab
           career={career}
-          offerInputs={offerInputs}
-          onSubmitFreeAgentOffer={onSubmitFreeAgentOffer}
+          onOpenNegotiation={setNegotiationTarget}
         />
       );
     }
@@ -477,10 +797,7 @@ export function OffseasonMarket({
   }, [
     activeTab,
     career,
-    offerInputs,
     onReleaseExpiredPlayer,
-    onSubmitFreeAgentOffer,
-    onSubmitRenewalOffer,
     onViewRoster,
   ]);
 
@@ -524,6 +841,19 @@ export function OffseasonMarket({
         </div>
         {activePanel}
       </Card>
+      {negotiationTarget && (
+        <ContractOfferModal
+          career={career}
+          key={`${negotiationTarget.mode}-${negotiationTarget.playerId}`}
+          onClose={() => setNegotiationTarget(null)}
+          onSubmit={
+            negotiationTarget.mode === "renewal"
+              ? onSubmitRenewalOffer
+              : onSubmitFreeAgentOffer
+          }
+          target={negotiationTarget}
+        />
+      )}
     </section>
   );
 }

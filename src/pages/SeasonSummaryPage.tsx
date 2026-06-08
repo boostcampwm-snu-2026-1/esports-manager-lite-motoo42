@@ -1,18 +1,36 @@
 import { SeasonSummary } from "../features/season-summary";
-import { useGame } from "../app/GameProvider";
+import { useGameDispatch, useGameSelector } from "../app/GameProvider";
+import type { AppRoute, RouteSubPage } from "../app/routes";
+import { gameActions } from "../app/state";
+import { CareerRequiredFallback } from "./CareerRequiredFallback";
+import type { CompetitionId } from "../types/game";
 
-export function SeasonSummaryPage() {
-  const { state, dispatch } = useGame();
+type SeasonSummaryPageProps = {
+  onGoTo: (
+    route: AppRoute,
+    options?: {
+      competitionId?: CompetitionId | null;
+      subPage?: RouteSubPage | null;
+    },
+  ) => void;
+};
 
-  if (!state.career) {
-    return null;
+export function SeasonSummaryPage({ onGoTo }: SeasonSummaryPageProps) {
+  const career = useGameSelector((state) => state.career);
+  const dispatch = useGameDispatch();
+
+  if (!career) {
+    return <CareerRequiredFallback title="시즌 요약을 열 수 없습니다" />;
   }
 
   return (
     <SeasonSummary
-      career={state.career}
-      onStartOffseason={() => dispatch({ type: "start-offseason-market" })}
-      onViewRoster={() => dispatch({ type: "go-to", route: "roster-builder" })}
+      career={career}
+      onStartOffseason={() => {
+        dispatch(gameActions.startOffseasonMarket());
+        onGoTo("offseason");
+      }}
+      onViewRoster={() => onGoTo("roster-builder")}
     />
   );
 }

@@ -62,4 +62,37 @@ describe("app routes", () => {
     });
     expect(getPathForRoute("offseason")).toBe("/offseason");
   });
+
+  it("parses and creates the save manager route", () => {
+    expect(getRouteMatchFromPath("/saves")).toEqual({
+      route: "save-manager",
+    });
+    expect(getPathForRoute("save-manager")).toBe("/saves");
+  });
+
+  it("parses and creates roster subpage routes", () => {
+    expect(getRouteMatchFromPath("/roster")).toEqual({
+      route: "roster-builder",
+      rosterSubPage: null,
+    });
+    expect(getRouteMatchFromPath("/roster/main")).toEqual({
+      route: "roster-builder",
+      rosterSubPage: "main",
+    });
+    expect(getRouteMatchFromPath("/roster/academy")).toEqual({
+      route: "roster-builder",
+      rosterSubPage: "academy",
+    });
+    expect(getRouteMatchFromPath("/roster/contracts")).toEqual({
+      route: "roster-builder",
+      rosterSubPage: "contracts",
+    });
+    expect(getRouteMatchFromPath("/roster/unknown")).toEqual({
+      route: "roster-builder",
+      rosterSubPage: null,
+    });
+    expect(getPathForRoute("roster-builder", null, "academy")).toBe(
+      "/roster/academy",
+    );
+  });
 });

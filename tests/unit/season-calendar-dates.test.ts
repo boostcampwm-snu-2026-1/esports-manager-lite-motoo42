@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createMonthGrid,
+  formatDateRange,
   getMatchDisplayDate,
   getRoadmapWindows,
   toDateKey,
@@ -58,5 +59,10 @@ describe("season calendar date helpers", () => {
     expect(
       getRoadmapWindows("normal").map((window) => window.competitionId),
     ).not.toContain("asian-games");
+  });
+
+  it("uses compact date ranges for competitions inside one month", () => {
+    expect(formatDateRange(2026, "first-stand", "asian-games")).toBe("3/10 - 23");
+    expect(formatDateRange(2026, "worlds", "asian-games")).toBe("10/6 - 11/23");
   });
 });

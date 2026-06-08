@@ -29,6 +29,8 @@ export type Player = {
   league: LeagueCode;
   currentTeam?: string;
   rosterTier?: "main" | "academy" | "free-agent";
+  portraitUrl?: string;
+  portraitSourceUrl?: string;
   source?:
     | "lck-2026-rounds-1-2"
     | "lck-cl-2026-rounds-1-2"
@@ -36,6 +38,7 @@ export type Player = {
   availableForRoster: boolean;
   age: number;
   retirementAge?: number;
+  retirementCandidate?: boolean;
   militaryServiceStatus?: "none" | "pending" | "serving" | "completed";
   cost: number;
   salaryExpectation: number;
@@ -146,10 +149,25 @@ export type Team = {
   elo: number;
 };
 
+export type TeamBalanceTier = "S" | "A" | "B" | "C";
+
+export type TeamBalanceAdjustment = {
+  teamId: string;
+  teamName: string;
+  expectedRank: number;
+  resultRank: number;
+  baseEloDelta: number;
+  strengthDelta: number;
+  budgetDelta: number;
+  reason: string;
+};
+
 export type TeamRosterSettings = {
   minPlayers: 10;
   maxPlayers: 15;
   freeMovementBetweenMainAndAcademy: boolean;
+  minMainRosterPlayers?: number;
+  minAcademyRosterPlayers?: number;
 };
 
 export type Competition = {
@@ -218,7 +236,18 @@ export type SeasonSummary = {
   competitionResults?: SeasonCompetitionSummary[];
   worldsChampionTeamName?: string;
   expiredContractPlayerIds?: string[];
+  offseasonSummary?: SeasonOffseasonSummary;
   nextSeasonNumber?: number;
+};
+
+export type SeasonOffseasonSummary = {
+  renewedPlayerIds?: string[];
+  releasedPlayerIds?: string[];
+  signedPlayerIds?: string[];
+  aiSigningCount?: number;
+  retiredPlayerIds?: string[];
+  militaryServicePlayerIds?: string[];
+  notableLogEntries?: OffseasonLogEntry[];
 };
 
 export type SeasonCompetitionSummary = {
@@ -534,7 +563,14 @@ export type OffseasonMarketStatus =
   | "blocked"
   | "completed";
 
+export type OffseasonContext = "preseason" | "postseason";
+
 export type OffseasonOfferKind = "contract" | "transfer";
+
+export type OffseasonNegotiationContext =
+  | "renewal"
+  | "free-agent"
+  | "ai-depth";
 
 export type OffseasonOfferStatus =
   | "pending"
@@ -555,6 +591,11 @@ export type OffseasonOffer = {
   createdDay: number;
   resolvedDay?: number;
   score?: number;
+  negotiationContext?: OffseasonNegotiationContext;
+  minAcceptableSalary?: number;
+  visibleDemand?: number;
+  moodScore?: number;
+  rejectionReason?: string;
 };
 
 export type OffseasonLogType =
@@ -563,6 +604,9 @@ export type OffseasonLogType =
   | "release"
   | "signing"
   | "ai-signing"
+  | "rejection"
+  | "retirement"
+  | "military"
   | "blocked";
 
 export type OffseasonLogEntry = {
@@ -574,6 +618,7 @@ export type OffseasonLogEntry = {
 };
 
 export type OffseasonState = {
+  context?: OffseasonContext;
   status: OffseasonStatus;
   completedSeasonNumber: number;
   nextSeasonNumber?: number;
@@ -593,6 +638,8 @@ export type OffseasonState = {
   releasedPlayerIds?: string[];
   signedPlayerIds?: string[];
   resolvedExpiredPlayerIds?: string[];
+  retiredPlayerIds?: string[];
+  militaryServicePlayerIds?: string[];
   logEntries?: OffseasonLogEntry[];
   validationErrors?: string[];
 };
@@ -618,6 +665,7 @@ export type SeasonState = {
   worlds?: WorldsState;
   worldsQualification?: WorldsQualificationState;
   offseason?: OffseasonState;
+  teamBalanceAdjustments?: TeamBalanceAdjustment[];
 };
 
 export type CareerSave = {

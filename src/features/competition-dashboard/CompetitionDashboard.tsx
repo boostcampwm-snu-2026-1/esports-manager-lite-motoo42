@@ -725,10 +725,10 @@ function FirstStandFormatModal({ onClose }: { onClose: () => void }) {
             </p>
           </article>
           <article>
-            <strong>제4조 1차 구현 범위</strong>
+            <strong>제4조 진행 처리</strong>
             <p>
-              12-A에서는 화면 구조와 placeholder를 먼저 구현한다. 실제 일정
-              생성, 경기 진행, 순위 산정은 12-B에서 연결한다.
+              조별리그, 토너먼트 일정, 경기 결과, 순위 산정은 시즌 진행
+              엔진과 연동되며 완료 시 후속 대회로 전환된다.
             </p>
           </article>
         </div>

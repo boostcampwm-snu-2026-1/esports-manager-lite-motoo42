@@ -1,17 +1,15 @@
-import { ensureCareerSaveIndexes } from "./careerSaves.js";
-import { closeMongoConnection, getDatabase, pingDatabase } from "./mongo.js";
+import { closeMongoConnection } from "./db/mongo.js";
+import { careerSaveCollectionName } from "./models/careerSave.js";
+import { getHealthStatus } from "./services/healthService.js";
 
 try {
-  const ping = await pingDatabase();
-  const database = await getDatabase();
-
-  await ensureCareerSaveIndexes(database);
+  const health = await getHealthStatus();
   console.log(
     JSON.stringify(
       {
-        collection: "careerSaves",
-        database: ping.databaseName,
-        ok: true,
+        collection: careerSaveCollectionName,
+        database: health.database,
+        ok: health.ok,
       },
       null,
       2,

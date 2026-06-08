@@ -1,26 +1,41 @@
-import { useGame } from "../app/GameProvider";
+import { useGameDispatch, useGameSelector } from "../app/GameProvider";
+import type { AppRoute, RouteSubPage } from "../app/routes";
+import { gameActions } from "../app/state";
 import { OffseasonMarket } from "../features/offseason";
+import { CareerRequiredFallback } from "./CareerRequiredFallback";
+import type { CompetitionId } from "../types/game";
 
-export function OffseasonPage() {
-  const { state, dispatch } = useGame();
+type OffseasonPageProps = {
+  onGoTo: (
+    route: AppRoute,
+    options?: {
+      competitionId?: CompetitionId | null;
+      subPage?: RouteSubPage | null;
+    },
+  ) => void;
+};
 
-  if (!state.career) {
-    return null;
+export function OffseasonPage({ onGoTo }: OffseasonPageProps) {
+  const career = useGameSelector((state) => state.career);
+  const dispatch = useGameDispatch();
+
+  if (!career) {
+    return <CareerRequiredFallback title="스토브리그를 열 수 없습니다" />;
   }
 
   return (
     <OffseasonMarket
-      career={state.career}
+      career={career}
       onReleaseExpiredPlayer={(playerId) =>
-        dispatch({ type: "release-expired-offseason-player", playerId })
+        dispatch(gameActions.releaseExpiredOffseasonPlayer(playerId))
       }
       onSubmitFreeAgentOffer={(offer) =>
-        dispatch({ type: "submit-free-agent-offer", offer })
+        dispatch(gameActions.submitFreeAgentOffer(offer))
       }
       onSubmitRenewalOffer={(offer) =>
-        dispatch({ type: "submit-offseason-renewal-offer", offer })
+        dispatch(gameActions.submitOffseasonRenewalOffer(offer))
       }
-      onViewRoster={() => dispatch({ type: "go-to", route: "roster-builder" })}
+      onViewRoster={() => onGoTo("roster-builder")}
     />
   );
 }

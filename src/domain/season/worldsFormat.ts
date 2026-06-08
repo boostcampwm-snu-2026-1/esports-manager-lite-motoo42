@@ -1087,7 +1087,7 @@ export function getWorldsTeamProfile(teamId: string, seasonState?: SeasonState) 
   if (leagueLabel === "LCK") {
     return {
       leagueLabel,
-      strength: getLckTeamStrength(teamId),
+      strength: getLckTeamStrength(teamId, seasonState?.teamBalanceAdjustments),
       style: getLckOpponentStyle(teamId),
     };
   }

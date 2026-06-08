@@ -1,3 +1,5 @@
+import { formatSalaryAmount, formatSalaryRange } from "../../shared/format/money";
+
 type BudgetSummaryProps = {
   budget: number;
   spent: number;
@@ -10,10 +12,10 @@ export function BudgetSummary({ budget, spent }: BudgetSummaryProps) {
     <div className="budget-summary">
       <span>Budget</span>
       <strong>
-        {spent} / {budget}
+        {formatSalaryRange(spent, budget)}
       </strong>
       <span className={remaining < 0 ? "danger" : "muted"}>
-        Remaining: {remaining}
+        Remaining: {formatSalaryAmount(remaining)}
       </span>
     </div>
   );

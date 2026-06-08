@@ -1,10 +1,11 @@
-import { lck2026Teams } from "../../data/lckTeams";
+import { getLckTeamProfile, lck2026Teams } from "../../data/lckTeams";
 import { offseasonFreeAgentSeeds } from "../../data/offseasonFreeAgents";
 import type {
   CareerSave,
   ContractType,
   OffseasonLogEntry,
   OffseasonMarketStatus,
+  OffseasonNegotiationContext,
   OffseasonOffer,
   OffseasonOfferStatus,
   Player,
@@ -13,9 +14,15 @@ import type {
   Team,
 } from "../../types/game";
 import {
+  createPlayerContract,
+  getContractTypeScoreBonus,
+  getPlayerContractDemand,
+} from "../players";
+import {
   addDaysToDateKey,
   formatSeasonDateLabel,
 } from "./seasonScheduleDates";
+import { completeStoveLeague } from "./createInitialSeasonState";
 import { startNextSeasonFromOffseason } from "./seasonEnd";
 
 export type OffseasonContractOfferInput = {
@@ -28,66 +35,330 @@ export type OffseasonRosterValidation = {
   isValid: boolean;
   errors: string[];
   contractedPlayerIds: string[];
+  academyPlayerIds: string[];
+  mainRosterPlayerIds: string[];
+  starterPlayerIds: string[];
   yearlySalary: number;
 };
 
 const roleOrder: Role[] = ["top", "jungle", "mid", "bot", "support"];
-const contractTypeSalaryMultiplier: Record<ContractType, number> = {
-  "one-year": 1,
-  "two-year": 1.08,
-  "one-plus-one": 1.04,
-};
-const contractTypeScoreBonus: Record<ContractType, number> = {
-  "one-year": 0,
-  "two-year": 6,
-  "one-plus-one": 3,
-};
-
-function getContractYears(type: ContractType): Pick<
-  PlayerContract,
-  "guaranteedYears" | "optionYear" | "remainingYears"
-> {
-  if (type === "two-year") {
-    return {
-      guaranteedYears: 2,
-      remainingYears: 2,
-    };
-  }
-
-  if (type === "one-plus-one") {
-    return {
-      guaranteedYears: 1,
-      optionYear: true,
-      remainingYears: 2,
-    };
-  }
-
-  return {
-    guaranteedYears: 1,
-    remainingYears: 1,
-  };
-}
 
 function createContract({
   contractType,
   playerId,
   salaryOffer,
 }: OffseasonContractOfferInput): PlayerContract {
-  return {
+  return createPlayerContract({
     playerId,
-    salary: Math.max(0, Math.round(salaryOffer)),
-    type: contractType,
-    ...getContractYears(contractType),
-  };
+    contractType,
+    salaryOffer,
+  });
 }
 
 export function getOffseasonContractDemand(
   player: Player,
   contractType: ContractType,
 ) {
-  return Math.round(
-    player.salaryExpectation * contractTypeSalaryMultiplier[contractType],
+  return getPlayerContractDemand(player, contractType);
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function getRenewalDemandMultiplier(day: number) {
+  if (day >= 7) {
+    return 0.9;
+  }
+
+  if (day >= 5) {
+    return 0.94;
+  }
+
+  if (day >= 3) {
+    return 0.97;
+  }
+
+  return 1;
+}
+
+function getFreeAgentDemandMultiplier(day: number) {
+  if (day >= 27) {
+    return 0.88;
+  }
+
+  if (day >= 22) {
+    return 0.92;
+  }
+
+  if (day >= 15) {
+    return 0.96;
+  }
+
+  return 1;
+}
+
+function getDemandMultiplier({
+  context,
+  day,
+}: {
+  context: OffseasonNegotiationContext;
+  day: number;
+}) {
+  return context === "renewal"
+    ? getRenewalDemandMultiplier(day)
+    : getFreeAgentDemandMultiplier(day);
+}
+
+export function getOffseasonMinimumAcceptableSalary({
+  context,
+  contractType,
+  day,
+  player,
+}: {
+  context: OffseasonNegotiationContext;
+  contractType: ContractType;
+  day: number;
+  player: Player;
+}) {
+  const demand = getOffseasonContractDemand(player, contractType);
+  const multiplier = getDemandMultiplier({ context, day });
+
+  return Math.ceil(demand * multiplier);
+}
+
+export function getOffseasonVisibleDemandSalary({
+  context,
+  contractType,
+  day,
+  player,
+}: {
+  context: OffseasonNegotiationContext;
+  contractType: ContractType;
+  day: number;
+  player: Player;
+}) {
+  const demand = getOffseasonContractDemand(player, contractType);
+  const minimumSalary = getOffseasonMinimumAcceptableSalary({
+    context,
+    contractType,
+    day,
+    player,
+  });
+  const visibleDemand = Math.ceil(
+    demand * (getDemandMultiplier({ context, day }) + 0.08),
   );
+
+  return Math.max(minimumSalary + 5, visibleDemand);
+}
+
+function getNegotiationHistory({
+  career,
+  context,
+  playerId,
+  teamName,
+}: {
+  career: CareerSave;
+  context: OffseasonNegotiationContext;
+  playerId: string;
+  teamName: string;
+}) {
+  return (career.seasonState.offseason?.resolvedOffers ?? []).filter(
+    (offer) =>
+      offer.fromTeamName === teamName &&
+      offer.playerIds.includes(playerId) &&
+      (offer.negotiationContext ?? "free-agent") === context,
+  );
+}
+
+function getHistoryMoodModifier({
+  career,
+  context,
+  playerId,
+  teamName,
+}: {
+  career: CareerSave;
+  context: OffseasonNegotiationContext;
+  playerId: string;
+  teamName: string;
+}) {
+  const history = getNegotiationHistory({
+    career,
+    context,
+    playerId,
+    teamName,
+  });
+  const modifier = history.reduce((total, offer) => {
+    if (offer.status === "accepted") {
+      return total + 8;
+    }
+
+    if (offer.status === "lost") {
+      return total - 6;
+    }
+
+    if (offer.status !== "rejected") {
+      return total - 3;
+    }
+
+    const referenceSalary = offer.minAcceptableSalary ?? offer.visibleDemand;
+    const ratio =
+      referenceSalary && referenceSalary > 0
+        ? offer.salaryOffer / referenceSalary
+        : 0;
+
+    if (ratio >= 0.98) {
+      return total + 4;
+    }
+
+    if (ratio >= 0.94) {
+      return total - 2;
+    }
+
+    if (ratio >= 0.86) {
+      return total - 8;
+    }
+
+    return total - 14;
+  }, 0);
+
+  return clampNumber(modifier, -34, 14);
+}
+
+function getBaseMoodScore({
+  baseMinimumSalary,
+  salaryOffer,
+  visibleDemand,
+}: {
+  baseMinimumSalary: number;
+  salaryOffer: number;
+  visibleDemand: number;
+}) {
+  const salary = Math.max(0, salaryOffer);
+
+  if (salary >= visibleDemand) {
+    return 100;
+  }
+
+  if (salary >= baseMinimumSalary) {
+    const spread = Math.max(1, visibleDemand - baseMinimumSalary);
+
+    return 72 + ((salary - baseMinimumSalary) / spread) * 24;
+  }
+
+  const ratio =
+    baseMinimumSalary > 0 ? salary / baseMinimumSalary : salary > 0 ? 1 : 0;
+
+  if (ratio >= 0.98) {
+    return 69;
+  }
+
+  if (ratio >= 0.94) {
+    return 62 + ((ratio - 0.94) / 0.04) * 6;
+  }
+
+  if (ratio >= 0.86) {
+    return 47 + ((ratio - 0.86) / 0.08) * 13;
+  }
+
+  if (ratio >= 0.7) {
+    return 25 + ((ratio - 0.7) / 0.16) * 20;
+  }
+
+  return (ratio / 0.7) * 24;
+}
+
+function getMoodMinimumMultiplier(moodScore: number) {
+  if (moodScore >= 50) {
+    return 1 - ((moodScore - 50) / 50) * 0.04;
+  }
+
+  return 1 + ((50 - moodScore) / 50) * 0.06;
+}
+
+export function getOffseasonNegotiationSnapshot({
+  career,
+  context,
+  contractType,
+  player,
+  salaryOffer,
+  teamName = career.userTeam.name,
+}: {
+  career: CareerSave;
+  context: OffseasonNegotiationContext;
+  contractType: ContractType;
+  player: Player;
+  salaryOffer: number;
+  teamName?: string;
+}) {
+  const day = getCurrentOffseasonDay(career);
+  const baseMinimumSalary = getOffseasonMinimumAcceptableSalary({
+    context,
+    contractType,
+    day,
+    player,
+  });
+  const visibleDemand = getOffseasonVisibleDemandSalary({
+    context,
+    contractType,
+    day,
+    player,
+  });
+  const moodScore = Math.round(
+    clampNumber(
+      getBaseMoodScore({
+        baseMinimumSalary,
+        salaryOffer,
+        visibleDemand,
+      }) +
+        getHistoryMoodModifier({
+          career,
+          context,
+          playerId: player.id,
+          teamName,
+        }),
+      0,
+      100,
+    ),
+  );
+  const minAcceptableSalary = Math.ceil(
+    baseMinimumSalary * getMoodMinimumMultiplier(moodScore),
+  );
+
+  return {
+    baseMinimumSalary,
+    minAcceptableSalary,
+    moodColor: getOffseasonMoodColor(moodScore),
+    moodScore,
+    visibleDemand,
+  };
+}
+
+function mixColor(
+  from: [number, number, number],
+  to: [number, number, number],
+  ratio: number,
+) {
+  return from.map((value, index) =>
+    Math.round(value + (to[index] - value) * ratio),
+  ) as [number, number, number];
+}
+
+function toHex(value: number) {
+  return value.toString(16).padStart(2, "0");
+}
+
+export function getOffseasonMoodColor(moodScore: number) {
+  const score = clampNumber(moodScore, 0, 100);
+  const red: [number, number, number] = [0xef, 0x44, 0x44];
+  const white: [number, number, number] = [0xf8, 0xfa, 0xfc];
+  const green: [number, number, number] = [0x22, 0xc5, 0x5e];
+  const [r, g, b] =
+    score <= 50
+      ? mixColor(red, white, score / 50)
+      : mixColor(white, green, (score - 50) / 50);
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 function addUnique(values: string[], value: string) {
@@ -306,22 +577,141 @@ function removePlayerFromUserTeam(team: Team, playerId: string): Team {
   };
 }
 
+function removePlayersFromUserTeam(team: Team, playerIds: string[]) {
+  return playerIds.reduce(
+    (currentTeam, playerId) => removePlayerFromUserTeam(currentTeam, playerId),
+    team,
+  );
+}
+
+function shouldRetireThisOffseason(player: Player) {
+  return (
+    player.availableForRoster &&
+    (Boolean(player.retirementCandidate) ||
+      (player.retirementAge !== undefined && player.age >= player.retirementAge))
+  );
+}
+
+function shouldEnterMilitaryService(player: Player) {
+  return (
+    player.availableForRoster &&
+    player.militaryServiceStatus === "pending"
+  );
+}
+
+function applyOffseasonDepartures(career: CareerSave, players: Player[]) {
+  const retiredPlayerIds = players
+    .filter(shouldRetireThisOffseason)
+    .map((player) => player.id);
+  const retiredIdSet = new Set(retiredPlayerIds);
+  const militaryServicePlayerIds = players
+    .filter(
+      (player) =>
+        !retiredIdSet.has(player.id) && shouldEnterMilitaryService(player),
+    )
+    .map((player) => player.id);
+  const militaryIdSet = new Set(militaryServicePlayerIds);
+  const unavailablePlayerIds = [...retiredPlayerIds, ...militaryServicePlayerIds];
+  const nextPlayers = players.map((player) => {
+    if (retiredIdSet.has(player.id)) {
+      return {
+        ...player,
+        availableForRoster: false,
+        currentTeam: undefined,
+        rosterTier: undefined,
+        retirementCandidate: true,
+      };
+    }
+
+    if (militaryIdSet.has(player.id)) {
+      return {
+        ...player,
+        availableForRoster: false,
+        currentTeam: undefined,
+        rosterTier: undefined,
+        militaryServiceStatus: "serving" as const,
+      };
+    }
+
+    return player;
+  });
+
+  return {
+    lckPlayers: nextPlayers,
+    userTeam: removePlayersFromUserTeam(career.userTeam, unavailablePlayerIds),
+    retiredPlayerIds,
+    militaryServicePlayerIds,
+  };
+}
+
+function getPlayerNamesById(players: Player[], playerIds: string[]) {
+  return playerIds
+    .map((playerId) => players.find((player) => player.id === playerId)?.name)
+    .filter((name): name is string => Boolean(name));
+}
+
+function appendDepartureLogs(
+  career: CareerSave,
+  departures: {
+    retiredPlayerIds: string[];
+    militaryServicePlayerIds: string[];
+  },
+) {
+  let nextCareer = career;
+  const retiredNames = getPlayerNamesById(
+    career.lckPlayers,
+    departures.retiredPlayerIds,
+  );
+  const militaryNames = getPlayerNamesById(
+    career.lckPlayers,
+    departures.militaryServicePlayerIds,
+  );
+
+  if (retiredNames.length > 0) {
+    nextCareer = appendLog(
+      nextCareer,
+      "retirement",
+      `은퇴 대상 선수 ${retiredNames.join(", ")}이 로스터와 FA 시장에서 제외됐습니다.`,
+    );
+  }
+
+  if (militaryNames.length > 0) {
+    nextCareer = appendLog(
+      nextCareer,
+      "military",
+      `병역 이탈 선수 ${militaryNames.join(", ")}이 로스터와 FA 시장에서 제외됐습니다.`,
+    );
+  }
+
+  return nextCareer;
+}
+
 function createOffer({
   career,
   contractType,
   fromTeamName,
+  negotiationContext,
   playerId,
+  minAcceptableSalary,
+  moodScore,
+  rejectionReason,
   salaryOffer,
   status,
   toTeamName = "Free Agent",
+  visibleDemand,
 }: {
   career: CareerSave;
   contractType: ContractType;
   fromTeamName: string;
+  negotiationContext: OffseasonNegotiationContext;
   playerId: string;
+  minAcceptableSalary?: number;
+  moodScore?: number;
+  rejectionReason?: string;
   salaryOffer: number;
   status: OffseasonOfferStatus;
   toTeamName?: string;
+  visibleDemand?: number;
 }): OffseasonOffer {
   const offseason = career.seasonState.offseason;
   const currentDay = getCurrentOffseasonDay(career);
@@ -339,6 +729,11 @@ function createOffer({
     contractType,
     status,
     createdDay: currentDay,
+    negotiationContext,
+    minAcceptableSalary,
+    moodScore,
+    rejectionReason,
+    visibleDemand,
   };
 }
 
@@ -375,17 +770,32 @@ export function initializeOffseasonMarket(career: CareerSave): CareerSave {
     career,
     mergeOffseasonFreeAgents(career.lckPlayers),
   );
-  const freeAgentPlayerIds = getInitialFreeAgentIds(
-    lckPlayers,
-    offseason.freeAgentPlayerIds ?? [],
+  const departures = applyOffseasonDepartures(career, lckPlayers);
+  const departedIdSet = new Set([
+    ...departures.retiredPlayerIds,
+    ...departures.militaryServicePlayerIds,
+  ]);
+  const expiredContractPlayerIds = offseason.expiredContractPlayerIds.filter(
+    (playerId) => !departedIdSet.has(playerId),
   );
+  const freeAgentPlayerIds = getInitialFreeAgentIds(
+    departures.lckPlayers,
+    offseason.freeAgentPlayerIds ?? [],
+  ).filter((playerId) => {
+    const player = departures.lckPlayers.find(
+      (candidate) => candidate.id === playerId,
+    );
+
+    return Boolean(player?.availableForRoster) && !departedIdSet.has(playerId);
+  });
   const resolvedExpiredPlayerIds =
-    offseason.expiredContractPlayerIds.length === 0
+    expiredContractPlayerIds.length === 0
       ? []
       : offseason.resolvedExpiredPlayerIds ?? [];
   const nextCareer: CareerSave = {
     ...career,
-    lckPlayers,
+    lckPlayers: departures.lckPlayers,
+    userTeam: departures.userTeam,
     seasonState: {
       ...career.seasonState,
       currentDateKey: startedDateKey,
@@ -395,7 +805,9 @@ export function initializeOffseasonMarket(career: CareerSave): CareerSave {
       lastMatchRecordIds: [],
       offseason: {
         ...offseason,
+        context: offseason.context ?? "postseason",
         status: "active",
+        expiredContractPlayerIds,
         currentDay: 1,
         currentWeek: 1,
         totalDays: 28,
@@ -406,6 +818,14 @@ export function initializeOffseasonMarket(career: CareerSave): CareerSave {
         resolvedOffers: [],
         releasedPlayerIds: offseason.releasedPlayerIds ?? [],
         signedPlayerIds: offseason.signedPlayerIds ?? [],
+        retiredPlayerIds: [
+          ...(offseason.retiredPlayerIds ?? []),
+          ...departures.retiredPlayerIds,
+        ],
+        militaryServicePlayerIds: [
+          ...(offseason.militaryServicePlayerIds ?? []),
+          ...departures.militaryServicePlayerIds,
+        ],
         resolvedExpiredPlayerIds,
         logEntries: [],
         validationErrors: [],
@@ -416,7 +836,7 @@ export function initializeOffseasonMarket(career: CareerSave): CareerSave {
   };
 
   return appendLog(
-    nextCareer,
+    appendDepartureLogs(nextCareer, departures),
     "system",
     "스토브리그가 시작됐습니다. 1주차에는 계약 만료 선수의 재계약 또는 방출을 결정해야 합니다.",
   );
@@ -435,57 +855,53 @@ export function submitOffseasonRenewalOffer(
     offseason.status !== "active" ||
     (offseason.currentWeek ?? 1) !== 1 ||
     !player ||
+    !player.availableForRoster ||
     !offseason.expiredContractPlayerIds.includes(offerInput.playerId)
   ) {
     return career;
   }
 
-  const demand = getOffseasonContractDemand(player, offerInput.contractType);
-  const accepted = offerInput.salaryOffer >= Math.ceil(demand * 0.9);
-  const resolvedOffer = {
-    ...createOffer({
-      career,
-      contractType: offerInput.contractType,
-      fromTeamName: career.userTeam.name,
-      playerId: offerInput.playerId,
-      salaryOffer: offerInput.salaryOffer,
-      status: accepted ? "accepted" : "rejected",
-    }),
-    resolvedDay: getCurrentOffseasonDay(career),
-  };
-  const updatedOffseason = {
-    ...offseason,
-    marketStatus: "renewal-week" as OffseasonMarketStatus,
-    resolvedOffers: [...(offseason.resolvedOffers ?? []), resolvedOffer],
-    validationErrors: [],
-  };
+  const hasPendingOffer = (offseason.pendingOffers ?? []).some(
+    (offer) =>
+      offer.status === "pending" &&
+      offer.negotiationContext === "renewal" &&
+      offer.fromTeamName === career.userTeam.name &&
+      offer.playerIds.includes(player.id),
+  );
 
-  if (!accepted) {
-    return appendLog(
-      setOffseasonState(career, updatedOffseason),
-      "renewal",
-      `${player.name}이 ${Math.round(offerInput.salaryOffer)} 제안을 거절했습니다. 요구액은 ${demand}입니다.`,
-    );
+  if (hasPendingOffer) {
+    return career;
   }
 
-  const nextContract = createContract(offerInput);
+  const snapshot = getOffseasonNegotiationSnapshot({
+    career,
+    context: "renewal",
+    contractType: offerInput.contractType,
+    player,
+    salaryOffer: offerInput.salaryOffer,
+  });
+  const pendingOffer = createOffer({
+    career,
+    contractType: offerInput.contractType,
+    fromTeamName: career.userTeam.name,
+    minAcceptableSalary: snapshot.minAcceptableSalary,
+    moodScore: snapshot.moodScore,
+    negotiationContext: "renewal",
+    playerId: offerInput.playerId,
+    salaryOffer: offerInput.salaryOffer,
+    status: "pending",
+    toTeamName: career.userTeam.name,
+    visibleDemand: snapshot.visibleDemand,
+  });
   const nextCareer: CareerSave = {
     ...career,
-    lckPlayers: setPlayerCurrentTeam(
-      career.lckPlayers,
-      player.id,
-      career.userTeam.name,
-    ),
-    userTeam: replaceContract(career.userTeam, nextContract),
     seasonState: {
       ...career.seasonState,
       offseason: {
-        ...updatedOffseason,
-        renewedPlayerIds: addUnique(offseason.renewedPlayerIds, player.id),
-        resolvedExpiredPlayerIds: addUnique(
-          offseason.resolvedExpiredPlayerIds ?? [],
-          player.id,
-        ),
+        ...offseason,
+        marketStatus: "renewal-week",
+        pendingOffers: [...(offseason.pendingOffers ?? []), pendingOffer],
+        validationErrors: [],
       },
     },
   };
@@ -493,7 +909,7 @@ export function submitOffseasonRenewalOffer(
   return appendLog(
     nextCareer,
     "renewal",
-    `${player.name}과 ${Math.round(offerInput.salaryOffer)} 규모의 ${offerInput.contractType} 재계약에 합의했습니다.`,
+    `${player.name}에게 ${Math.round(offerInput.salaryOffer)} 규모의 재계약을 제안했습니다. 다음날 수락 여부를 확인합니다.`,
   );
 }
 
@@ -524,6 +940,9 @@ export function releaseExpiredOffseasonPlayer(
       offseason: {
         ...offseason,
         marketStatus: "renewal-week",
+        pendingOffers: (offseason.pendingOffers ?? []).filter(
+          (offer) => !offer.playerIds.includes(playerId),
+        ),
         releasedPlayerIds: addUnique(offseason.releasedPlayerIds ?? [], playerId),
         resolvedExpiredPlayerIds: addUnique(
           offseason.resolvedExpiredPlayerIds ?? [],
@@ -551,13 +970,19 @@ function getContractedRoleCount(career: CareerSave, role: Role) {
   );
 
   return career.lckPlayers.filter(
-    (player) => player.role === role && contractedIds.has(player.id),
+    (player) =>
+      player.role === role &&
+      player.availableForRoster &&
+      contractedIds.has(player.id),
   ).length;
 }
 
 function getAiRoleCount(players: Player[], teamName: string, role: Role) {
   return players.filter(
-    (player) => player.currentTeam === teamName && player.role === role,
+    (player) =>
+      player.currentTeam === teamName &&
+      player.role === role &&
+      player.availableForRoster,
   ).length;
 }
 
@@ -602,9 +1027,14 @@ function getTeamAppeal(career: CareerSave, teamName: string) {
     return Math.min(92, Math.max(65, career.userTeam.elo / 20));
   }
 
-  return (
-    lck2026Teams.find((team) => team.name === teamName || team.shortName === teamName)
-      ?.strength ?? 72
+  const profile = getLckTeamProfile(
+    teamName,
+    career.seasonState.teamBalanceAdjustments,
+  );
+
+  return Math.min(
+    95,
+    Math.max(60, (profile?.strength ?? 72) + (profile?.appealModifier ?? 0)),
   );
 }
 
@@ -626,7 +1056,7 @@ function getOfferScore({
 
   return (
     salaryRatio * 70 +
-    contractTypeScoreBonus[contractType] +
+    getContractTypeScoreBonus(contractType) +
     getTeamAppeal(career, teamName) * 0.16 +
     getTeamNeedScore({ career, player, teamName })
   );
@@ -660,10 +1090,12 @@ function getAiCandidateTeams(career: CareerSave, player: Player) {
 
 function createAiOffer({
   career,
+  context = "free-agent",
   player,
   teamName,
 }: {
   career: CareerSave;
+  context?: OffseasonNegotiationContext;
   player: Player;
   teamName: string;
 }) {
@@ -672,17 +1104,30 @@ function createAiOffer({
   const contractType: ContractType = hash % 3 === 0 ? "two-year" : "one-year";
   const demand = getOffseasonContractDemand(player, contractType);
   const salaryOffer = Math.round(demand * (0.92 + (hash % 24) / 100));
+  const snapshot = getOffseasonNegotiationSnapshot({
+    career,
+    context,
+    contractType,
+    player,
+    salaryOffer,
+    teamName,
+  });
   const offer = createOffer({
     career,
     contractType,
     fromTeamName: teamName,
+    minAcceptableSalary: snapshot.minAcceptableSalary,
+    moodScore: snapshot.moodScore,
+    negotiationContext: context,
     playerId: player.id,
     salaryOffer,
     status: "pending",
+    visibleDemand: snapshot.visibleDemand,
   });
 
   return {
     ...offer,
+    id: `${offer.id}-${hashString(teamName)}`,
     score: getOfferScore({
       career,
       contractType,
@@ -693,7 +1138,45 @@ function createAiOffer({
   };
 }
 
-function getPendingUserOffersToResolve(career: CareerSave) {
+function evaluateOffer({
+  career,
+  context,
+  offer,
+  player,
+}: {
+  career: CareerSave;
+  context: OffseasonNegotiationContext;
+  offer: OffseasonOffer;
+  player: Player;
+}) {
+  const contractType = offer.contractType ?? "one-year";
+  const snapshot = getOffseasonNegotiationSnapshot({
+    career,
+    context,
+    contractType,
+    player,
+    salaryOffer: offer.salaryOffer,
+    teamName: offer.fromTeamName,
+  });
+  const score = getOfferScore({
+    career,
+    contractType,
+    player,
+    salaryOffer: offer.salaryOffer,
+    teamName: offer.fromTeamName,
+  });
+
+  return {
+    ...offer,
+    minAcceptableSalary: snapshot.minAcceptableSalary,
+    moodScore: snapshot.moodScore,
+    score,
+    visibleDemand: snapshot.visibleDemand,
+    isAcceptable: offer.salaryOffer >= snapshot.minAcceptableSalary,
+  };
+}
+
+function getPendingRenewalOffersToResolve(career: CareerSave) {
   const currentDay = getCurrentOffseasonDay(career);
 
   return (career.seasonState.offseason?.pendingOffers ?? []).filter(
@@ -701,13 +1184,141 @@ function getPendingUserOffersToResolve(career: CareerSave) {
       offer.kind === "contract" &&
       offer.status === "pending" &&
       offer.fromTeamName === career.userTeam.name &&
+      offer.negotiationContext === "renewal" &&
+      (offer.createdDay < currentDay || currentDay >= 7),
+  );
+}
+
+function getPendingFreeAgentOffersToResolve(career: CareerSave) {
+  const currentDay = getCurrentOffseasonDay(career);
+
+  return (career.seasonState.offseason?.pendingOffers ?? []).filter(
+    (offer) =>
+      offer.kind === "contract" &&
+      offer.status === "pending" &&
+      offer.fromTeamName === career.userTeam.name &&
+      (offer.negotiationContext ?? "free-agent") === "free-agent" &&
       offer.createdDay < currentDay,
   );
 }
 
+function getPendingOfferPlayerIdsToResolve(career: CareerSave) {
+  return new Set(
+    [
+      ...getPendingRenewalOffersToResolve(career),
+      ...getPendingFreeAgentOffersToResolve(career),
+    ].flatMap((offer) => offer.playerIds),
+  );
+}
+
+function resolveRenewalOffers(career: CareerSave): CareerSave {
+  const offseason = career.seasonState.offseason;
+  const offersToResolve = getPendingRenewalOffersToResolve(career);
+
+  if (!offseason || offersToResolve.length === 0) {
+    return career;
+  }
+
+  return offersToResolve.reduce((currentCareer, userOffer) => {
+    const currentOffseason = currentCareer.seasonState.offseason;
+    const playerId = userOffer.playerIds[0];
+    const player = getPlayer(currentCareer, playerId);
+
+    if (
+      !currentOffseason ||
+      !player ||
+      !currentOffseason.expiredContractPlayerIds.includes(playerId)
+    ) {
+      return currentCareer;
+    }
+
+    const evaluated = evaluateOffer({
+      career: currentCareer,
+      context: "renewal",
+      offer: userOffer,
+      player,
+    });
+    const remainingPendingOffers = (currentOffseason.pendingOffers ?? []).filter(
+      (offer) => offer.id !== userOffer.id,
+    );
+    const resolvedUserOffer: OffseasonOffer = {
+      ...userOffer,
+      status: evaluated.isAcceptable ? "accepted" : "rejected",
+      resolvedDay: getCurrentOffseasonDay(currentCareer),
+      score: evaluated.score,
+      minAcceptableSalary: evaluated.minAcceptableSalary,
+      moodScore: evaluated.moodScore,
+      rejectionReason: evaluated.isAcceptable
+        ? undefined
+        : "minimum-salary-not-met",
+      visibleDemand: evaluated.visibleDemand,
+    };
+
+    if (!evaluated.isAcceptable) {
+      const nextCareer = setOffseasonState(currentCareer, {
+        ...currentOffseason,
+        pendingOffers: remainingPendingOffers,
+        resolvedOffers: [
+          ...(currentOffseason.resolvedOffers ?? []),
+          resolvedUserOffer,
+        ],
+        validationErrors: [],
+      });
+
+      return appendLog(
+        nextCareer,
+        "rejection",
+        `${player.name}이 재계약 제안을 거절했습니다. 협상 분위기 ${evaluated.moodScore}%입니다.`,
+      );
+    }
+
+    const contractType = userOffer.contractType ?? "one-year";
+    const nextContract = createContract({
+      playerId,
+      contractType,
+      salaryOffer: userOffer.salaryOffer,
+    });
+    const nextCareer: CareerSave = {
+      ...currentCareer,
+      lckPlayers: setPlayerCurrentTeam(
+        currentCareer.lckPlayers,
+        player.id,
+        currentCareer.userTeam.name,
+      ),
+      userTeam: replaceContract(currentCareer.userTeam, nextContract),
+      seasonState: {
+        ...currentCareer.seasonState,
+        offseason: {
+          ...currentOffseason,
+          pendingOffers: remainingPendingOffers,
+          resolvedOffers: [
+            ...(currentOffseason.resolvedOffers ?? []),
+            resolvedUserOffer,
+          ],
+          renewedPlayerIds: addUnique(
+            currentOffseason.renewedPlayerIds,
+            player.id,
+          ),
+          resolvedExpiredPlayerIds: addUnique(
+            currentOffseason.resolvedExpiredPlayerIds ?? [],
+            player.id,
+          ),
+          validationErrors: [],
+        },
+      },
+    };
+
+    return appendLog(
+      nextCareer,
+      "renewal",
+      `${player.name}과 ${Math.round(userOffer.salaryOffer)} 규모의 ${contractType} 재계약에 합의했습니다.`,
+    );
+  }, career);
+}
+
 function resolveFreeAgentOffers(career: CareerSave): CareerSave {
   const offseason = career.seasonState.offseason;
-  const offersToResolve = getPendingUserOffersToResolve(career);
+  const offersToResolve = getPendingFreeAgentOffersToResolve(career);
 
   if (!offseason || offersToResolve.length === 0) {
     return career;
@@ -727,12 +1338,11 @@ function resolveFreeAgentOffers(career: CareerSave): CareerSave {
     }
 
     const userContractType = userOffer.contractType ?? "one-year";
-    const userScore = getOfferScore({
+    const evaluatedUserOffer = evaluateOffer({
       career: currentCareer,
-      contractType: userContractType,
+      context: "free-agent",
+      offer: userOffer,
       player,
-      salaryOffer: userOffer.salaryOffer,
-      teamName: currentCareer.userTeam.name,
     });
     const aiOffers = getAiCandidateTeams(currentCareer, player).map(({ team }) =>
       createAiOffer({
@@ -741,19 +1351,71 @@ function resolveFreeAgentOffers(career: CareerSave): CareerSave {
         teamName: team.name,
       }),
     );
-    const bestAiOffer = aiOffers.sort(
+    const evaluatedAiOffers = aiOffers.map((offer) =>
+      evaluateOffer({
+        career: currentCareer,
+        context: "free-agent",
+        offer,
+        player,
+      }),
+    );
+    const acceptableOffers = [
+      evaluatedUserOffer,
+      ...evaluatedAiOffers,
+    ].filter((offer) => offer.isAcceptable);
+    const winningOffer = acceptableOffers.sort(
       (left, right) => (right.score ?? 0) - (left.score ?? 0),
     )[0];
-    const userWins = !bestAiOffer || userScore >= (bestAiOffer.score ?? 0);
+    const userWins = winningOffer?.id === userOffer.id;
     const resolvedUserOffer: OffseasonOffer = {
       ...userOffer,
-      status: userWins ? "accepted" : "lost",
+      status: !winningOffer
+        ? "rejected"
+        : userWins
+          ? "accepted"
+          : evaluatedUserOffer.isAcceptable
+            ? "lost"
+            : "rejected",
       resolvedDay: getCurrentOffseasonDay(currentCareer),
-      score: userScore,
+      score: evaluatedUserOffer.score,
+      minAcceptableSalary: evaluatedUserOffer.minAcceptableSalary,
+      moodScore: evaluatedUserOffer.moodScore,
+      rejectionReason:
+        winningOffer && evaluatedUserOffer.isAcceptable
+          ? undefined
+          : "minimum-salary-not-met",
+      visibleDemand: evaluatedUserOffer.visibleDemand,
     };
+    const rejectedAiOffers: OffseasonOffer[] = evaluatedAiOffers
+      .filter((offer) => offer.id !== winningOffer?.id)
+      .map((offer) => ({
+        ...offer,
+        status: "rejected",
+        resolvedDay: getCurrentOffseasonDay(currentCareer),
+        rejectionReason: "minimum-salary-not-met",
+      }));
     const remainingPendingOffers = (currentOffseason.pendingOffers ?? []).filter(
       (offer) => offer.id !== userOffer.id,
     );
+
+    if (!winningOffer) {
+      const nextCareer = setOffseasonState(currentCareer, {
+        ...currentOffseason,
+        pendingOffers: remainingPendingOffers,
+        resolvedOffers: [
+          ...(currentOffseason.resolvedOffers ?? []),
+          resolvedUserOffer,
+          ...rejectedAiOffers,
+        ],
+        validationErrors: [],
+      });
+
+      return appendLog(
+        nextCareer,
+        "rejection",
+        `${player.name}이 모든 제안을 거절했습니다. 협상 분위기 ${evaluatedUserOffer.moodScore}%입니다.`,
+      );
+    }
 
     if (userWins) {
       const nextContract = createContract({
@@ -780,6 +1442,7 @@ function resolveFreeAgentOffers(career: CareerSave): CareerSave {
             resolvedOffers: [
               ...(currentOffseason.resolvedOffers ?? []),
               resolvedUserOffer,
+              ...rejectedAiOffers,
             ],
             freeAgentPlayerIds: removeValue(
               currentOffseason.freeAgentPlayerIds ?? [],
@@ -802,8 +1465,8 @@ function resolveFreeAgentOffers(career: CareerSave): CareerSave {
     }
 
     const acceptedAiOffer: OffseasonOffer = {
-      ...(bestAiOffer ?? userOffer),
-      id: `${bestAiOffer?.id ?? userOffer.id}-ai-win`,
+      ...winningOffer,
+      id: `${winningOffer.id}-ai-win`,
       status: "accepted",
       resolvedDay: getCurrentOffseasonDay(currentCareer),
     };
@@ -824,6 +1487,7 @@ function resolveFreeAgentOffers(career: CareerSave): CareerSave {
             ...(currentOffseason.resolvedOffers ?? []),
             resolvedUserOffer,
             acceptedAiOffer,
+            ...rejectedAiOffers,
           ],
           freeAgentPlayerIds: removeValue(
             currentOffseason.freeAgentPlayerIds ?? [],
@@ -842,6 +1506,159 @@ function resolveFreeAgentOffers(career: CareerSave): CareerSave {
   }, career);
 }
 
+function getAvailableFreeAgentPlayers(
+  career: CareerSave,
+  excludedPlayerIds: Set<string>,
+) {
+  const freeAgentIds = new Set(
+    career.seasonState.offseason?.freeAgentPlayerIds ?? [],
+  );
+
+  return career.lckPlayers.filter(
+    (player) =>
+      player.availableForRoster &&
+      freeAgentIds.has(player.id) &&
+      !excludedPlayerIds.has(player.id),
+  );
+}
+
+function getAiDepthTarget(career: CareerSave, teamName: string) {
+  return roleOrder.find(
+    (role) => getAiRoleCount(career.lckPlayers, teamName, role) < 2,
+  );
+}
+
+function pickAiDepthCandidate({
+  career,
+  excludedPlayerIds,
+  role,
+}: {
+  career: CareerSave;
+  excludedPlayerIds: Set<string>;
+  role: Role;
+}) {
+  return getAvailableFreeAgentPlayers(career, excludedPlayerIds)
+    .filter((player) => player.role === role)
+    .sort((left, right) => {
+      const rightScore = right.overall * 1.5 + right.potential * 0.35;
+      const leftScore = left.overall * 1.5 + left.potential * 0.35;
+      const scoreDiff = rightScore - leftScore;
+
+      if (scoreDiff !== 0) {
+        return scoreDiff;
+      }
+
+      return left.id.localeCompare(right.id);
+    })[0];
+}
+
+function resolveAiDepthSignings(
+  career: CareerSave,
+  excludedPlayerIds: Set<string>,
+) {
+  const offseason = career.seasonState.offseason;
+  const currentDay = getCurrentOffseasonDay(career);
+
+  if (!offseason || currentDay < 8 || currentDay >= 28) {
+    return career;
+  }
+
+  const userTeamName = career.userTeam.name.trim().toLowerCase();
+  const maxSigningsPerDay = 3;
+  let nextCareer = career;
+  let signingCount = 0;
+  const claimedPlayerIds = new Set(excludedPlayerIds);
+
+  for (const team of [...lck2026Teams].sort(
+    (left, right) => left.previousSeasonRank - right.previousSeasonRank,
+  )) {
+    if (signingCount >= maxSigningsPerDay) {
+      break;
+    }
+
+    if (team.name.trim().toLowerCase() === userTeamName) {
+      continue;
+    }
+
+    const targetRole = getAiDepthTarget(nextCareer, team.name);
+
+    if (!targetRole) {
+      continue;
+    }
+
+    const player = pickAiDepthCandidate({
+      career: nextCareer,
+      excludedPlayerIds: claimedPlayerIds,
+      role: targetRole,
+    });
+
+    if (!player) {
+      continue;
+    }
+
+    const offer = createAiOffer({
+      career: nextCareer,
+      context: "ai-depth",
+      player,
+      teamName: team.name,
+    });
+    const evaluatedOffer = evaluateOffer({
+      career: nextCareer,
+      context: "ai-depth",
+      offer,
+      player,
+    });
+
+    if (!evaluatedOffer.isAcceptable) {
+      continue;
+    }
+
+    const currentOffseason = nextCareer.seasonState.offseason;
+
+    if (!currentOffseason) {
+      break;
+    }
+
+    const acceptedAiOffer: OffseasonOffer = {
+      ...evaluatedOffer,
+      status: "accepted",
+      resolvedDay: getCurrentOffseasonDay(nextCareer),
+    };
+    nextCareer = {
+      ...nextCareer,
+      lckPlayers: setPlayerCurrentTeam(
+        nextCareer.lckPlayers,
+        player.id,
+        team.name,
+      ),
+      seasonState: {
+        ...nextCareer.seasonState,
+        offseason: {
+          ...currentOffseason,
+          resolvedOffers: [
+            ...(currentOffseason.resolvedOffers ?? []),
+            acceptedAiOffer,
+          ],
+          freeAgentPlayerIds: removeValue(
+            currentOffseason.freeAgentPlayerIds ?? [],
+            player.id,
+          ),
+          validationErrors: [],
+        },
+      },
+    };
+    nextCareer = appendLog(
+      nextCareer,
+      "ai-signing",
+      `${team.name}이 ${targetRole.toUpperCase()} 보강을 위해 ${player.name}을 영입했습니다.`,
+    );
+    claimedPlayerIds.add(player.id);
+    signingCount += 1;
+  }
+
+  return nextCareer;
+}
+
 export function submitFreeAgentOffer(
   career: CareerSave,
   offerInput: OffseasonContractOfferInput,
@@ -857,6 +1674,7 @@ export function submitFreeAgentOffer(
     currentDay < 8 ||
     currentDay >= 28 ||
     !player ||
+    !player.availableForRoster ||
     !(offseason.freeAgentPlayerIds ?? []).includes(player.id)
   ) {
     return career;
@@ -866,6 +1684,7 @@ export function submitFreeAgentOffer(
     (offer) =>
       offer.status === "pending" &&
       offer.fromTeamName === career.userTeam.name &&
+      (offer.negotiationContext ?? "free-agent") === "free-agent" &&
       offer.playerIds.includes(player.id),
   );
 
@@ -873,13 +1692,24 @@ export function submitFreeAgentOffer(
     return career;
   }
 
+  const snapshot = getOffseasonNegotiationSnapshot({
+    career,
+    context: "free-agent",
+    contractType: offerInput.contractType,
+    player,
+    salaryOffer: offerInput.salaryOffer,
+  });
   const pendingOffer = createOffer({
     career,
     contractType: offerInput.contractType,
     fromTeamName: career.userTeam.name,
+    minAcceptableSalary: snapshot.minAcceptableSalary,
+    moodScore: snapshot.moodScore,
+    negotiationContext: "free-agent",
     playerId: player.id,
     salaryOffer: offerInput.salaryOffer,
     status: "pending",
+    visibleDemand: snapshot.visibleDemand,
   });
   const nextCareer: CareerSave = {
     ...career,
@@ -908,21 +1738,71 @@ export function validateOffseasonRoster(
   career: CareerSave,
 ): OffseasonRosterValidation {
   const errors: string[] = [];
+  const rosterSettings = career.userTeam.rosterSettings;
+  const minMainRosterPlayers = rosterSettings.minMainRosterPlayers ?? 5;
+  const minAcademyRosterPlayers = rosterSettings.minAcademyRosterPlayers ?? 5;
   const contractedPlayerIds = career.userTeam.contracts
-    .filter((contract) => contract.remainingYears > 0)
+    .filter((contract) => {
+      const player = getPlayer(career, contract.playerId);
+
+      return contract.remainingYears > 0 && player?.availableForRoster;
+    })
     .map((contract) => contract.playerId);
   const contractedIdSet = new Set(contractedPlayerIds);
   const yearlySalary = getContractSalaryTotal(career.userTeam);
+  const starterPlayerIds = roleOrder
+    .map((role) => career.userTeam.roster[role])
+    .filter((playerId): playerId is string => {
+      if (!playerId || !contractedIdSet.has(playerId)) {
+        return false;
+      }
 
-  if (contractedPlayerIds.length < career.userTeam.rosterSettings.minPlayers) {
+      const player = getPlayer(career, playerId);
+
+      return Boolean(player?.availableForRoster);
+    });
+  const mainRosterPlayerIds = [
+    ...new Set([...career.userTeam.mainRosterPlayerIds, ...starterPlayerIds]),
+  ].filter((playerId) => {
+    if (!contractedIdSet.has(playerId)) {
+      return false;
+    }
+
+    const player = getPlayer(career, playerId);
+
+    return Boolean(player?.availableForRoster);
+  });
+  const academyPlayerIds = career.userTeam.academyRosterPlayerIds.filter(
+    (playerId) => {
+      if (!contractedIdSet.has(playerId)) {
+        return false;
+      }
+
+      const player = getPlayer(career, playerId);
+
+      return Boolean(player?.availableForRoster);
+    },
+  );
+
+  if (contractedPlayerIds.length < rosterSettings.minPlayers) {
     errors.push(
-      `계약 선수는 최소 ${career.userTeam.rosterSettings.minPlayers}명이 필요합니다.`,
+      `계약 선수는 최소 ${rosterSettings.minPlayers}명이 필요합니다.`,
     );
   }
 
-  if (contractedPlayerIds.length > career.userTeam.rosterSettings.maxPlayers) {
+  if (contractedPlayerIds.length > rosterSettings.maxPlayers) {
     errors.push(
-      `계약 선수는 최대 ${career.userTeam.rosterSettings.maxPlayers}명을 넘을 수 없습니다.`,
+      `계약 선수는 최대 ${rosterSettings.maxPlayers}명을 넘을 수 없습니다.`,
+    );
+  }
+
+  if (mainRosterPlayerIds.length < minMainRosterPlayers) {
+    errors.push(`1군 등록 계약 선수는 최소 ${minMainRosterPlayers}명이 필요합니다.`);
+  }
+
+  if (academyPlayerIds.length < minAcademyRosterPlayers) {
+    errors.push(
+      `2군 등록 계약 선수는 최소 ${minAcademyRosterPlayers}명이 필요합니다.`,
     );
   }
 
@@ -934,7 +1814,12 @@ export function validateOffseasonRoster(
     const starterId = career.userTeam.roster[role];
     const starter = starterId ? getPlayer(career, starterId) : undefined;
 
-    if (!starterId || !starter || !contractedIdSet.has(starterId)) {
+    if (
+      !starterId ||
+      !starter ||
+      !starter.availableForRoster ||
+      !contractedIdSet.has(starterId)
+    ) {
       errors.push(`${role.toUpperCase()} 선발 계약 선수가 필요합니다.`);
       return;
     }
@@ -947,7 +1832,10 @@ export function validateOffseasonRoster(
   return {
     isValid: errors.length === 0,
     errors,
+    academyPlayerIds,
     contractedPlayerIds,
+    mainRosterPlayerIds,
+    starterPlayerIds,
     yearlySalary,
   };
 }
@@ -1021,7 +1909,11 @@ export function progressOffseasonDay(career: CareerSave): CareerSave {
   }
 
   const currentDay = offseason.currentDay ?? 1;
-  const careerWithResolvedOffers = resolveFreeAgentOffers(career);
+  const negotiatedPlayerIds = getPendingOfferPlayerIdsToResolve(career);
+  const careerWithResolvedOffers = resolveAiDepthSignings(
+    resolveFreeAgentOffers(resolveRenewalOffers(career)),
+    negotiatedPlayerIds,
+  );
   const unresolvedExpiredPlayerIds = getUnresolvedExpiredPlayerIds(
     careerWithResolvedOffers,
   );
@@ -1055,14 +1947,29 @@ export function progressOffseasonDay(career: CareerSave): CareerSave {
         },
       },
     };
-
-    return startNextSeasonFromOffseason(
-      appendLog(
-        readyCareer,
-        "system",
-        "스토브리그 최종 등록을 마치고 다음 시즌으로 이동합니다.",
-      ),
+    const readyCareerWithLog = appendLog(
+      readyCareer,
+      "system",
+      offseason.context === "preseason"
+        ? "프리시즌 최종 등록을 마치고 2026 LCK Cup에 진입합니다."
+        : "스토브리그 최종 등록을 마치고 다음 시즌으로 이동합니다.",
     );
+
+    if (offseason.context === "preseason") {
+      const nextSeasonState = completeStoveLeague(
+        readyCareerWithLog.seasonState,
+      );
+
+      return {
+        ...readyCareerWithLog,
+        seasonState: {
+          ...nextSeasonState,
+          offseason: undefined,
+        },
+      };
+    }
+
+    return startNextSeasonFromOffseason(readyCareerWithLog);
   }
 
   return advanceOffseasonDate(careerWithResolvedOffers);

@@ -79,7 +79,9 @@ describe("SeasonSummary", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "2026 시즌 종료" })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "2026 시즌의 발자취" }),
+    ).toBeVisible();
     expect(screen.getByText("34W 12L")).toBeVisible();
     expect(screen.getByText("1688")).toBeVisible();
     expect(screen.getAllByText("T1").length).toBeGreaterThan(0);
@@ -88,6 +90,75 @@ describe("SeasonSummary", () => {
     fireEvent.click(screen.getByRole("button", { name: "스토브리그 진입" }));
 
     expect(onStartOffseason).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders season history cards and switches the selected season detail", () => {
+    const career = createSummaryCareer();
+    const firstSummary = career.seasonHistory[0];
+    const multiSeasonCareer: CareerSave = {
+      ...career,
+      seasonHistory: [
+        {
+          ...firstSummary,
+          seasonNumber: 1,
+          yearLabel: 2026,
+          lckResult: "우승",
+          finalElo: 1700,
+          finalRecord: { wins: 40, losses: 10 },
+          worldsChampionTeamName: "T1",
+          offseasonSummary: {
+            renewedPlayerIds: ["lck-top-01"],
+            releasedPlayerIds: ["lck-jungle-01"],
+            signedPlayerIds: ["lck-mid-01"],
+            aiSigningCount: 2,
+            notableLogEntries: [
+              {
+                id: "history-log-1",
+                day: 7,
+                week: 1,
+                type: "renewal",
+                message: "Zeus가 팀에 남았습니다.",
+              },
+            ],
+          },
+        },
+        {
+          ...firstSummary,
+          seasonNumber: 2,
+          yearLabel: 2027,
+          lckResult: "3위",
+          finalElo: 1620,
+          finalRecord: { wins: 31, losses: 20 },
+          worldsChampionTeamName: "Gen.G",
+          offseasonSummary: undefined,
+        },
+      ],
+    };
+
+    render(
+      <SeasonSummary
+        career={multiSeasonCareer}
+        onStartOffseason={vi.fn()}
+        onViewRoster={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /2026/ })).toBeVisible();
+    expect(screen.getByRole("button", { name: /2027/ })).toBeVisible();
+    expect(screen.getByText("40W 10L")).toBeVisible();
+    expect(screen.getByText("Zeus가 팀에 남았습니다.")).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: /2027/ }));
+
+    expect(
+      screen.getByRole("heading", { name: "2027 시즌의 발자취" }),
+    ).toBeVisible();
+    expect(screen.getByText("31W 20L")).toBeVisible();
+    expect(screen.getByText("1620")).toBeVisible();
+    expect(
+      screen.getAllByText("아직 이 시즌에 저장된 선수 변화 기록이 없습니다.")
+        .length,
+    ).toBeGreaterThan(0);
   });
 
   it("disables offseason entry when the career is completed", () => {

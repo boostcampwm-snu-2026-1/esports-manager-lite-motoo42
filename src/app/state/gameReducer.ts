@@ -1,0 +1,44 @@
+import { handleCareerAction } from "./careerHandlers";
+import type { GameAction } from "./gameActions";
+import type { GameState } from "./gameState";
+import { handleOffseasonAction } from "./offseasonHandlers";
+import { handleRosterAction } from "./rosterHandlers";
+import { handleRouteAction } from "./routeHandlers";
+import { handleSeasonProgressAction } from "./seasonProgressHandlers";
+import { handleWeeklyPlanAction } from "./weeklyPlanHandlers";
+
+export function gameReducer(state: GameState, action: GameAction): GameState {
+  switch (action.type) {
+    case "start-career":
+    case "load-career":
+      return handleCareerAction(state, action);
+    case "sync-route":
+    case "go-to":
+    case "view-competition":
+      return handleRouteAction(state, action);
+    case "set-roster-player":
+    case "call-up-player":
+    case "send-down-player":
+    case "sign-roster-player":
+    case "release-roster-player":
+    case "confirm-roster":
+      return handleRosterAction(state, action);
+    case "set-strategy":
+    case "set-training-intensity":
+      return handleWeeklyPlanAction(state, action);
+    case "renew-expired-contracts":
+    case "start-offseason-market":
+    case "submit-offseason-renewal-offer":
+    case "release-expired-offseason-player":
+    case "submit-free-agent-offer":
+    case "start-next-season":
+      return handleOffseasonAction(state, action);
+    case "set-asian-games-play-mode":
+    case "simulate-next-match":
+    case "progress-season":
+    case "commit-progress-result":
+      return handleSeasonProgressAction(state, action);
+    default:
+      return state;
+  }
+}

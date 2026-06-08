@@ -1,21 +1,32 @@
-import { useGame } from "../app/GameProvider";
+import { useGameSelector } from "../app/GameProvider";
+import type { AppRoute, RouteSubPage } from "../app/routes";
 import { MainDashboard } from "../features/main-dashboard";
+import { CareerRequiredFallback } from "./CareerRequiredFallback";
+import type { CompetitionId } from "../types/game";
 
-export function MainDashboardPage() {
-  const { state, dispatch } = useGame();
+type MainDashboardPageProps = {
+  onGoTo: (
+    route: AppRoute,
+    options?: {
+      competitionId?: CompetitionId | null;
+      subPage?: RouteSubPage | null;
+    },
+  ) => void;
+};
 
-  if (!state.career) {
-    return null;
+export function MainDashboardPage({ onGoTo }: MainDashboardPageProps) {
+  const career = useGameSelector((state) => state.career);
+
+  if (!career) {
+    return <CareerRequiredFallback title="메인 허브를 열 수 없습니다" />;
   }
 
   return (
     <MainDashboard
-      career={state.career}
-      onViewRoster={() => dispatch({ type: "go-to", route: "roster-builder" })}
-      onViewCompetition={() =>
-        dispatch({ type: "go-to", route: "competition-dashboard" })
-      }
-      onViewCalendar={() => dispatch({ type: "go-to", route: "season-calendar" })}
+      career={career}
+      onViewRoster={() => onGoTo("roster-builder")}
+      onViewCompetition={() => onGoTo("competition-dashboard")}
+      onViewCalendar={() => onGoTo("season-calendar")}
     />
   );
 }

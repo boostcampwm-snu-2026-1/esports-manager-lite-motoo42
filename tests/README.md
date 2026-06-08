@@ -69,15 +69,15 @@ tests/acceptance
 ## 5. 실행 명령
 
 ```bash
-npm test
-npm run test:system
-npm run test:acceptance
+npm.cmd test
+npm.cmd run test:system
+npm.cmd run test:acceptance
 ```
 
 빌드 검증:
 
 ```bash
-npm run build
+npm.cmd run build
 ```
 
 ## 6. 규칙

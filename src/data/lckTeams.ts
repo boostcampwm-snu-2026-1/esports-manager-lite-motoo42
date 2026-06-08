@@ -1,9 +1,15 @@
+import type { TeamBalanceAdjustment, TeamBalanceTier } from "../types/game";
+
 export type LckTeamSeed = {
   id: string;
   name: string;
   shortName: string;
+  tier: TeamBalanceTier;
   baseElo: number;
   strength: number;
+  budget: number;
+  salaryMultiplier: number;
+  appealModifier: number;
   previousSeasonRank: number;
 };
 
@@ -12,104 +18,232 @@ export const lck2026Teams: LckTeamSeed[] = [
     id: "gen-g",
     name: "Gen.G",
     shortName: "GEN",
-    baseElo: 1680,
-    strength: 88,
+    tier: "S",
+    baseElo: 1690,
+    strength: 89,
+    budget: 1450,
+    salaryMultiplier: 1.12,
+    appealModifier: 4,
     previousSeasonRank: 1,
   },
   {
     id: "hanwha-life-esports",
     name: "Hanwha Life Esports",
     shortName: "HLE",
-    baseElo: 1665,
-    strength: 87,
+    tier: "S",
+    baseElo: 1680,
+    strength: 88,
+    budget: 1450,
+    salaryMultiplier: 1.12,
+    appealModifier: 4,
     previousSeasonRank: 2,
   },
   {
     id: "t1",
     name: "T1",
     shortName: "T1",
-    baseElo: 1650,
-    strength: 86,
+    tier: "S",
+    baseElo: 1670,
+    strength: 87,
+    budget: 1500,
+    salaryMultiplier: 1.15,
+    appealModifier: 5,
     previousSeasonRank: 3,
   },
   {
     id: "kt-rolster",
     name: "KT Rolster",
     shortName: "KT",
-    baseElo: 1605,
+    tier: "A",
+    baseElo: 1615,
     strength: 82,
+    budget: 1280,
+    salaryMultiplier: 1.03,
+    appealModifier: 1,
     previousSeasonRank: 4,
   },
   {
     id: "dplus-kia",
     name: "Dplus KIA",
     shortName: "DK",
-    baseElo: 1585,
-    strength: 80,
+    tier: "A",
+    baseElo: 1605,
+    strength: 81,
+    budget: 1260,
+    salaryMultiplier: 1.02,
+    appealModifier: 1,
     previousSeasonRank: 5,
   },
   {
     id: "hanjin-brion",
     name: "Hanjin BRION",
     shortName: "BRO",
+    tier: "B",
     baseElo: 1535,
     strength: 75,
+    budget: 1050,
+    salaryMultiplier: 0.94,
+    appealModifier: -1,
     previousSeasonRank: 6,
   },
   {
     id: "bnk-fearx",
     name: "BNK FEARX",
     shortName: "BFX",
+    tier: "B",
     baseElo: 1515,
     strength: 73,
+    budget: 1000,
+    salaryMultiplier: 0.92,
+    appealModifier: -1,
     previousSeasonRank: 7,
   },
   {
     id: "nongshim-redforce",
     name: "Nongshim RedForce",
     shortName: "NS",
-    baseElo: 1510,
-    strength: 72,
+    tier: "B",
+    baseElo: 1530,
+    strength: 75,
+    budget: 1080,
+    salaryMultiplier: 0.96,
+    appealModifier: 0,
     previousSeasonRank: 8,
   },
   {
     id: "kiwoom-drx",
     name: "Kiwoom DRX",
     shortName: "DRX",
-    baseElo: 1495,
-    strength: 71,
+    tier: "C",
+    baseElo: 1490,
+    strength: 72,
+    budget: 960,
+    salaryMultiplier: 0.89,
+    appealModifier: -2,
     previousSeasonRank: 9,
   },
   {
     id: "dn-soopers",
     name: "DN SOOPers",
     shortName: "DNF",
-    baseElo: 1450,
-    strength: 67,
+    tier: "C",
+    baseElo: 1460,
+    strength: 69,
+    budget: 920,
+    salaryMultiplier: 0.87,
+    appealModifier: -3,
     previousSeasonRank: 10,
   },
 ];
 
-export function createPlayableLckTeams(userTeamName: string) {
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function normalizeTeamName(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function getAdjustmentForTeam(
+  team: LckTeamSeed,
+  adjustments: TeamBalanceAdjustment[] = [],
+) {
+  const normalizedName = normalizeTeamName(team.name);
+  const normalizedShortName = normalizeTeamName(team.shortName);
+
+  return adjustments.find(
+    (adjustment) =>
+      adjustment.teamId === team.id ||
+      normalizeTeamName(adjustment.teamName) === normalizedName ||
+      normalizeTeamName(adjustment.teamName) === normalizedShortName,
+  );
+}
+
+export function applyTeamBalanceAdjustment(
+  team: LckTeamSeed,
+  adjustments: TeamBalanceAdjustment[] = [],
+): LckTeamSeed {
+  const adjustment = getAdjustmentForTeam(team, adjustments);
+
+  if (!adjustment) {
+    return team;
+  }
+
+  return {
+    ...team,
+    baseElo: clamp(team.baseElo + adjustment.baseEloDelta, 1350, 1900),
+    strength: clamp(team.strength + adjustment.strengthDelta, 60, 95),
+    budget: clamp(team.budget + adjustment.budgetDelta, 800, 1700),
+  };
+}
+
+export function findLckTeamSeed(value: string) {
+  const normalizedValue = normalizeTeamName(value);
+
+  return lck2026Teams.find(
+    (team) =>
+      normalizeTeamName(team.name) === normalizedValue ||
+      normalizeTeamName(team.shortName) === normalizedValue ||
+      team.id === normalizedValue,
+  );
+}
+
+export function getLckTeamProfile(
+  value: string,
+  adjustments: TeamBalanceAdjustment[] = [],
+) {
+  const matchedTeam = findLckTeamSeed(value);
+  const fallbackTeam = findLckTeamSeed("T1");
+  const baseTeam =
+    matchedTeam ??
+    (fallbackTeam
+      ? {
+          ...fallbackTeam,
+          id: "user-team",
+          name: value.trim() || "T1",
+          shortName: "USER",
+        }
+      : undefined);
+
+  return baseTeam ? applyTeamBalanceAdjustment(baseTeam, adjustments) : undefined;
+}
+
+export function createPlayableLckTeams(
+  userTeamName: string,
+  adjustments: TeamBalanceAdjustment[] = [],
+) {
   const normalizedUserTeamName = userTeamName.trim().toLowerCase();
   const matchedTeam = lck2026Teams.find(
     (team) =>
       team.name.toLowerCase() === normalizedUserTeamName ||
       team.shortName.toLowerCase() === normalizedUserTeamName,
   );
+  const adjustedTeams = lck2026Teams.map((team) =>
+    applyTeamBalanceAdjustment(team, adjustments),
+  );
 
   if (matchedTeam) {
-    return lck2026Teams;
+    return adjustedTeams;
   }
 
-  return lck2026Teams.map((team) =>
-    team.id === "t1"
-      ? {
-          ...team,
-          id: "user-team",
-          name: userTeamName.trim() || "T1",
-          shortName: "USER",
-        }
-      : team,
-  );
+  return adjustedTeams.map((team) => {
+    if (team.id !== "t1") {
+      return team;
+    }
+
+    const customTeam = {
+      ...team,
+      id: "user-team",
+      name: userTeamName.trim() || "T1",
+      shortName: "USER",
+    };
+
+    const customAdjustment = adjustments.find(
+      (adjustment) => adjustment.teamId === "user-team",
+    );
+
+    return customAdjustment
+      ? applyTeamBalanceAdjustment(customTeam, [customAdjustment])
+      : customTeam;
+  });
 }

@@ -1,5 +1,5 @@
 import { MongoClient, type Db } from "mongodb";
-import { getDatabaseName, getMongoUri } from "./config.js";
+import { getDatabaseName, getMongoUri } from "../config.js";
 
 let client: MongoClient | null = null;
 

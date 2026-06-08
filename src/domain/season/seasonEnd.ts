@@ -2,14 +2,18 @@ import {
   createContractsForRoster,
   type ContractTypeSelections,
 } from "../roster";
+import { rollPlayerIntoNextSeason } from "../players";
+import { findLckTeamSeed, getLckTeamProfile, lck2026Teams } from "../../data/lckTeams";
 import type {
   CareerSave,
   CompetitionId,
   CompetitionState,
-  Player,
   SeasonCompetitionSummary,
+  SeasonOffseasonSummary,
   SeasonState,
   SeasonSummary,
+  StandingEntry,
+  TeamBalanceAdjustment,
 } from "../../types/game";
 import {
   completeStoveLeague,
@@ -169,6 +173,66 @@ function replaceSeasonSummary(
   ].sort((left, right) => left.seasonNumber - right.seasonNumber);
 }
 
+function createOffseasonSummaryFromCareer(
+  career: CareerSave,
+): SeasonOffseasonSummary | undefined {
+  const offseason = career.seasonState.offseason;
+
+  if (!offseason) {
+    return undefined;
+  }
+
+  const userTeamName = career.userTeam.name;
+  const resolvedOffers = offseason.resolvedOffers ?? [];
+  const aiSigningCount = resolvedOffers.filter(
+    (offer) =>
+      offer.status === "accepted" &&
+      offer.fromTeamName !== userTeamName &&
+      (offer.negotiationContext === "free-agent" ||
+        offer.negotiationContext === "ai-depth"),
+  ).length;
+  const notableLogEntries = (offseason.logEntries ?? [])
+    .filter((entry) => entry.type !== "blocked")
+    .slice(-8);
+
+  return {
+    renewedPlayerIds: offseason.renewedPlayerIds ?? [],
+    releasedPlayerIds: offseason.releasedPlayerIds ?? [],
+    signedPlayerIds: offseason.signedPlayerIds ?? [],
+    aiSigningCount,
+    retiredPlayerIds: offseason.retiredPlayerIds ?? [],
+    militaryServicePlayerIds: offseason.militaryServicePlayerIds ?? [],
+    notableLogEntries,
+  };
+}
+
+function attachOffseasonSummaryToHistory(career: CareerSave): CareerSave {
+  const offseason = career.seasonState.offseason;
+
+  if (!offseason) {
+    return career;
+  }
+
+  const summarySeasonNumber =
+    offseason.summarySeasonNumber ?? offseason.completedSeasonNumber;
+  const seasonSummary = career.seasonHistory.find(
+    (summary) => summary.seasonNumber === summarySeasonNumber,
+  );
+  const offseasonSummary = createOffseasonSummaryFromCareer(career);
+
+  if (!seasonSummary || !offseasonSummary) {
+    return career;
+  }
+
+  return {
+    ...career,
+    seasonHistory: replaceSeasonSummary(career.seasonHistory, {
+      ...seasonSummary,
+      offseasonSummary,
+    }),
+  };
+}
+
 function decrementContractYears(career: CareerSave) {
   const contracts = career.userTeam.contracts.map((contract) => ({
     ...contract,
@@ -284,25 +348,6 @@ export function renewExpiredContractsForOffseason({
   };
 }
 
-function clampStatusValue(value: number) {
-  return Math.max(0, Math.min(100, Math.round(value)));
-}
-
-function rollPlayerIntoNextSeason(player: Player): Player {
-  return {
-    ...player,
-    age: player.age + 1,
-    status: {
-      ...player.status,
-      form: clampStatusValue((player.status.form + 50) / 2),
-      fatigue: 0,
-      morale: "neutral",
-      condition: 100,
-      injuryRisk: clampStatusValue(Math.min(10, player.status.injuryRisk / 2)),
-    },
-  };
-}
-
 function hasUnresolvedExpiredContracts(career: CareerSave) {
   const expiredIds = new Set(
     career.seasonState.offseason?.expiredContractPlayerIds ?? [],
@@ -314,6 +359,130 @@ function hasUnresolvedExpiredContracts(career: CareerSave) {
   ]);
 
   return [...expiredIds].some((playerId) => !resolvedIds.has(playerId));
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function getFinalLckCompetition(seasonState: SeasonState) {
+  return ([
+    "lck-rounds-3-5",
+    "lck-rounds-3-4",
+    "lck-rounds-1-2",
+    "lck-cup",
+  ] as CompetitionId[])
+    .map((competitionId) => findCompetition(seasonState, competitionId))
+    .find(
+      (competition): competition is CompetitionState =>
+        competition !== undefined &&
+        competition.status !== "locked" &&
+        competition.standings.length > 0,
+    );
+}
+
+function findBaseTeamForStanding(entry: StandingEntry) {
+  if (entry.teamId === "user-team") {
+    return findLckTeamSeed("T1");
+  }
+
+  return (
+    lck2026Teams.find((team) => team.id === entry.teamId) ??
+    findLckTeamSeed(entry.teamName)
+  );
+}
+
+function createTeamBalanceAdjustment(entry: StandingEntry): TeamBalanceAdjustment | null {
+  const baseTeam = findBaseTeamForStanding(entry);
+
+  if (!baseTeam) {
+    return null;
+  }
+
+  const resultRank = entry.rank || baseTeam.previousSeasonRank;
+  const expectedRank = baseTeam.previousSeasonRank;
+  const rankDelta = expectedRank - resultRank;
+  let baseEloDelta = 0;
+  let budgetDelta = 0;
+  let strengthDelta = 0;
+
+  if (rankDelta >= 2) {
+    baseEloDelta += 20;
+    budgetDelta += 40;
+    strengthDelta += 1;
+  } else if (rankDelta === 1) {
+    baseEloDelta += 10;
+    budgetDelta += 20;
+  } else if (rankDelta <= -2) {
+    baseEloDelta -= 20;
+    budgetDelta -= 40;
+    strengthDelta -= 1;
+  } else if (rankDelta === -1) {
+    baseEloDelta -= 10;
+    budgetDelta -= 20;
+  }
+
+  if (resultRank === 1) {
+    baseEloDelta += 10;
+    budgetDelta += 30;
+    strengthDelta += 1;
+  }
+
+  baseEloDelta = clamp(baseEloDelta, -35, 35);
+  budgetDelta = clamp(budgetDelta, -70, 70);
+  strengthDelta = clamp(strengthDelta, -2, 2);
+
+  return {
+    teamId: entry.teamId,
+    teamName: entry.teamName,
+    expectedRank,
+    resultRank,
+    baseEloDelta,
+    strengthDelta,
+    budgetDelta,
+    reason:
+      rankDelta > 0
+        ? `${entry.teamName} overperformed by ${rankDelta} rank(s).`
+        : rankDelta < 0
+          ? `${entry.teamName} underperformed by ${Math.abs(rankDelta)} rank(s).`
+          : `${entry.teamName} matched the expected rank.`,
+  };
+}
+
+export function calculateNextSeasonTeamBalanceAdjustments(
+  career: CareerSave,
+): TeamBalanceAdjustment[] {
+  const lckCompetition = getFinalLckCompetition(career.seasonState);
+
+  if (!lckCompetition) {
+    return [];
+  }
+
+  return lckCompetition.standings
+    .map(createTeamBalanceAdjustment)
+    .filter(
+      (adjustment): adjustment is TeamBalanceAdjustment =>
+        adjustment !== null &&
+        (adjustment.baseEloDelta !== 0 ||
+          adjustment.budgetDelta !== 0 ||
+          adjustment.strengthDelta !== 0),
+    );
+}
+
+function getUserTeamAdjustment(
+  career: CareerSave,
+  adjustments: TeamBalanceAdjustment[],
+) {
+  const userEntry = getFinalLckCompetition(career.seasonState)?.standings.find(
+    (entry) => entry.isUserTeam,
+  );
+
+  return adjustments.find(
+    (adjustment) =>
+      adjustment.teamId === userEntry?.teamId ||
+      adjustment.teamName === userEntry?.teamName ||
+      adjustment.teamName === career.userTeam.name,
+  );
 }
 
 export function startNextSeasonFromOffseason(career: CareerSave): CareerSave {
@@ -330,23 +499,46 @@ export function startNextSeasonFromOffseason(career: CareerSave): CareerSave {
   }
 
   const nextSeasonNumber = career.currentSeason + 1;
+  const careerWithOffseasonSummary = attachOffseasonSummaryToHistory(career);
+  const teamBalanceAdjustments =
+    calculateNextSeasonTeamBalanceAdjustments(careerWithOffseasonSummary);
+  const userTeamAdjustment = getUserTeamAdjustment(
+    careerWithOffseasonSummary,
+    teamBalanceAdjustments,
+  );
+  const userTeamProfile = getLckTeamProfile(
+    careerWithOffseasonSummary.userTeam.name,
+    teamBalanceAdjustments,
+  );
   const nextSeasonState = completeStoveLeague(
     createInitialSeasonState({
       seasonNumber: nextSeasonNumber,
-      userTeamName: career.userTeam.name,
+      teamBalanceAdjustments,
+      userTeamName: careerWithOffseasonSummary.userTeam.name,
     }),
   );
 
   return {
-    ...career,
+    ...careerWithOffseasonSummary,
     currentSeason: nextSeasonNumber,
-    lckPlayers: career.lckPlayers.map(rollPlayerIntoNextSeason),
+    lckPlayers: careerWithOffseasonSummary.lckPlayers.map(
+      rollPlayerIntoNextSeason,
+    ),
     weeklyPlan: {
       strategy: "balanced",
       trainingIntensity: "normal",
     },
     userTeam: {
-      ...career.userTeam,
+      ...careerWithOffseasonSummary.userTeam,
+      budget: userTeamProfile?.budget ?? careerWithOffseasonSummary.userTeam.budget,
+      elo: clamp(
+        Math.round(
+          careerWithOffseasonSummary.userTeam.elo +
+            (userTeamAdjustment?.baseEloDelta ?? 0),
+        ),
+        1300,
+        1900,
+      ),
       wins: 0,
       losses: 0,
     },

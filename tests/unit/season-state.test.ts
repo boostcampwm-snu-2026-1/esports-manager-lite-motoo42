@@ -191,11 +191,16 @@ describe("createInitialSeasonState", () => {
     expect(lckCup?.standings.find((entry) => entry.teamName === "T1")?.isUserTeam).toBe(true);
   });
 
-  it("connects the running season state to a new career save", () => {
+  it("connects a new career save to the preseason stove league market", () => {
     const career = createInitialCareer("T1");
 
     expect(career.seasonState.seasonNumber).toBe(1);
-    expect(career.seasonState.phase).toBe("stove-league");
+    expect(career.seasonState.phase).toBe("offseason");
+    expect(career.seasonState.currentDateKey).toBe("2025-12-17");
+    expect(career.seasonState.offseason?.context).toBe("preseason");
+    expect(career.seasonState.offseason?.status).toBe("active");
+    expect(career.seasonState.offseason?.expiredContractPlayerIds.length).toBeGreaterThanOrEqual(10);
+    expect(career.seasonState.offseason?.freeAgentPlayerIds?.length).toBeGreaterThan(50);
     expect(career.seasonState.competitions).toHaveLength(7);
   });
 });

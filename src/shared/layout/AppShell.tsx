@@ -1,4 +1,4 @@
-import type { PropsWithChildren, ReactNode } from "react";
+import { useEffect, useRef, type PropsWithChildren } from "react";
 import {
   getStrategyLabel,
   getTrainingIntensityLabel,
@@ -8,6 +8,7 @@ import type {
   AppRoute,
   CalendarSubPage,
   CompetitionSubPage,
+  RosterSubPage,
   RouteSubPage,
 } from "../../app/routes";
 import type { CareerSave, CompetitionId, CompetitionState } from "../../types/game";
@@ -27,7 +28,11 @@ type AppShellProps = PropsWithChildren<{
   selectedCompetitionId?: CompetitionId | null;
   competitionSubPage?: CompetitionSubPage | null;
   calendarSubPage?: CalendarSubPage | null;
-  saveControls?: ReactNode;
+  rosterSubPage?: RosterSubPage | null;
+  autoSaveStatus?: {
+    kind: "idle" | "saving" | "saved" | "failed" | "conflict";
+    message: string;
+  } | null;
   onGoTo: (
     route: AppRoute,
     options?: {
@@ -46,6 +51,12 @@ type ShellMenuItem = {
   subItems: string[];
 };
 
+type ShellMenuGroup = {
+  id: string;
+  label: string;
+  items: ShellMenuItem[];
+};
+
 type ShellSubMenuItem = {
   id: string;
   label: string;
@@ -55,91 +66,119 @@ type ShellSubMenuItem = {
   isDefault?: boolean;
 };
 
-const shellMenuItems: ShellMenuItem[] = [
+const shellMenuGroups: ShellMenuGroup[] = [
   {
-    id: "inbox",
-    label: "메인 허브",
-    icon: "HB",
-    route: "main-dashboard",
-    subItems: ["중요 알림", "뉴스", "일정 알림"],
+    id: "management",
+    label: "관리",
+    items: [
+      {
+        id: "inbox",
+        label: "홈",
+        icon: "HB",
+        route: "main-dashboard",
+        subItems: ["중요 알림", "뉴스", "일정 알림"],
+      },
+      {
+        id: "roster",
+        label: "로스터 관리",
+        icon: "RS",
+        route: "roster-builder",
+        subItems: ["선발 5인", "계약", "2군"],
+      },
+      {
+        id: "training",
+        label: "전략 / 훈련",
+        icon: "TR",
+        route: "match-week",
+        subItems: ["주간 계획", "전략", "훈련 강도"],
+      },
+    ],
   },
   {
-    id: "roster",
-    label: "로스터 관리",
-    icon: "RS",
-    route: "roster-builder",
-    subItems: ["선발 5인", "계약", "2군"],
+    id: "season",
+    label: "시즌",
+    items: [
+      {
+        id: "competition",
+        label: "대회 현황",
+        icon: "CP",
+        route: "competition-dashboard",
+        subItems: ["대회 현황", "순위표", "일정/결과", "토너먼트"],
+      },
+      {
+        id: "calendar",
+        label: "시즌 캘린더",
+        icon: "CA",
+        route: "season-calendar",
+        subItems: ["로드맵", "월간 달력", "대회 일정"],
+      },
+      {
+        id: "offseason",
+        label: "스토브리그",
+        icon: "FA",
+        route: "offseason",
+        subItems: ["타임라인", "내 팀 계약", "FA 시장", "이적 로그"],
+      },
+    ],
   },
   {
-    id: "training",
-    label: "전략/훈련",
-    icon: "TR",
-    route: "match-week",
-    subItems: ["주간 계획", "전략", "훈련 강도"],
-  },
-  {
-    id: "scout",
-    label: "스카우트",
-    icon: "SC",
-    route: "main-dashboard",
-    subItems: ["선수 검색", "상대 분석", "관찰 목록"],
-  },
-  {
-    id: "offseason",
-    label: "스토브리그",
-    icon: "FA",
-    route: "offseason",
-    subItems: ["타임라인", "내 팀 계약", "FA 시장", "이적 로그"],
-  },
-  {
-    id: "competition",
-    label: "대회",
-    icon: "CP",
-    route: "competition-dashboard",
-    subItems: ["대회 현황", "순위표", "일정/결과", "토너먼트"],
-  },
-  {
-    id: "calendar",
-    label: "캘린더",
-    icon: "CA",
-    route: "season-calendar",
-    subItems: ["로드맵", "월간 달력", "대회 일정"],
-  },
-  {
-    id: "other",
-    label: "기록",
-    icon: "LG",
-    route: "season-summary",
-    subItems: ["기록", "설정", "시즌 요약"],
+    id: "system",
+    label: "시스템",
+    items: [
+      {
+        id: "save",
+        label: "데이터 저장",
+        icon: "SV",
+        route: "save-manager",
+        subItems: ["저장 슬롯", "불러오기", "자동 저장"],
+      },
+      {
+        id: "other",
+        label: "시즌 결산",
+        icon: "LG",
+        route: "season-summary",
+        subItems: ["기록", "설정", "시즌 요약"],
+      },
+    ],
   },
 ];
 
+const shellMenuItems = shellMenuGroups.flatMap((group) => group.items);
+
+function getMenuItemById(id: string) {
+  return shellMenuItems.find((item) => item.id === id) ?? shellMenuItems[0];
+}
+
 function getActiveMenuItem(route: AppRoute) {
   if (route === "roster-builder") {
-    return shellMenuItems[1];
+    return getMenuItemById("roster");
   }
 
   if (route === "match-week") {
-    return shellMenuItems[2];
+    return getMenuItemById("training");
   }
 
   if (route === "competition-dashboard") {
-    return shellMenuItems[5];
+    return getMenuItemById("competition");
   }
 
   if (route === "season-calendar") {
-    return shellMenuItems[6];
+    return getMenuItemById("calendar");
   }
 
   if (route === "season-summary") {
-    return shellMenuItems[7];
+    return getMenuItemById("other");
   }
 
   if (route === "offseason") {
-    return shellMenuItems[4];
+    return getMenuItemById("offseason");
   }
 
-  return shellMenuItems[0];
+  if (route === "save-manager") {
+    return getMenuItemById("save");
+  }
+
+  return getMenuItemById("inbox");
 }
 
 function getActiveCompetitionName(career: CareerSave | null) {
@@ -355,6 +394,30 @@ function getCalendarSubMenuItems(): ShellSubMenuItem[] {
   ];
 }
 
+function getRosterSubMenuItems(): ShellSubMenuItem[] {
+  return [
+    {
+      id: "main",
+      label: "선발 5인",
+      route: "roster-builder",
+      subPage: "main",
+      isDefault: true,
+    },
+    {
+      id: "contracts",
+      label: "계약",
+      route: "roster-builder",
+      subPage: "contracts",
+    },
+    {
+      id: "academy",
+      label: "2군",
+      route: "roster-builder",
+      subPage: "academy",
+    },
+  ];
+}
+
 function getStaticSubMenuItems(activeMenuItem: ShellMenuItem): ShellSubMenuItem[] {
   return activeMenuItem.subItems.map((label, index) => ({
     id: `${activeMenuItem.id}-${index}`,
@@ -364,24 +427,95 @@ function getStaticSubMenuItems(activeMenuItem: ShellMenuItem): ShellSubMenuItem[
   }));
 }
 
+function isSubMenuItemActive({
+  calendarSubPage,
+  competitionSubPage,
+  item,
+  rosterSubPage,
+  route,
+}: {
+  calendarSubPage: CalendarSubPage | null;
+  competitionSubPage: CompetitionSubPage | null;
+  item: ShellSubMenuItem;
+  rosterSubPage: RosterSubPage | null;
+  route: AppRoute;
+}) {
+  if (item.route === "competition-dashboard") {
+    return (
+      route === item.route &&
+      (item.subPage
+        ? competitionSubPage === item.subPage ||
+          (!competitionSubPage && item.isDefault)
+        : !competitionSubPage)
+    );
+  }
+
+  if (item.route === "season-calendar") {
+    return (
+      route === item.route &&
+      (item.subPage
+        ? calendarSubPage === item.subPage || (!calendarSubPage && item.isDefault)
+        : !calendarSubPage)
+    );
+  }
+
+  if (item.route === "roster-builder") {
+    return (
+      route === item.route &&
+      (item.subPage
+        ? rosterSubPage === item.subPage || (!rosterSubPage && item.isDefault)
+        : !rosterSubPage)
+    );
+  }
+
+  return route === item.route && Boolean(item.isDefault);
+}
+
 export function AppShell({
   children,
   career,
   calendarSubPage = null,
   competitionSubPage = null,
+  rosterSubPage = null,
   isProgressBlocked = false,
   isProgressing = false,
   progressOverlay,
   route,
   selectedCompetitionId = null,
-  saveControls,
+  autoSaveStatus,
   onGoTo,
   onProgress,
 }: AppShellProps) {
+  const mainRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const mainElement = mainRef.current;
+
+    if (!mainElement) {
+      return;
+    }
+
+    if (typeof mainElement.scrollTo === "function") {
+      mainElement.scrollTo({ top: 0, left: 0 });
+      return;
+    }
+
+    mainElement.scrollTop = 0;
+    mainElement.scrollLeft = 0;
+  }, [
+    calendarSubPage,
+    competitionSubPage,
+    rosterSubPage,
+    route,
+    selectedCompetitionId,
+  ]);
+
   if (route === "career-setup") {
     return (
       <div className="app-shell app-shell-simple">
-        <main className="app-main app-main-simple">{children}</main>
+        <main className="app-main app-main-simple" ref={mainRef}>
+          {children}
+        </main>
       </div>
     );
   }
@@ -393,7 +527,9 @@ export function AppShell({
       ? getCompetitionSubMenuItems(selectedCompetition)
       : activeMenuItem.route === "season-calendar"
         ? getCalendarSubMenuItems()
-        : getStaticSubMenuItems(activeMenuItem);
+        : activeMenuItem.route === "roster-builder"
+          ? getRosterSubMenuItems()
+          : getStaticSubMenuItems(activeMenuItem);
   const activeCompetitionName = getActiveCompetitionName(career);
   const seasonLabel = career
     ? career.seasonState.currentDateLabel
@@ -413,67 +549,82 @@ export function AppShell({
   return (
     <div className={`app-shell ${isProgressing ? "app-shell-busy" : ""}`}>
       <aside className="shell-sidebar" aria-label="Main navigation">
-        <div className="club-mark">{career?.userTeam.name.slice(0, 2).toUpperCase() ?? "LM"}</div>
-        <nav className="shell-icon-menu">
-          {shellMenuItems.map((item) => (
-            <button
-              aria-label={item.label}
-              className={`shell-menu-button ${
-                item.id === activeMenuItem.id ? "shell-menu-button-active" : ""
-              }`}
-              data-testid={`shell-menu-${item.id}`}
-              disabled={isProgressing}
-              key={item.id}
-              onClick={() => onGoTo(item.route)}
-              title={item.label}
-              type="button"
-            >
-              <span>{item.icon}</span>
-            </button>
+        <div className="shell-sidebar-header">
+          <div className="club-mark">
+            {career?.userTeam.name.slice(0, 2).toUpperCase() ?? "LM"}
+          </div>
+          <div>
+            <span>Manager</span>
+            <strong>{career?.userTeam.name ?? "LoL Manager"}</strong>
+          </div>
+        </div>
+
+        <nav className="shell-menu-groups">
+          {shellMenuGroups.map((group) => (
+            <section className="shell-menu-group" key={group.id}>
+              <h2>{group.label}</h2>
+              <div className="shell-menu-list">
+                {group.items.map((item) => {
+                  const isActiveMenu = item.id === activeMenuItem.id;
+
+                  return (
+                    <div className="shell-menu-block" key={item.id}>
+                      <button
+                        aria-current={isActiveMenu ? "page" : undefined}
+                        className={`shell-menu-button ${
+                          isActiveMenu ? "shell-menu-button-active" : ""
+                        }`}
+                        data-testid={`shell-menu-${item.id}`}
+                        disabled={isProgressing}
+                        onClick={() => onGoTo(item.route)}
+                        title={item.label}
+                        type="button"
+                      >
+                        <span className="shell-menu-icon" aria-hidden="true">
+                          {item.icon}
+                        </span>
+                        <span className="shell-menu-label">{item.label}</span>
+                      </button>
+
+                      {isActiveMenu && subMenuItems.length > 0 && (
+                        <div className="submenu-list shell-inline-submenu">
+                          {subMenuItems.map((subItem) => {
+                            const isActive = isSubMenuItemActive({
+                              calendarSubPage,
+                              competitionSubPage,
+                              item: subItem,
+                              rosterSubPage,
+                              route,
+                            });
+
+                            return (
+                              <button
+                                className={`submenu-item ${
+                                  isActive ? "submenu-item-active" : ""
+                                }`}
+                                disabled={isProgressing}
+                                key={subItem.id}
+                                onClick={() =>
+                                  onGoTo(subItem.route, {
+                                    competitionId: subItem.competitionId,
+                                    subPage: subItem.subPage,
+                                  })
+                                }
+                                type="button"
+                              >
+                                {subItem.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
           ))}
         </nav>
-      </aside>
-
-      <aside className="shell-submenu">
-        <p className="eyebrow">Menu</p>
-        <h2>{activeMenuItem.label}</h2>
-        <div className="submenu-list">
-          {subMenuItems.map((item) => {
-            const isActive =
-              item.route === "competition-dashboard"
-                ? route === item.route &&
-                  (item.subPage
-                    ? competitionSubPage === item.subPage ||
-                      (!competitionSubPage && item.isDefault)
-                    : !competitionSubPage)
-                : item.route === "season-calendar"
-                  ? route === item.route &&
-                    (item.subPage
-                      ? calendarSubPage === item.subPage ||
-                        (!calendarSubPage && item.isDefault)
-                      : !calendarSubPage)
-                  : route === item.route;
-
-            return (
-              <button
-                className={`submenu-item ${
-                  isActive ? "submenu-item-active" : ""
-                }`}
-                disabled={isProgressing}
-                key={item.id}
-                onClick={() =>
-                  onGoTo(item.route, {
-                    competitionId: item.competitionId,
-                    subPage: item.subPage,
-                  })
-                }
-                type="button"
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
       </aside>
 
       <div className="shell-content">
@@ -492,7 +643,13 @@ export function AppShell({
               </span>
             )}
           </div>
-          {saveControls}
+          {career && autoSaveStatus && (
+            <span
+              className={`shell-save-status shell-save-status-${autoSaveStatus.kind}`}
+            >
+              {autoSaveStatus.message}
+            </span>
+          )}
           <button
             className="shell-progress-button"
             disabled={progressDisabled}
@@ -502,7 +659,9 @@ export function AppShell({
             {isProgressing ? "진행중" : progressActionLabel}
           </button>
         </header>
-        <main className="app-main">{children}</main>
+        <main className="app-main" ref={mainRef}>
+          {children}
+        </main>
       </div>
 
       {progressOverlay && (

@@ -146,7 +146,12 @@ describe("SaveManager", () => {
 
   it("loads a selected career save through the save API", async () => {
     const career = createInitialCareer("T1");
-    const save = createSaveDto({ career });
+    const legacyCareer = {
+      ...career,
+      seasonHistory: undefined,
+      weeklyPlan: undefined,
+    } as unknown as typeof career;
+    const save = createSaveDto({ career: legacyCareer });
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ saves: [createSaveDto()] }))
@@ -173,8 +178,22 @@ describe("SaveManager", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "불러오기" }));
 
-    await waitFor(() => expect(onLoadCareer).toHaveBeenCalledWith(career, "save-1"));
-    expect(onSaveCommitted).toHaveBeenCalledWith(save);
+    await waitFor(() => expect(onLoadCareer).toHaveBeenCalled());
+    const loadedCareer = onLoadCareer.mock.calls[0][0];
+
+    expect(loadedCareer.weeklyPlan).toEqual({
+      strategy: "balanced",
+      trainingIntensity: "normal",
+    });
+    expect(loadedCareer.seasonHistory).toEqual([]);
+    expect(onLoadCareer.mock.calls[0][1]).toBe("save-1");
+    expect(onSaveCommitted.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ id: save.id }),
+    );
+    expect(onSaveCommitted.mock.calls[0][0].career.weeklyPlan).toEqual({
+      strategy: "balanced",
+      trainingIntensity: "normal",
+    });
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/api/saves/save-1?ownerId=local-dev"),
     );

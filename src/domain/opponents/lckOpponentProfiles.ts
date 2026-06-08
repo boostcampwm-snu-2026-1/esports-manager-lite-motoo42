@@ -1,5 +1,10 @@
-import { lck2026Teams } from "../../data/lckTeams";
-import type { MatchSchedule, Opponent, StrategyId } from "../../types/game";
+import { getLckTeamProfile } from "../../data/lckTeams";
+import type {
+  MatchSchedule,
+  Opponent,
+  StrategyId,
+  TeamBalanceAdjustment,
+} from "../../types/game";
 
 export const lckOpponentStyles: Record<string, StrategyId> = {
   "gen-g": "macro",
@@ -14,8 +19,11 @@ export const lckOpponentStyles: Record<string, StrategyId> = {
   "dn-soopers": "balanced",
 };
 
-export function getLckTeamStrength(teamId: string) {
-  return lck2026Teams.find((team) => team.id === teamId)?.strength ?? 76;
+export function getLckTeamStrength(
+  teamId: string,
+  teamBalanceAdjustments: TeamBalanceAdjustment[] = [],
+) {
+  return getLckTeamProfile(teamId, teamBalanceAdjustments)?.strength ?? 76;
 }
 
 export function getLckOpponentStyle(teamId: string): StrategyId {
@@ -25,6 +33,7 @@ export function getLckOpponentStyle(teamId: string): StrategyId {
 export function createLckOpponentFromSchedule(
   match: MatchSchedule,
   userTeamId: string,
+  teamBalanceAdjustments: TeamBalanceAdjustment[] = [],
 ): Opponent {
   const opponentTeamId =
     match.blueTeamId === userTeamId ? match.redTeamId : match.blueTeamId;
@@ -37,7 +46,7 @@ export function createLckOpponentFromSchedule(
     region: "lck",
     leagueLabel: "LCK",
     appearsIn: [match.competitionId],
-    strength: getLckTeamStrength(opponentTeamId),
+    strength: getLckTeamStrength(opponentTeamId, teamBalanceAdjustments),
     style: getLckOpponentStyle(opponentTeamId),
   };
 }

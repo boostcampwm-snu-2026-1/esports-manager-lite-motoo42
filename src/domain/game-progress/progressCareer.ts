@@ -59,6 +59,41 @@ import type {
 export type CareerProgressResult = {
   career: CareerSave;
   lastMatch: MatchResult | null;
+  trace?: CareerProgressTrace;
+};
+
+export type CareerProgressAction =
+  | "advance-idle-day"
+  | "blocked"
+  | "continue-match-review"
+  | "play-current-date"
+  | "progress-offseason-day"
+  | "simulate-practice-match"
+  | "transition-completed-competition";
+
+export type CareerProgressBlockReason =
+  | "asian-games-decision-pending"
+  | "career-completed"
+  | "no-transition-available"
+  | "offseason-inactive"
+  | "stove-league";
+
+export type CareerProgressTraceSnapshot = {
+  seasonNumber: number;
+  yearLabel: number;
+  phase: SeasonState["phase"];
+  currentCompetitionId: CompetitionId | null;
+  currentDateKey: string;
+  progressStatus: SeasonState["progressStatus"];
+  currentStageName: string | null;
+};
+
+export type CareerProgressTrace = {
+  before: CareerProgressTraceSnapshot;
+  after: CareerProgressTraceSnapshot;
+  action: CareerProgressAction;
+  blockReason?: CareerProgressBlockReason;
+  changed: boolean;
 };
 
 function getUserTeamId(seasonState: SeasonState) {
@@ -122,18 +157,24 @@ function getTeamStrengthForSchedule(
   }
 
   if (match.competitionId === "first-stand") {
-    return getFirstStandTeamProfile(teamId)?.strength ?? getLckTeamStrength(teamId);
+    return (
+      getFirstStandTeamProfile(teamId)?.strength ??
+      getLckTeamStrength(teamId, career.seasonState.teamBalanceAdjustments)
+    );
   }
 
   if (match.competitionId === "msi") {
-    return getMsiTeamProfile(teamId)?.strength ?? getLckTeamStrength(teamId);
+    return (
+      getMsiTeamProfile(teamId)?.strength ??
+      getLckTeamStrength(teamId, career.seasonState.teamBalanceAdjustments)
+    );
   }
 
   if (match.competitionId === "worlds") {
     return getWorldsTeamProfile(teamId, career.seasonState).strength;
   }
 
-  return getLckTeamStrength(teamId);
+  return getLckTeamStrength(teamId, career.seasonState.teamBalanceAdjustments);
 }
 
 function createOpponentFromSchedule(
@@ -178,7 +219,11 @@ function createOpponentFromSchedule(
   }
 
   if (match.competitionId !== "first-stand" && match.competitionId !== "msi") {
-    return createLckOpponentFromSchedule(match, userTeamId);
+    return createLckOpponentFromSchedule(
+      match,
+      userTeamId,
+      seasonState.teamBalanceAdjustments,
+    );
   }
 
   const opponentTeamId =
@@ -202,7 +247,11 @@ function createOpponentFromSchedule(
     };
   }
 
-  return createLckOpponentFromSchedule(match, userTeamId);
+  return createLckOpponentFromSchedule(
+    match,
+    userTeamId,
+    seasonState.teamBalanceAdjustments,
+  );
 }
 
 function getUserSimulationTeam(career: CareerSave, match: MatchSchedule): Team {
@@ -412,6 +461,87 @@ export function advanceCompetitionsAfterCompletedRecords(
   }
 
   return seasonStateAfterCupAdvance;
+}
+
+function getActiveCompetitionStageName(seasonState: SeasonState) {
+  return (
+    seasonState.competitions.find(
+      (competition) =>
+        competition.competitionId === seasonState.currentCompetitionId,
+    )?.currentStageName ?? null
+  );
+}
+
+function createProgressTraceSnapshot(
+  career: CareerSave,
+): CareerProgressTraceSnapshot {
+  return {
+    seasonNumber: career.seasonState.seasonNumber,
+    yearLabel: career.seasonState.yearLabel,
+    phase: career.seasonState.phase,
+    currentCompetitionId: career.seasonState.currentCompetitionId,
+    currentDateKey: career.seasonState.currentDateKey,
+    progressStatus: career.seasonState.progressStatus,
+    currentStageName: getActiveCompetitionStageName(career.seasonState),
+  };
+}
+
+function createProgressFingerprint(career: CareerSave) {
+  const seasonState = career.seasonState;
+  const activeCompetition = seasonState.competitions.find(
+    (competition) =>
+      competition.competitionId === seasonState.currentCompetitionId,
+  );
+
+  return [
+    career.currentSeason,
+    career.seasonHistory.length,
+    seasonState.seasonNumber,
+    seasonState.yearLabel,
+    seasonState.phase,
+    seasonState.currentCompetitionId ?? "no-competition",
+    seasonState.currentDateKey,
+    seasonState.currentTurn,
+    seasonState.progressStatus,
+    seasonState.currentWeek,
+    activeCompetition?.status ?? "no-status",
+    activeCompetition?.currentStageName ?? "no-stage",
+    activeCompetition?.completed ? "completed" : "not-completed",
+    seasonState.matchRecords.length,
+    seasonState.nextMatchIds.join(","),
+    seasonState.lastMatchRecordIds.join(","),
+    seasonState.offseason?.status ?? "no-offseason",
+    seasonState.offseason?.currentDay ?? "no-offseason-day",
+    seasonState.offseason?.currentWeek ?? "no-offseason-week",
+    seasonState.worlds?.status ?? "no-worlds",
+    career.userTeam.wins,
+    career.userTeam.losses,
+  ].join("|");
+}
+
+function withProgressTrace({
+  action,
+  before,
+  blockReason,
+  result,
+}: {
+  action: CareerProgressAction;
+  before: CareerSave;
+  blockReason?: CareerProgressBlockReason;
+  result: Omit<CareerProgressResult, "trace">;
+}): CareerProgressResult {
+  return {
+    ...result,
+    trace: {
+      before: createProgressTraceSnapshot(before),
+      after: createProgressTraceSnapshot(result.career),
+      action,
+      blockReason,
+      changed:
+        createProgressFingerprint(before) !==
+        createProgressFingerprint(result.career),
+    },
+  };
 }
 
 function isLckCupCompletedAndWaitingForFirstStand(seasonState: SeasonState) {
@@ -754,55 +884,104 @@ function advanceIdleDay(career: CareerSave): CareerSave {
 
 export function progressCareer(career: CareerSave): CareerProgressResult {
   if (career.seasonState.phase === "offseason") {
-    return {
+    const result = {
       career: progressOffseasonDay(career),
       lastMatch: null,
     };
+
+    return withProgressTrace({
+      action: "progress-offseason-day",
+      before: career,
+      blockReason:
+        career.seasonState.offseason?.status === "active"
+          ? undefined
+          : "offseason-inactive",
+      result,
+    });
   }
 
-  if (
-    career.seasonState.phase === "stove-league" ||
-    career.seasonState.phase === "completed"
-  ) {
-    return { career, lastMatch: null };
+  if (career.seasonState.phase === "stove-league") {
+    return withProgressTrace({
+      action: "blocked",
+      before: career,
+      blockReason: "stove-league",
+      result: { career, lastMatch: null },
+    });
+  }
+
+  if (career.seasonState.phase === "completed") {
+    return withProgressTrace({
+      action: "blocked",
+      before: career,
+      blockReason: "career-completed",
+      result: { career, lastMatch: null },
+    });
   }
 
   if (isAsianGamesDecisionPending(career.seasonState)) {
-    return { career, lastMatch: null };
+    return withProgressTrace({
+      action: "blocked",
+      before: career,
+      blockReason: "asian-games-decision-pending",
+      result: { career, lastMatch: null },
+    });
   }
 
   if (career.seasonState.progressStatus === "idle") {
-    return {
-      career: advanceIdleDay(career),
-      lastMatch: null,
-    };
+    return withProgressTrace({
+      action: "advance-idle-day",
+      before: career,
+      result: {
+        career: advanceIdleDay(career),
+        lastMatch: null,
+      },
+    });
   }
 
   if (career.seasonState.progressStatus === "match-review") {
     const transitionedCareer = transitionAfterCompletedCompetition(career);
     if (transitionedCareer) {
-      return {
-        career: {
-          ...transitionedCareer,
-          seasonState: {
-            ...transitionedCareer.seasonState,
-            currentTurn: career.seasonState.currentTurn + 1,
+      return withProgressTrace({
+        action: "transition-completed-competition",
+        before: career,
+        result: {
+          career: {
+            ...transitionedCareer,
+            seasonState: {
+              ...transitionedCareer.seasonState,
+              currentTurn: career.seasonState.currentTurn + 1,
+            },
           },
+          lastMatch: null,
         },
-        lastMatch: null,
-      };
+      });
     }
 
-    return {
+    const result = {
       career: {
         ...career,
         seasonState: continueAfterMatchReview(career.seasonState),
       },
       lastMatch: null,
     };
+
+    return withProgressTrace({
+      action: "continue-match-review",
+      before: career,
+      blockReason:
+        createProgressFingerprint(career) ===
+        createProgressFingerprint(result.career)
+          ? "no-transition-available"
+          : undefined,
+      result,
+    });
   }
 
-  return playCurrentDate(career);
+  return withProgressTrace({
+    action: "play-current-date",
+    before: career,
+    result: playCurrentDate(career),
+  });
 }
 
 export function simulatePracticeMatch(career: CareerSave): CareerProgressResult {
@@ -845,17 +1024,22 @@ export function simulatePracticeMatch(career: CareerSave): CareerProgressResult 
     trainingIntensity,
     userResult: result.winner === "user" ? "win" : "loss",
   });
-
-  return {
-    lastMatch: result,
-    career: {
-      ...career,
-      lckPlayers: nextPlayers,
-      userTeam: {
-        ...career.userTeam,
-        wins: career.userTeam.wins + (result.winner === "user" ? 1 : 0),
-        losses: career.userTeam.losses + (result.winner === "opponent" ? 1 : 0),
-      },
+  const nextCareer = {
+    ...career,
+    lckPlayers: nextPlayers,
+    userTeam: {
+      ...career.userTeam,
+      wins: career.userTeam.wins + (result.winner === "user" ? 1 : 0),
+      losses: career.userTeam.losses + (result.winner === "opponent" ? 1 : 0),
     },
   };
+
+  return withProgressTrace({
+    action: "simulate-practice-match",
+    before: career,
+    result: {
+      lastMatch: result,
+      career: nextCareer,
+    },
+  });
 }

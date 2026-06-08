@@ -102,6 +102,41 @@ function createActiveOffseasonCareer(): CareerSave {
 }
 
 describe("OffseasonMarket", () => {
+  it("renders the new career preseason renewals and full LCK market filters", () => {
+    const career = createInitialCareer("T1");
+
+    render(
+      <OffseasonMarket
+        career={career}
+        onReleaseExpiredPlayer={vi.fn()}
+        onSubmitFreeAgentOffer={vi.fn()}
+        onSubmitRenewalOffer={vi.fn()}
+        onViewRoster={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Faker")).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "FA 시장" }));
+    expect(screen.getByLabelText("시장 선수 검색")).toBeVisible();
+    expect(screen.getByLabelText("시장 팀 필터")).toBeVisible();
+    expect(screen.getByLabelText("시장 포지션 필터")).toBeVisible();
+    expect(screen.getByLabelText("시장 1군 2군 필터")).toBeVisible();
+
+    fireEvent.change(screen.getByLabelText("시장 팀 필터"), {
+      target: { value: "Gen.G" },
+    });
+    fireEvent.change(screen.getByLabelText("시장 포지션 필터"), {
+      target: { value: "mid" },
+    });
+    fireEvent.change(screen.getByLabelText("시장 1군 2군 필터"), {
+      target: { value: "main" },
+    });
+
+    expect(screen.getByText("Chovy")).toBeVisible();
+    expect(screen.queryByText("Faker")).not.toBeInTheDocument();
+  });
+
   it("renders the renewal week and submits a renewal offer", () => {
     const onSubmitRenewalOffer = vi.fn();
 
@@ -118,7 +153,21 @@ describe("OffseasonMarket", () => {
     expect(screen.getByRole("heading", { name: "스토브리그 1일차" })).toBeVisible();
     expect(screen.getByText("Zeus")).toBeVisible();
 
-    fireEvent.click(screen.getByRole("button", { name: "제안" }));
+    fireEvent.click(screen.getByRole("button", { name: "재계약 협상" }));
+    expect(screen.getByRole("dialog", { name: "재계약 협상" })).toBeVisible();
+    expect(screen.getByText("협상 분위기")).toBeVisible();
+    expect(screen.queryByText("현재 최소 수락선")).not.toBeInTheDocument();
+    expect(screen.queryByText("수락권")).not.toBeInTheDocument();
+    expect(screen.queryByText("거절 위험")).not.toBeInTheDocument();
+
+    const initialMood = screen.getByTestId("negotiation-mood-score").textContent;
+    fireEvent.change(screen.getByLabelText("제안 연봉"), {
+      target: { value: "1" },
+    });
+    expect(screen.getByTestId("negotiation-mood-score").textContent).not.toBe(
+      initialMood,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "제안 보내기" }));
 
     expect(onSubmitRenewalOffer).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -157,7 +206,12 @@ describe("OffseasonMarket", () => {
     fireEvent.click(screen.getByRole("button", { name: "FA 시장" }));
 
     expect(screen.getByText("BeryL")).toBeVisible();
-    fireEvent.click(screen.getAllByRole("button", { name: "FA 제안" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "FA 협상" })[0]);
+    expect(screen.getByRole("dialog", { name: "FA 계약 협상" })).toBeVisible();
+    expect(screen.getByText("선수 측 요구액")).toBeVisible();
+    expect(screen.getByText("협상 분위기")).toBeVisible();
+    expect(screen.queryByText("현재 최소 수락선")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "제안 보내기" }));
 
     expect(onSubmitFreeAgentOffer).toHaveBeenCalledWith(
       expect.objectContaining({

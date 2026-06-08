@@ -101,6 +101,7 @@ export {
 } from "./worldsFormat";
 export type { SeededWorldsEntrant } from "./worldsFormat";
 export {
+  calculateNextSeasonTeamBalanceAdjustments,
   completeSeasonAfterWorlds,
   createSeasonSummaryFromCareer,
   renewExpiredContractsForOffseason,
@@ -108,6 +109,10 @@ export {
 } from "./seasonEnd";
 export {
   getOffseasonContractDemand,
+  getOffseasonMinimumAcceptableSalary,
+  getOffseasonMoodColor,
+  getOffseasonNegotiationSnapshot,
+  getOffseasonVisibleDemandSalary,
   getUnresolvedExpiredPlayerIds,
   initializeOffseasonMarket,
   progressOffseasonDay,

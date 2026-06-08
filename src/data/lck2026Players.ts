@@ -1,4 +1,5 @@
-import { lck2026Teams } from "./lckTeams";
+import { getLckTeamProfile, lck2026Teams } from "./lckTeams";
+import { getLck2026PlayerPortrait } from "./lck2026PlayerPortraits";
 import { lck2026RatingOverrides } from "./lck2026RatingOverrides";
 import { lck2026RosterSeeds, type Lck2026RosterSeed } from "./lck2026RosterSeeds";
 import { samplePlayers } from "./samplePlayers";
@@ -267,6 +268,36 @@ function applyRatingOverride(player: Player): Player {
   return next;
 }
 
+function applyTeamSalaryProfile(player: Player): Player {
+  const teamProfile = getLckTeamProfile(player.currentTeam ?? "");
+  const salaryMultiplier = teamProfile?.salaryMultiplier ?? 1;
+  const salaryExpectation = clamp(
+    Math.round(player.salaryExpectation * salaryMultiplier),
+    32,
+    170,
+  );
+
+  return {
+    ...player,
+    cost: salaryExpectation,
+    salaryExpectation,
+  };
+}
+
+function applyPortrait(player: Player): Player {
+  const portrait = getLck2026PlayerPortrait(player);
+
+  if (!portrait || player.rosterTier !== "main") {
+    return player;
+  }
+
+  return {
+    ...player,
+    portraitUrl: portrait.portraitUrl,
+    portraitSourceUrl: portrait.portraitSourceUrl,
+  };
+}
+
 function createPlayerFromSeed(seed: Lck2026RosterSeed, samplePlayer?: Player): Player {
   const player = samplePlayer
     ? {
@@ -279,7 +310,7 @@ function createPlayerFromSeed(seed: Lck2026RosterSeed, samplePlayer?: Player): P
       }
     : createGeneratedPlayer(seed);
 
-  return applyRatingOverride(player);
+  return applyPortrait(applyTeamSalaryProfile(applyRatingOverride(player)));
 }
 
 function createLck2026Players() {

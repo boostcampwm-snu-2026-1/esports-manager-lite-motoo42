@@ -1,8 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { formatSalaryAmount } from "../../shared/format/money";
 import { Button } from "../../shared/ui/Button";
 import { Card } from "../../shared/ui/Card";
 import type {
   CareerSave,
+  OffseasonLogEntry,
   Player,
   SeasonCompetitionSummary,
   SeasonSummary as SeasonSummaryRecord,
@@ -24,6 +26,14 @@ function getLatestSummary(career: CareerSave) {
       .find((summary) => summary.seasonNumber === summarySeasonNumber) ??
     career.seasonHistory[career.seasonHistory.length - 1]
   );
+}
+
+function getSummaryOptions(career: CareerSave) {
+  const summaries = [...career.seasonHistory].sort(
+    (left, right) => left.seasonNumber - right.seasonNumber,
+  );
+
+  return summaries.length > 0 ? summaries : [getFallbackSummary(career)];
 }
 
 function getFallbackSummary(career: CareerSave): SeasonSummaryRecord {
@@ -56,6 +66,10 @@ function getPlayerName(players: Player[], playerId: string) {
   return players.find((player) => player.id === playerId)?.name ?? playerId;
 }
 
+function getPlayerNames(players: Player[], playerIds: string[] = []) {
+  return playerIds.map((playerId) => getPlayerName(players, playerId));
+}
+
 function getExpiredPlayers(career: CareerSave) {
   const expiredIds =
     career.seasonState.offseason?.expiredContractPlayerIds ??
@@ -85,6 +99,14 @@ function SummaryMetric({
   );
 }
 
+function getTimelineResult(summary: SeasonSummaryRecord) {
+  const worldsLabel = summary.worldsChampionTeamName
+    ? `Worlds ${summary.worldsChampionTeamName}`
+    : "Worlds 미정";
+
+  return `${summary.lckResult} · ${worldsLabel}`;
+}
+
 function CompetitionResultList({
   results,
 }: {
@@ -112,17 +134,100 @@ function CompetitionResultList({
   );
 }
 
+function SeasonTimeline({
+  selectedSeasonNumber,
+  summaries,
+  onSelect,
+}: {
+  selectedSeasonNumber: number;
+  summaries: SeasonSummaryRecord[];
+  onSelect: (seasonNumber: number) => void;
+}) {
+  return (
+    <div className="season-history-timeline" aria-label="시즌 히스토리">
+      {summaries.map((summary) => (
+        <button
+          aria-pressed={summary.seasonNumber === selectedSeasonNumber}
+          className={`season-history-card ${
+            summary.seasonNumber === selectedSeasonNumber
+              ? "season-history-card-active"
+              : ""
+          }`}
+          key={summary.seasonNumber}
+          onClick={() => onSelect(summary.seasonNumber)}
+          type="button"
+        >
+          <span>{summary.yearLabel ?? `S${summary.seasonNumber}`}</span>
+          <strong>Season {summary.seasonNumber}</strong>
+          <small>{getTimelineResult(summary)}</small>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function OffseasonLogList({ entries }: { entries: OffseasonLogEntry[] }) {
+  if (entries.length === 0) {
+    return (
+      <p className="season-summary-empty-note">
+        아직 이 시즌에 남은 스토브리그 로그가 없습니다.
+      </p>
+    );
+  }
+
+  return (
+    <div className="season-offseason-log-list">
+      {entries.map((entry) => (
+        <article className="season-offseason-log-row" key={entry.id}>
+          <span>
+            W{entry.week} · D{entry.day}
+          </span>
+          <strong>{entry.message}</strong>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function PlayerChangeGroup({
+  label,
+  names,
+}: {
+  label: string;
+  names: string[];
+}) {
+  if (names.length === 0) {
+    return null;
+  }
+
+  return (
+    <article className="season-player-change-group">
+      <span>{label}</span>
+      <strong>{names.join(", ")}</strong>
+    </article>
+  );
+}
+
 export function SeasonSummary({
   career,
   onStartOffseason,
   onViewRoster,
 }: SeasonSummaryProps) {
-  const summary = getLatestSummary(career) ?? getFallbackSummary(career);
+  const summaryOptions = useMemo(() => getSummaryOptions(career), [career]);
+  const latestSummary = getLatestSummary(career) ?? getFallbackSummary(career);
+  const [selectedSeasonNumber, setSelectedSeasonNumber] = useState(
+    latestSummary.seasonNumber,
+  );
+  const summary =
+    summaryOptions.find(
+      (candidate) => candidate.seasonNumber === selectedSeasonNumber,
+    ) ?? latestSummary;
   const expiredPlayers = useMemo(() => getExpiredPlayers(career), [career]);
   const offseason = career.seasonState.offseason;
   const isCareerComplete =
     career.seasonState.phase === "completed" ||
     offseason?.status === "career-completed";
+  const hasThreeSeasonHistory = career.seasonHistory.length >= 3;
   const canEnterOffseason =
     career.seasonState.phase === "offseason" &&
     !isCareerComplete &&
@@ -130,34 +235,80 @@ export function SeasonSummary({
     offseason?.status !== "ready-for-next-season";
   const finalRecord = summary.finalRecord ?? {
     wins: career.userTeam.wins,
-    losses: career.userTeam.losses,
-  };
+      losses: career.userTeam.losses,
+    };
   const competitionResults = summary.competitionResults ?? [];
+  const offseasonSummary = summary.offseasonSummary;
+  const renewedNames = getPlayerNames(
+    career.lckPlayers,
+    offseasonSummary?.renewedPlayerIds,
+  );
+  const releasedNames = getPlayerNames(
+    career.lckPlayers,
+    offseasonSummary?.releasedPlayerIds,
+  );
+  const signedNames = getPlayerNames(
+    career.lckPlayers,
+    offseasonSummary?.signedPlayerIds,
+  );
+  const retiredNames = getPlayerNames(
+    career.lckPlayers,
+    offseasonSummary?.retiredPlayerIds,
+  );
+  const militaryNames = getPlayerNames(
+    career.lckPlayers,
+    offseasonSummary?.militaryServicePlayerIds,
+  );
+  const notableLogEntries = offseasonSummary?.notableLogEntries ?? [];
+  const aiSigningCount = offseasonSummary?.aiSigningCount ?? 0;
+  const hasPlayerChanges =
+    renewedNames.length +
+      releasedNames.length +
+      signedNames.length +
+      retiredNames.length +
+      militaryNames.length >
+      0 || aiSigningCount > 0;
 
   return (
     <section className="stack season-summary-page">
       <header className="season-summary-header">
         <div>
-          <p className="eyebrow">Season Summary</p>
-          <h1>
-            {summary.yearLabel ?? career.seasonState.yearLabel} 시즌 종료
-          </h1>
+          <p className="eyebrow">Career Chronicle</p>
+          <h1>{summary.yearLabel ?? career.seasonState.yearLabel} 시즌의 발자취</h1>
           <p className="lede">
-            {career.userTeam.name}의 시즌 기록을 확인하고 다음 시즌 스토브리그로
-            이동합니다.
+            {career.userTeam.name}이 지나온 시간과 남은 기록을 천천히
+            돌아봅니다.
           </p>
         </div>
         <div className="season-summary-status">
-          <span>Season {summary.seasonNumber}</span>
-          <strong>{isCareerComplete ? "커리어 완료" : "스토브리그 대기"}</strong>
+          <span>
+            {career.seasonHistory.length} seasons archived
+          </span>
+          <strong>
+            {isCareerComplete
+              ? "커리어 완료"
+              : hasThreeSeasonHistory
+                ? "3시즌 결산"
+                : canEnterOffseason
+                  ? "스토브리그 대기"
+                  : "시즌 기록"}
+          </strong>
         </div>
       </header>
 
-      <div className="season-summary-grid">
+      <SeasonTimeline
+        onSelect={setSelectedSeasonNumber}
+        selectedSeasonNumber={summary.seasonNumber}
+        summaries={summaryOptions}
+      />
+
+      <div className="season-summary-grid season-summary-detail-grid">
         <Card>
           <div className="season-summary-card-title">
-            <p className="eyebrow">Team Result</p>
-            <h2>{career.userTeam.name}</h2>
+            <div>
+              <p className="eyebrow">남은 기록</p>
+              <h2>{career.userTeam.name}</h2>
+            </div>
           </div>
           <div className="season-summary-metrics">
             <SummaryMetric
@@ -180,35 +331,91 @@ export function SeasonSummary({
 
         <Card>
           <div className="season-summary-card-title">
-            <p className="eyebrow">Competition Log</p>
-            <h2>대회별 요약</h2>
+            <div>
+              <p className="eyebrow">시즌의 발자취</p>
+              <h2>대회별 요약</h2>
+            </div>
           </div>
           <CompetitionResultList results={competitionResults} />
         </Card>
       </div>
 
+      <div className="season-summary-grid">
+        <Card>
+          <div className="season-summary-card-title">
+            <div>
+              <p className="eyebrow">스토브리그의 흔적</p>
+              <h2>시장 결산</h2>
+            </div>
+          </div>
+          <div className="season-summary-metrics season-offseason-metrics">
+            <SummaryMetric label="재계약" value={`${renewedNames.length}`} />
+            <SummaryMetric label="방출" value={`${releasedNames.length}`} />
+            <SummaryMetric label="FA 영입" value={`${signedNames.length}`} />
+            <SummaryMetric label="AI 보강" value={`${aiSigningCount}`} />
+          </div>
+          <OffseasonLogList entries={notableLogEntries} />
+        </Card>
+
+        <Card>
+          <div className="season-summary-card-title">
+            <div>
+              <p className="eyebrow">선수 변화</p>
+              <h2>남겨진 이름들</h2>
+            </div>
+          </div>
+
+          {hasPlayerChanges ? (
+            <div className="season-player-change-list">
+              <PlayerChangeGroup label="재계약" names={renewedNames} />
+              <PlayerChangeGroup label="방출" names={releasedNames} />
+              <PlayerChangeGroup label="영입" names={signedNames} />
+              <PlayerChangeGroup label="은퇴" names={retiredNames} />
+              <PlayerChangeGroup label="군입대" names={militaryNames} />
+              {aiSigningCount > 0 && (
+                <article className="season-player-change-group">
+                  <span>AI 팀 보강</span>
+                  <strong>{aiSigningCount}건</strong>
+                </article>
+              )}
+            </div>
+          ) : (
+            <p className="season-summary-empty-note">
+              아직 이 시즌에 저장된 선수 변화 기록이 없습니다.
+            </p>
+          )}
+        </Card>
+      </div>
+
       <Card>
         <div className="season-summary-card-title">
-          <p className="eyebrow">Offseason</p>
-          <h2>스토브리그 준비</h2>
+          <div>
+            <p className="eyebrow">Next Chapter</p>
+            <h2>{isCareerComplete || hasThreeSeasonHistory ? "커리어 결산" : "다음 장"}</h2>
+          </div>
         </div>
 
-        {isCareerComplete ? (
+        {isCareerComplete || hasThreeSeasonHistory ? (
           <div className="season-summary-empty">
-            <strong>최대 시즌을 모두 마쳤습니다.</strong>
-            <span>커리어 기록은 시즌 히스토리에 보존됩니다.</span>
+            <strong>세 시즌의 기록이 히스토리에 남았습니다.</strong>
+            <span>승리와 이적, 남겨진 이름들이 이 커리어의 결말입니다.</span>
           </div>
-        ) : (
+        ) : canEnterOffseason ? (
           <div className="season-summary-renewal-ready">
             <strong>28일 스토브리그가 대기 중입니다.</strong>
             <span>
-              1주차에는 팀 내 재계약/방출을 처리하고, 2~4주차에는 FA 시장에서
-              AI 팀들과 경쟁합니다.
+              이 시즌의 마지막 결정은 재계약, 방출, 그리고 FA 시장에서
+              이어집니다.
             </span>
+          </div>
+        ) : (
+          <div className="season-summary-empty">
+            <strong>기록은 시즌 히스토리에 보존됩니다.</strong>
+            <span>다음 결산은 시즌이 끝난 뒤 다시 열립니다.</span>
           </div>
         )}
 
-        {expiredPlayers.length > 0 && (
+        {canEnterOffseason && expiredPlayers.length > 0 && (
           <div className="season-renewal-panel">
             <div className="section-label-row">
               <span>계약 만료</span>
@@ -221,7 +428,7 @@ export function SeasonSummary({
                     <strong>{player.name}</strong>
                     <span>
                       {player.role.toUpperCase()} · {player.currentTeam} · salary{" "}
-                      {player.salaryExpectation}
+                      {formatSalaryAmount(player.salaryExpectation)}
                     </span>
                     <small>스토브리그 1주차에서 재계약 또는 방출 결정</small>
                   </div>

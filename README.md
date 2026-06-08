@@ -51,12 +51,14 @@ League of Legends e스포츠 팀 매니지먼트 시뮬레이션 게임
 ## 실행 방법
 
 ```bash
-npm install
-npm run dev:server
-npm run dev:client
+npm.cmd install
+npm.cmd run dev:server
+npm.cmd run dev:client
 ```
 
-MongoDB 연결에는 Git에 커밋하지 않는 `.env.local`이 필요합니다. 공개 가능한 변수 예시는 `.env.example`을 참고합니다.
+MongoDB 연결에는 Git에 커밋하지 않는 `.env.local` 또는 배포 서비스의 환경변수가 필요합니다. 공개 가능한 변수 예시는 `.env.example`을 참고합니다.
+
+친구 베타 테스트용 링크 하나 배포 절차는 `docs/beta-deploy-guide.md`를 참고합니다. 로컬/보조 테스트용 터널 방식은 `docs/beta-test-guide.md`에 남겨 두었습니다.
 
 ## 검증 명령
 
@@ -90,7 +92,7 @@ main
 
 - React / Vite / TypeScript 기반 프로젝트 구조
 - Vitest, Playwright 기반 테스트 환경
-- 실제 URL 기반 라우팅: `/`, `/hub`, `/roster`, `/match`, `/competitions`, `/competitions/:id`, `/competitions/:id/:subPage`, `/calendar`, `/calendar/:subPage`, `/summary`, `/offseason`
+- 실제 URL 기반 라우팅: `/`, `/hub`, `/roster`, `/match`, `/competitions`, `/competitions/:id`, `/competitions/:id/:subPage`, `/calendar`, `/calendar/:subPage`, `/saves`, `/summary`, `/offseason`
 - FM식 16:9 고정형 메인 허브 UI
 - `GameProvider`에서 reducer/action과 진행 엔진 분리
 - CareerSave, SeasonState, CompetitionState 등 핵심 상태 타입
@@ -133,6 +135,7 @@ main
 
 - `CODEX_HANDOFF.md`
 - `IMPLEMENTATION_ORDER.md`
+- `docs/beta-test-guide.md`
 - `docs/development-checklist.md`
 - `docs/overview.md`
 - `docs/mvp-scope.md`

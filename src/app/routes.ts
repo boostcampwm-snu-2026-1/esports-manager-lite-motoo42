@@ -7,6 +7,7 @@ export type AppRoute =
   | "match-week"
   | "competition-dashboard"
   | "season-calendar"
+  | "save-manager"
   | "offseason"
   | "season-summary";
 
@@ -20,7 +21,9 @@ export type CompetitionSubPage =
 
 export type CalendarSubPage = "roadmap" | "calendar";
 
-export type RouteSubPage = CompetitionSubPage | CalendarSubPage;
+export type RosterSubPage = "main" | "academy" | "contracts";
+
+export type RouteSubPage = CompetitionSubPage | CalendarSubPage | RosterSubPage;
 
 export const appRoutes: AppRoute[] = [
   "career-setup",
@@ -29,6 +32,7 @@ export const appRoutes: AppRoute[] = [
   "match-week",
   "competition-dashboard",
   "season-calendar",
+  "save-manager",
   "offseason",
   "season-summary",
 ];
@@ -40,6 +44,7 @@ const routePathByRoute: Record<AppRoute, string> = {
   "match-week": "/match",
   "competition-dashboard": "/competitions",
   "season-calendar": "/calendar",
+  "save-manager": "/saves",
   offseason: "/offseason",
   "season-summary": "/summary",
 };
@@ -65,12 +70,14 @@ const competitionSubPages = new Set<CompetitionSubPage>([
 ]);
 
 const calendarSubPages = new Set<CalendarSubPage>(["roadmap", "calendar"]);
+const rosterSubPages = new Set<RosterSubPage>(["main", "academy", "contracts"]);
 
 export type RouteMatch = {
   route: AppRoute;
   competitionId?: CompetitionId | null;
   competitionSubPage?: CompetitionSubPage | null;
   calendarSubPage?: CalendarSubPage | null;
+  rosterSubPage?: RosterSubPage | null;
 };
 
 export function isCompetitionId(value: string): value is CompetitionId {
@@ -85,6 +92,10 @@ export function isCompetitionSubPage(
 
 export function isCalendarSubPage(value: string): value is CalendarSubPage {
   return calendarSubPages.has(value as CalendarSubPage);
+}
+
+export function isRosterSubPage(value: string): value is RosterSubPage {
+  return rosterSubPages.has(value as RosterSubPage);
 }
 
 export function getPathForRoute(
@@ -108,12 +119,29 @@ export function getPathForRoute(
     return routePathByRoute[route];
   }
 
+  if (route === "roster-builder") {
+    if (subPage && isRosterSubPage(subPage)) {
+      return `/roster/${subPage}`;
+    }
+
+    return routePathByRoute[route];
+  }
+
   return routePathByRoute[route];
 }
 
 export function getRouteMatchFromPath(pathname: string): RouteMatch {
   if (pathname === "/roster") {
-    return { route: "roster-builder" };
+    return { route: "roster-builder", rosterSubPage: null };
+  }
+
+  const rosterMatch = pathname.match(/^\/roster\/([^/]+)$/);
+
+  if (rosterMatch) {
+    return {
+      route: "roster-builder",
+      rosterSubPage: isRosterSubPage(rosterMatch[1]) ? rosterMatch[1] : null,
+    };
   }
 
   if (pathname === "/hub") {
@@ -126,6 +154,10 @@ export function getRouteMatchFromPath(pathname: string): RouteMatch {
 
   if (pathname === "/calendar") {
     return { route: "season-calendar", calendarSubPage: null };
+  }
+
+  if (pathname === "/saves") {
+    return { route: "save-manager" };
   }
 
   const calendarMatch = pathname.match(/^\/calendar\/([^/]+)$/);

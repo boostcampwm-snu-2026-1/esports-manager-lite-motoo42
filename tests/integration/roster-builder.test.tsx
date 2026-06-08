@@ -97,4 +97,40 @@ describe("RosterBuilder", () => {
 
     expect(screen.queryByText("Faker")).not.toBeInTheDocument();
   });
+
+  it("renders player portraits in the market and signed roster areas", () => {
+    const t1Players = lck2026Players.filter(
+      (player) => player.currentTeam === "T1" && player.rosterTier === "main",
+    );
+    const faker = t1Players.find((player) => player.name === "Faker");
+    const teamWithFakerSigned: Team = {
+      ...emptyTeam,
+      mainRosterPlayerIds: [faker?.id ?? ""],
+      roster: { mid: faker?.id },
+      contracts: [
+        {
+          playerId: faker?.id ?? "",
+          salary: faker?.salaryExpectation ?? 0,
+          type: "one-year",
+          guaranteedYears: 1,
+          remainingYears: 1,
+        },
+      ],
+    };
+
+    render(
+      <RosterBuilder
+        players={t1Players}
+        team={teamWithFakerSigned}
+        onSelectPlayer={vi.fn()}
+        onSignPlayer={vi.fn()}
+        onReleasePlayer={vi.fn()}
+        onConfirmRoster={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getAllByRole("img", { name: "Faker portrait" }).length,
+    ).toBeGreaterThanOrEqual(2);
+  });
 });

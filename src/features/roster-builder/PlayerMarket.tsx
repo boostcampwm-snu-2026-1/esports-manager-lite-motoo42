@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { formatSalaryAmount } from "../../shared/format/money";
 import { Card } from "../../shared/ui/Card";
+import { PlayerPortrait } from "../../shared/ui/PlayerPortrait";
 import { StatPill } from "../../shared/ui/StatPill";
 import type { Player, Role } from "../../types/game";
 
@@ -136,17 +138,27 @@ export function PlayerMarket({
 
           return (
             <article className="player-card" key={player.id}>
-              <span className="player-card-header">
-                <strong>{player.name}</strong>
-                <span>{player.role}</span>
-              </span>
-              <span className="muted">
-                {player.currentTeam} · {player.rosterTier ?? "main"}
-              </span>
+              <div className="player-card-identity">
+                <PlayerPortrait
+                  className="player-card-portrait"
+                  player={player}
+                  size="md"
+                />
+                <span className="player-card-header">
+                  <strong>{player.name}</strong>
+                  <span>{player.role}</span>
+                  <small className="muted">
+                    {player.currentTeam} · {player.rosterTier ?? "main"}
+                  </small>
+                </span>
+              </div>
               <span className="pill-row">
                 <StatPill label="OVR" value={player.overall} />
                 <StatPill label="POT" value={player.potential} />
-                <StatPill label="Salary" value={player.salaryExpectation} />
+                <StatPill
+                  label="Salary"
+                  value={formatSalaryAmount(player.salaryExpectation)}
+                />
               </span>
               <span className="player-card-actions">
                 <button

@@ -1,4 +1,6 @@
 import { Button } from "../../shared/ui/Button";
+import { formatSalaryAmount } from "../../shared/format/money";
+import { PlayerPortrait } from "../../shared/ui/PlayerPortrait";
 import type { ContractType, Player, Team } from "../../types/game";
 
 type SignedRosterPanelProps = {
@@ -37,12 +39,20 @@ export function SignedRosterPanel({
       )}
       {selectedPlayers.map((player) => (
         <div className="signed-player-row" key={player.id}>
-          <div>
-            <strong>{player.name}</strong>
-            <p className="muted">
-              {player.role} · {player.currentTeam} · salary {player.salaryExpectation}
-              {starterIds.has(player.id) ? " · starter" : " · academy"}
-            </p>
+          <div className="signed-player-identity">
+            <PlayerPortrait
+              className="signed-player-portrait"
+              player={player}
+              size="sm"
+            />
+            <div>
+              <strong>{player.name}</strong>
+              <p className="muted">
+                {player.role} · {player.currentTeam} · salary{" "}
+                {formatSalaryAmount(player.salaryExpectation)}
+                {starterIds.has(player.id) ? " · starter" : " · academy"}
+              </p>
+            </div>
           </div>
           <label className="contract-select">
             Contract
