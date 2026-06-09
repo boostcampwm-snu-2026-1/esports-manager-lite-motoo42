@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-server/
 coverage/
 playwright-report/
 test-results/
@@ -15,3 +16,4 @@ vitest.config.js
 vitest.config.d.ts
 playwright.config.js
 playwright.config.d.ts
+UI-Picture/
