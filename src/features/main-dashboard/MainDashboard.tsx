@@ -4,6 +4,7 @@ import {
   getTrainingIntensityLabel,
 } from "../../domain/weekly-plan";
 import { PlayerPortrait } from "../../shared/ui/PlayerPortrait";
+import { EvaluationStars } from "../../shared/ui/EvaluationStars";
 import { analyzeOpponent, type OpponentAnalysis } from "../../domain/opponent-analysis";
 import { createLckOpponentFromSchedule } from "../../domain/opponents";
 import {
@@ -472,6 +473,7 @@ export function MainDashboard({
                   size="lg"
                 />
                 <div className="starter-name">{player?.name ?? "Open"}</div>
+                {player && <EvaluationStars compact player={player} />}
               </article>
             );
           })}

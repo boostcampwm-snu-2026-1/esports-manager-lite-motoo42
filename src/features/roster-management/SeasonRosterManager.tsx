@@ -17,6 +17,7 @@ import {
   isLineupEditableDate,
 } from "../../domain/season/seasonScheduleDates";
 import { formatSalaryAmount } from "../../shared/format/money";
+import { EvaluationStars } from "../../shared/ui/EvaluationStars";
 import { MoraleIndicator } from "../../shared/ui/MoraleIndicator";
 import { PlayerPortrait } from "../../shared/ui/PlayerPortrait";
 
@@ -199,28 +200,21 @@ function PlayerDetailModal({
             <p className="eyebrow">{roleLabels[player.role]} 상세</p>
             <h2>{player.name}</h2>
             <p className="muted">
-              {player.currentTeam} · OVR {player.overall} · POT {player.potential}
+              {player.currentTeam} · {player.age}세
             </p>
+            <EvaluationStars player={player} />
           </div>
         </div>
         <div className="player-detail-grid">
-          <Stat label="피지컬" value={player.mechanics} />
-          <Stat label="운영" value={player.macro} />
-          <Stat label="라인전" value={player.laning} />
-          <Stat label="한타" value={player.teamfight} />
-          <Stat label="멘탈" value={player.mental} />
-          <Stat label="챔프폭" value={player.championPool} />
-          <Stat label="폼" value={player.status.form} />
           <Stat label="피로도" value={player.status.fatigue} />
+          <Stat label="컨디션" value={player.status.condition} />
+          <Stat label="부상 위험" value={player.status.injuryRisk} />
           <div className="player-detail-stat player-detail-morale-stat">
             <span>사기</span>
             <strong>
               <MoraleIndicator level={player.status.morale} showLabel />
             </strong>
           </div>
-          <Stat label="큰 경기" value={player.mindset.clutch} />
-          <Stat label="적응력" value={player.adaptability.metaAdaptability} />
-          <Stat label="소통" value={player.mindset.communication} />
         </div>
         <div>
           <p className="eyebrow">Traits</p>
@@ -359,12 +353,11 @@ function RosterPlayerCard({
         </div>
       </div>
       <div className="roster-management-card-meta">
-        <span className="roster-management-ovr">OVR {player.overall}</span>
-        <span>POT {player.potential}</span>
+        <EvaluationStars player={player} />
       </div>
       <div className="roster-management-card-status-strip">
-        <span>폼 {player.status.form}</span>
         <span>피로 {player.status.fatigue}</span>
+        <span>컨디션 {player.status.condition}</span>
         <span className="card-morale-cell">
           <MoraleIndicator level={player.status.morale} />
           {getMoraleLabel(player.status.morale)}
@@ -569,7 +562,7 @@ function ContractsView({
             <article className="roster-contract-row" key={contract.playerId}>
               <span>
                 <strong>{player.name}</strong>
-                <small>{roleLabels[player.role]} · OVR {player.overall}</small>
+                <small>{roleLabels[player.role]} · 평가 기반 공개 정보</small>
               </span>
               <span>{rosterLabel}</span>
               <span>

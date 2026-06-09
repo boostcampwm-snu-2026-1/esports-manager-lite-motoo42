@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 import { createInitialCareer } from "../../src/domain/career/createInitialCareer";
 import { progressCareer } from "../../src/domain/game-progress/progressCareer";
 import {
+  completeStoveLeague,
   cancelFreeAgentSigning,
   completeSeasonAfterWorlds,
   confirmFreeAgentSigning,
   getOffseasonMoodColor,
   initializeOffseasonMarket,
   getOffseasonMinimumAcceptableSalary,
+  getOffseasonMarketViewStatus,
   getOffseasonNegotiationSnapshot,
   getOffseasonVisibleDemandSalary,
   progressOffseasonDay,
@@ -131,6 +133,20 @@ function startMarket(career = createWorldsCompletedCareer({ expiringTop: true })
 }
 
 describe("offseason market", () => {
+  it("classifies active and closed offseason market views", () => {
+    const preseasonCareer = createInitialCareer("T1");
+    const competitionCareer: CareerSave = {
+      ...preseasonCareer,
+      seasonState: {
+        ...completeStoveLeague(preseasonCareer.seasonState),
+        offseason: undefined,
+      },
+    };
+
+    expect(getOffseasonMarketViewStatus(preseasonCareer)).toBe("active-market");
+    expect(getOffseasonMarketViewStatus(competitionCareer)).toBe("closed-info");
+  });
+
   it("starts a new career in the 2026 preseason market with selected-team renewals and the full LCK market", () => {
     const career = createInitialCareer("T1");
     const expiredIds = career.seasonState.offseason?.expiredContractPlayerIds ?? [];

@@ -65,6 +65,8 @@ describe("career save normalization", () => {
     expect(normalizedPlayer.militaryServiceStatus).toBe("none");
     expect(normalizedPlayer.retirementCandidate).toBe(false);
     expect(normalizedPlayer.status.morale).toBe("neutral");
+    expect(normalizedPlayer.status.evaluationForm).toBe(normalizedPlayer.status.form);
+    expect(normalizedPlayer.status.evaluationStars).toBeGreaterThanOrEqual(0.5);
     expect(normalized.seasonHistory[0].competitionResults).toEqual([]);
     expect(normalized.seasonHistory[0].expiredContractPlayerIds).toEqual([]);
     expect(normalized.seasonState.offseason?.pendingOffers).toEqual([]);

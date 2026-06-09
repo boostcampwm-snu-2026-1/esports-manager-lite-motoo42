@@ -43,6 +43,8 @@ export type OffseasonRosterValidation = {
   yearlySalary: number;
 };
 
+export type OffseasonMarketViewStatus = "active-market" | "closed-info";
+
 const roleOrder: Role[] = ["top", "jungle", "mid", "bot", "support"];
 const maxPlayersPerRolePerTeam = 3;
 
@@ -63,6 +65,15 @@ export function getOffseasonContractDemand(
   contractType: ContractType,
 ) {
   return getPlayerContractDemand(player, contractType);
+}
+
+export function getOffseasonMarketViewStatus(
+  career: CareerSave,
+): OffseasonMarketViewStatus {
+  return career.seasonState.phase === "offseason" &&
+    career.seasonState.offseason?.status === "active"
+    ? "active-market"
+    : "closed-info";
 }
 
 function clampNumber(value: number, min: number, max: number) {

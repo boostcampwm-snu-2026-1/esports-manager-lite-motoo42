@@ -1,4 +1,5 @@
 import type { Player } from "../../types/game";
+import { ensurePlayerEvaluationStatus } from "./playerEvaluation";
 import { blendPlayerSalaryExpectation, calculatePlayerMarketValue } from "./playerMarketValue";
 import { clampStatusValue } from "./playerStatus";
 
@@ -58,7 +59,19 @@ export function rollPlayerIntoNextSeason(player: Player): Player {
     marketValue,
   );
 
-  return {
+  const nextStatus = {
+    ...ratingUpdatedPlayer.status,
+    form: clampStatusValue((ratingUpdatedPlayer.status.form + 50) / 2),
+    evaluationForm: undefined,
+    evaluationStars: undefined,
+    fatigue: 0,
+    morale: "neutral" as const,
+    condition: 100,
+    injuryRisk: clampStatusValue(
+      Math.min(10, ratingUpdatedPlayer.status.injuryRisk / 2),
+    ),
+  };
+  const nextPlayer = {
     ...ratingUpdatedPlayer,
     age: nextAge,
     cost: salaryExpectation,
@@ -66,19 +79,15 @@ export function rollPlayerIntoNextSeason(player: Player): Player {
     retirementCandidate: player.retirementAge
       ? nextAge >= player.retirementAge
       : player.retirementCandidate,
-    status: {
-      ...ratingUpdatedPlayer.status,
-      form: clampStatusValue((ratingUpdatedPlayer.status.form + 50) / 2),
-      fatigue: 0,
-      morale: "neutral",
-      condition: 100,
-      injuryRisk: clampStatusValue(
-        Math.min(10, ratingUpdatedPlayer.status.injuryRisk / 2),
-      ),
-    },
+    status: nextStatus,
     marketProfile: {
       ...ratingUpdatedPlayer.marketProfile,
       buyoutEstimate: Math.round(salaryExpectation * 2.4),
     },
+  };
+
+  return {
+    ...nextPlayer,
+    status: ensurePlayerEvaluationStatus(nextPlayer, nextStatus),
   };
 }

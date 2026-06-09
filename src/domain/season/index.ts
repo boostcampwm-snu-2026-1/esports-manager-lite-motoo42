@@ -110,6 +110,7 @@ export {
 export {
   getOffseasonContractDemand,
   getOffseasonMinimumAcceptableSalary,
+  getOffseasonMarketViewStatus,
   getOffseasonMoodColor,
   getOffseasonNegotiationSnapshot,
   getOffseasonVisibleDemandSalary,

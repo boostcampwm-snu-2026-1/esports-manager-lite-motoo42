@@ -74,6 +74,8 @@ describe("SeasonRosterManager", () => {
     expect(
       screen.getAllByRole("img", { name: "Bdd portrait" }).length,
     ).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByLabelText(/평가/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/OVR|POT|오버롤|포텐셜/)).not.toBeInTheDocument();
   });
 
   it("renders academy players separately and calls up players from the academy page", () => {

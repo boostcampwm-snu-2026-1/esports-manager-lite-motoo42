@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { offseasonFreeAgentSeeds } from "../../data/offseasonFreeAgents";
 import {
+  getOffseasonMarketViewStatus,
   getOffseasonNegotiationSnapshot,
   getOffseasonVisibleDemandSalary,
   getUnresolvedExpiredPlayerIds,
@@ -9,6 +11,8 @@ import {
 import { formatSalaryAmount, formatSalaryRange } from "../../shared/format/money";
 import { Button } from "../../shared/ui/Button";
 import { Card } from "../../shared/ui/Card";
+import { EvaluationStars } from "../../shared/ui/EvaluationStars";
+import { PlayerPortrait } from "../../shared/ui/PlayerPortrait";
 import type {
   CareerSave,
   ContractType,
@@ -102,7 +106,7 @@ function getPlayer(players: Player[], playerId: string) {
 }
 
 function getPlayerLabel(player: Player) {
-  return `${player.role.toUpperCase()} · OVR ${player.overall} · POT ${player.potential} · ${player.age}세`;
+  return `${player.role.toUpperCase()} · ${player.age}세 · ${getRosterTierLabel(player)}`;
 }
 
 function getNegotiationContext(mode: NegotiationMode): OffseasonNegotiationContext {
@@ -222,6 +226,74 @@ function getConfirmationPendingOffers(career: CareerSave) {
       offer.fromTeamName === career.userTeam.name &&
       (offer.negotiationContext ?? "free-agent") === "free-agent",
   );
+}
+
+function getClosedMarketPlayers(career: CareerSave) {
+  const explicitMarketIds = new Set(
+    career.seasonState.offseason?.freeAgentPlayerIds ?? [],
+  );
+  const confirmationPendingPlayerIds = new Set(
+    getConfirmationPendingOffers(career).flatMap((offer) => offer.playerIds),
+  );
+  const knownPlayerIds = new Set(career.lckPlayers.map((player) => player.id));
+  const displayPlayers = [
+    ...career.lckPlayers,
+    ...offseasonFreeAgentSeeds.filter((player) => !knownPlayerIds.has(player.id)),
+  ];
+
+  return displayPlayers
+    .filter(
+      (player) =>
+        player.availableForRoster &&
+        !confirmationPendingPlayerIds.has(player.id) &&
+        (!player.currentTeam || explicitMarketIds.has(player.id)),
+    )
+    .sort((left, right) => {
+      const overallDiff = right.overall - left.overall;
+
+      if (overallDiff !== 0) {
+        return overallDiff;
+      }
+
+      return left.id.localeCompare(right.id);
+    });
+}
+
+function getRecentOffseasonLogs(career: CareerSave) {
+  const activeLogs = career.seasonState.offseason?.logEntries ?? [];
+  const historyLogs = career.seasonHistory.flatMap(
+    (summary) => summary.offseasonSummary?.notableLogEntries ?? [],
+  );
+
+  return [...historyLogs, ...activeLogs].slice(-8).reverse();
+}
+
+function getClosedMarketStatusLabel(career: CareerSave) {
+  const offseasonStatus = career.seasonState.offseason?.status;
+
+  if (career.seasonState.phase === "offseason" && offseasonStatus === "summary") {
+    return "스토브리그 대기";
+  }
+
+  if (career.seasonState.phase === "completed") {
+    return "커리어 결산";
+  }
+
+  return "시장 닫힘";
+}
+
+function getNextMarketDescription(career: CareerSave) {
+  const offseasonStatus = career.seasonState.offseason?.status;
+
+  if (career.seasonState.phase === "offseason" && offseasonStatus === "summary") {
+    return "시즌 결산 화면에서 28일 스토브리그에 진입할 수 있습니다.";
+  }
+
+  if (career.seasonState.phase === "completed") {
+    return "3시즌 결산 상태입니다. 추가 시즌 확장 전까지 이적시장은 열리지 않습니다.";
+  }
+
+  return "정식 시장은 시즌 종료 후 28일 스토브리그로 열립니다. LCK 1~2라운드 종료 후 MSI 전후 단기 시장은 후속 확장 예정입니다.";
 }
 
 function findLatestOffer(
@@ -369,6 +441,7 @@ function ContractOfferModal({
             <p className="eyebrow">{title}</p>
             <h2>{modalPlayer.name}</h2>
             <span>{getPlayerLabel(modalPlayer)}</span>
+            <EvaluationStars player={modalPlayer} />
           </div>
           <button
             aria-label="닫기"
@@ -532,6 +605,7 @@ function ContractTab({
             <div className="offseason-player-main">
               <strong>{player.name}</strong>
               <span>{getPlayerLabel(player)}</span>
+              <EvaluationStars compact player={player} />
               <small>
                 {latestOffer
                   ? `최근 재계약 제안 ${getOfferStatusLabel(
@@ -626,13 +700,23 @@ function ConfirmationPendingSection({
           return (
             <article className="offseason-confirmation-card" key={offer.id}>
               <div className="offseason-confirmation-player-card">
-                <span>{player?.role.toUpperCase() ?? "FA"}</span>
-                <strong>{player?.overall ?? "--"}</strong>
-                <em>{player?.name ?? offer.playerIds[0]}</em>
+                {player ? (
+                  <>
+                    <PlayerPortrait player={player} size="lg" />
+                    <em>{player.name}</em>
+                    <EvaluationStars compact player={player} />
+                  </>
+                ) : (
+                  <>
+                    <span>FA</span>
+                    <em>{offer.playerIds[0]}</em>
+                  </>
+                )}
               </div>
               <div className="offseason-confirmation-details">
                 <strong>{player?.name ?? offer.playerIds[0]}</strong>
                 <span>{player ? getPlayerLabel(player) : "선수 정보 없음"}</span>
+                {player && <EvaluationStars compact player={player} />}
                 <small>제안 연봉 {formatSalaryAmount(offer.salaryOffer)}</small>
                 <small>
                   제안 역할 {getRequestedRosterRoleLabel(offer.requestedRosterRole)}
@@ -855,6 +939,7 @@ function FreeAgentTab({
             <div className="offseason-player-main">
               <strong>{player.name}</strong>
               <span>{getPlayerLabel(player)}</span>
+              <EvaluationStars compact player={player} />
               <small>
                 {latestOffer
                   ? `최근 FA 제안 ${getOfferStatusLabel(
@@ -959,6 +1044,7 @@ function RosterTab({
           <article className="offseason-mini-player" key={player.id}>
             <strong>{player.name}</strong>
             <span>{getPlayerLabel(player)}</span>
+            <EvaluationStars compact player={player} />
           </article>
         ))}
       </div>
@@ -1031,6 +1117,219 @@ function LogTab({ career }: { career: CareerSave }) {
   );
 }
 
+function ClosedMarketFreeAgentPanel({ career }: { career: CareerSave }) {
+  const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
+  const [tierFilter, setTierFilter] = useState<
+    "all" | "main" | "academy" | "free-agent"
+  >("all");
+  const players = getClosedMarketPlayers(career);
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredPlayers = players.filter((player) => {
+    const matchesQuery =
+      normalizedQuery.length === 0 ||
+      player.name.toLowerCase().includes(normalizedQuery) ||
+      (player.realName ?? "").toLowerCase().includes(normalizedQuery) ||
+      (player.nativeName ?? "").toLowerCase().includes(normalizedQuery);
+    const matchesRole = roleFilter === "all" || player.role === roleFilter;
+    const matchesTier =
+      tierFilter === "all" || (player.rosterTier ?? "free-agent") === tierFilter;
+
+    return matchesQuery && matchesRole && matchesTier;
+  });
+
+  return (
+    <Card>
+      <div className="section-label-row">
+        <span>FA 명단</span>
+        <strong>{filteredPlayers.length}명</strong>
+      </div>
+      <p className="muted">
+        협상은 등록된 이적시장 기간에만 가능합니다. 지금은 시장 상태와
+        후보군만 확인할 수 있습니다.
+      </p>
+      <div className="offseason-filter-row">
+        <label>
+          <span>검색</span>
+          <input
+            aria-label="닫힌 시장 선수 검색"
+            placeholder="선수명"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
+        <label>
+          <span>포지션</span>
+          <select
+            aria-label="닫힌 시장 포지션 필터"
+            value={roleFilter}
+            onChange={(event) =>
+              setRoleFilter(event.target.value as "all" | Role)
+            }
+          >
+            <option value="all">전체 포지션</option>
+            {roleOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>구분</span>
+          <select
+            aria-label="닫힌 시장 1군 2군 필터"
+            value={tierFilter}
+            onChange={(event) =>
+              setTierFilter(
+                event.target.value as "all" | "main" | "academy" | "free-agent",
+              )
+            }
+          >
+            <option value="all">전체</option>
+            <option value="main">1군</option>
+            <option value="academy">2군</option>
+            <option value="free-agent">무소속</option>
+          </select>
+        </label>
+      </div>
+      {filteredPlayers.length === 0 ? (
+        <div className="offseason-empty">
+          <strong>확인 가능한 FA 선수가 없습니다.</strong>
+          <span>필터를 조정하거나 다음 이적시장 개장을 기다리세요.</span>
+        </div>
+      ) : (
+        <div className="offseason-list offseason-closed-player-list">
+          {filteredPlayers.slice(0, 16).map((player) => (
+            <article className="offseason-player-row" key={player.id}>
+              <div className="offseason-player-main">
+                <strong>{player.name}</strong>
+                <span>{getPlayerLabel(player)}</span>
+                <EvaluationStars compact player={player} />
+                <small>
+                  {getMarketTeamLabel(player)} · {getRosterTierLabel(player)}
+                </small>
+              </div>
+              <strong className="offseason-status-label">관찰 가능</strong>
+            </article>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function ClosedMarketLogPanel({ career }: { career: CareerSave }) {
+  const logs = getRecentOffseasonLogs(career);
+
+  return (
+    <Card>
+      <div className="section-label-row">
+        <span>이적 로그</span>
+        <strong>{logs.length}</strong>
+      </div>
+      {logs.length === 0 ? (
+        <div className="offseason-empty">
+          <strong>아직 확인할 이적 로그가 없습니다.</strong>
+          <span>스토브리그가 진행되면 주요 기록이 이곳에 남습니다.</span>
+        </div>
+      ) : (
+        <div className="offseason-log-list offseason-closed-log-list">
+          {logs.map((log) => (
+            <article
+              className={`offseason-log-entry offseason-log-${log.type} ${
+                log.isUserTeamRelated ? "offseason-log-user-team" : ""
+              }`}
+              key={log.id}
+            >
+              <span>
+                {log.week}주차 {log.day}일
+              </span>
+              <strong>{log.message}</strong>
+            </article>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function ClosedOffseasonInfo({ career }: { career: CareerSave }) {
+  const validation = validateOffseasonRoster(career);
+  const activeSalaryTotal = getActiveSalaryTotal(career);
+  const remainingBudget = career.userTeam.budget - activeSalaryTotal;
+
+  return (
+    <section className="stack offseason-page">
+      <Card>
+        <div className="offseason-closed-hero">
+          <div>
+            <p className="eyebrow">Stove League Hub</p>
+            <h1>현재 이적시장은 닫혀 있습니다.</h1>
+            <p>{getNextMarketDescription(career)}</p>
+          </div>
+          <div className="offseason-day-badge">
+            <span>현재 상태</span>
+            <strong>{getClosedMarketStatusLabel(career)}</strong>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="section-label-row">
+          <span>시장 개요</span>
+          <strong>{career.seasonState.currentDateLabel}</strong>
+        </div>
+        <div className="season-summary-metrics">
+          <article className="season-summary-metric">
+            <span>팀 예산</span>
+            <strong>{formatSalaryAmount(career.userTeam.budget)}</strong>
+            <small>현재 시즌 기준</small>
+          </article>
+          <article className="season-summary-metric">
+            <span>연봉 총액</span>
+            <strong>{formatSalaryAmount(activeSalaryTotal)}</strong>
+            <small>잔여 {formatSalaryAmount(remainingBudget)}</small>
+          </article>
+          <article className="season-summary-metric">
+            <span>1군 등록</span>
+            <strong>{validation.mainRosterPlayerIds.length}명</strong>
+            <small>선발 5인 + 후보</small>
+          </article>
+          <article className="season-summary-metric">
+            <span>2군 등록</span>
+            <strong>{validation.academyPlayerIds.length}명</strong>
+            <small>아카데미 로스터</small>
+          </article>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="section-label-row">
+          <span>일정 안내</span>
+          <strong>후속 확장 여지</strong>
+        </div>
+        <div className="offseason-window-grid">
+          <article className="offseason-mini-player">
+            <strong>정규 스토브리그</strong>
+            <span>프리시즌과 시즌 종료 후 28일 시장</span>
+          </article>
+          <article className="offseason-mini-player">
+            <strong>MSI 전후 단기 시장</strong>
+            <span>
+              LCK Rounds 1-2 종료 후 추가 영입, 방출, 트레이드 확장 예정
+            </span>
+          </article>
+        </div>
+      </Card>
+
+      <ClosedMarketFreeAgentPanel career={career} />
+      <ClosedMarketLogPanel career={career} />
+    </section>
+  );
+}
+
 export function OffseasonMarket({
   career,
   onCancelFreeAgentSigning,
@@ -1045,6 +1344,7 @@ export function OffseasonMarket({
     useState<NegotiationTarget | null>(null);
   const offseason = career.seasonState.offseason;
   const validationErrors = offseason?.validationErrors ?? [];
+  const marketViewStatus = getOffseasonMarketViewStatus(career);
 
   const activePanel = useMemo(() => {
     if (activeTab === "contracts") {
@@ -1082,17 +1382,8 @@ export function OffseasonMarket({
     onViewRoster,
   ]);
 
-  if (career.seasonState.phase !== "offseason" || offseason?.status !== "active") {
-    return (
-      <section className="stack offseason-page">
-        <Card>
-          <div className="offseason-empty">
-            <strong>진행 중인 스토브리그가 없습니다.</strong>
-            <span>시즌 요약 화면에서 스토브리그에 진입하세요.</span>
-          </div>
-        </Card>
-      </section>
-    );
+  if (marketViewStatus === "closed-info") {
+    return <ClosedOffseasonInfo career={career} />;
   }
 
   return (

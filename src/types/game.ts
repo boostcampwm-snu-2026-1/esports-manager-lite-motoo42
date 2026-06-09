@@ -63,6 +63,8 @@ export type Player = {
 
 export type PlayerStatus = {
   form: number;
+  evaluationForm?: number;
+  evaluationStars?: number;
   fatigue: number;
   morale: MoraleLevel;
   condition: number;

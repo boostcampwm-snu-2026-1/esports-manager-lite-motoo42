@@ -117,7 +117,7 @@ const shellMenuGroups: ShellMenuGroup[] = [
         label: "스토브리그",
         icon: "FA",
         route: "offseason",
-        subItems: ["타임라인", "내 팀 계약", "FA 시장", "이적 로그"],
+        subItems: ["시장 개요", "FA 명단", "일정 안내", "이적 로그"],
       },
     ],
   },

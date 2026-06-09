@@ -1,5 +1,6 @@
 import { Button } from "../../shared/ui/Button";
 import { formatSalaryAmount } from "../../shared/format/money";
+import { EvaluationStars } from "../../shared/ui/EvaluationStars";
 import { PlayerPortrait } from "../../shared/ui/PlayerPortrait";
 import type { ContractType, Player, Team } from "../../types/game";
 
@@ -52,6 +53,7 @@ export function SignedRosterPanel({
                 {formatSalaryAmount(player.salaryExpectation)}
                 {starterIds.has(player.id) ? " · starter" : " · academy"}
               </p>
+              <EvaluationStars compact player={player} />
             </div>
           </div>
           <label className="contract-select">

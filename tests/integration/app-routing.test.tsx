@@ -149,6 +149,49 @@ describe("App routing", () => {
     ).toBeVisible();
   });
 
+  it("opens the read-only offseason hub from the sidebar during competition", async () => {
+    const baseCareer = createInitialCareer("T1");
+    const career = {
+      ...baseCareer,
+      seasonState: {
+        ...completeStoveLeague(baseCareer.seasonState),
+        offseason: undefined,
+      },
+    };
+    const save = createSaveDto({ career });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: RequestInfo | URL) => {
+        const requestUrl = String(url);
+
+        if (requestUrl.includes("/api/saves/save-1")) {
+          return jsonResponse({ save });
+        }
+
+        return jsonResponse({ saves: [save] });
+      }),
+    );
+
+    render(<App />);
+
+    await screen.findByText("저장 목록 동기화됨");
+    fireEvent.change(screen.getByRole("combobox", { name: "Save slot" }), {
+      target: { value: "save-1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "불러오기" }));
+
+    await waitFor(() => expect(window.location.pathname).toBe("/hub"));
+
+    fireEvent.click(await screen.findByTestId("shell-menu-offseason"));
+
+    await waitFor(() => expect(window.location.pathname).toBe("/offseason"));
+    expect(
+      await screen.findByText("현재 이적시장은 닫혀 있습니다."),
+    ).toBeVisible();
+    expect(screen.queryByRole("button", { name: "FA 협상" })).not.toBeInTheDocument();
+  });
+
   it("keeps dashboard internal navigation on the target URL without route bounce", async () => {
     const baseCareer = createInitialCareer("T1");
     const career = {

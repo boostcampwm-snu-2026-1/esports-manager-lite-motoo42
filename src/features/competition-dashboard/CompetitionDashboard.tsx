@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CompetitionSubPage } from "../../app/routes";
+import { EvaluationStars } from "../../shared/ui/EvaluationStars";
 import {
   asianGamesCountryProfiles,
   asianGamesKoreaTeamId,
@@ -265,6 +266,10 @@ function getMatchTitle(match: MatchSchedule) {
 
 function getFormatLabel(match: MatchSchedule) {
   return `${match.format.toUpperCase()}${match.fearlessEnabled ? " · Fearless" : ""}`;
+}
+
+function getSelectionStarsFromForm(form: number) {
+  return Math.max(0.5, Math.min(5, Math.round(form / 10) * 0.5));
 }
 
 function compareStandingEntries(left: StandingEntry, right: StandingEntry) {
@@ -4568,9 +4573,9 @@ function AsianGamesOverview({ career }: { career: CareerSave }) {
               </span>
               <strong>{member.playerName}</strong>
               <small>
-                {getAsianGamesRoleSelectionLabel(member)} · 폼{" "}
-                {member.formAtSelection}
+                {getAsianGamesRoleSelectionLabel(member)} · 선발 당시 평가
               </small>
+              <EvaluationStars compact value={getSelectionStarsFromForm(member.formAtSelection)} />
             </article>
           ))}
           {!asianGamesState && (

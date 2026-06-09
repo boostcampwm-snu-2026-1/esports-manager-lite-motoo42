@@ -106,6 +106,10 @@ https://github.com/boostcampwm-snu-2026-1/esports-manager-lite-motoo42
 - 2027/2028 다음 시즌 진입 시 직전 LCK 순위가 기대 순위보다 높거나 낮으면 ELO/예산/strength가 소폭 보정됨.
 - 연봉/예산 내부 단위는 `1 = 1천만원`, 예: `130 = 13억`. UI 표시에는 한국식 금액 formatter를 사용.
 - `src/domain/players`에 선수 상태, 계약, 시장가치, 시즌 롤오버 helper 분리.
+- UI에는 `overall`, `ability`, `potential`, `OVR`, `POT` 같은 내부 능력치 숫자를 직접 노출하지 않고 흰색 별점 기반 `평가`만 표시한다.
+- `src/domain/players/playerEvaluation.ts`가 숨겨진 선수 품질, 완만한 폼 보정, 사기, 피로도를 합산해 평가 점수와 0.5~5.0성 별점을 계산한다.
+- `evaluationForm`은 `previous * 0.85 + form * 0.15`로 완만하게 갱신하고, 별점 경계에는 1점 완충을 둬 경계값 근처 흔들림만 줄인다.
+- 공통 `EvaluationStars`, `PlayerCard` 컴포넌트로 로스터, 허브, 스토브리그, 로스터 빌더의 선수 카드 표기를 통일한다.
 - 다음 시즌 전환 시 나이 증가, 상태 회복, 성장/하락, 시장가치 기반 `salaryExpectation`/`cost`, 은퇴 후보 플래그 반영.
 - 오프시즌 시작 시 은퇴 대상과 병역 `pending` 선수는 계약/선발/로스터/FA 시장에서 제외.
 - 3시즌 기말 목표에서는 신규 유망주 생성 로직을 만들지 않고, 3군/FA/해외리거/가상선수 공급 방식은 장기 과제로 보류.
@@ -119,6 +123,8 @@ https://github.com/boostcampwm-snu-2026-1/esports-manager-lite-motoo42
 - 프리시즌 종료 후에는 다음 시즌으로 넘어가지 않고 같은 2026 시즌의 LCK Cup을 활성화한다.
 - `/summary`는 시즌 결과 확인과 스토브리그 진입 허브.
 - `/offseason`은 28일/4주 날짜 진행형 시장.
+- `/offseason`은 커리어가 있으면 항상 접근 가능하다. 실제 시장 기간이 아니면 읽기 전용 닫힌 시장 정보 화면으로 FA 명단, 예산/로스터 요약, 다음 시장 일정, 최근 이적 로그를 보여준다.
+- MSI 전후 단기 영입/방출/트레이드 시장은 아직 구현하지 않았고, 닫힌 시장 화면에서 후속 확장 예정으로 안내한다.
 - 1주차: 팀 내 재계약/방출. 재계약 제안은 하루 단위 pending 후 수락/거절 판정.
 - 2~4주차: FA 계약 제안과 AI 경쟁. 선수는 유저/AI 제안을 모두 거절할 수 있고, 마감이 가까울수록 요구 조건이 완만하게 낮아짐.
 - FA/재계약 제안에는 `1군 주전`, `식스맨`, `2군` 제안 역할을 저장한다.
@@ -222,15 +228,23 @@ UI 변경 후 가능하면 16:9와 모바일 폭을 확인한다.
 
 ### 기능 작업 후보
 
-1. `닫힌 스토브리그 정보 화면`
-   - 스토브리그 기간이 아니어도 FA 풀과 다음 시장 일정을 볼 수 있게 변경
-2. `타팀 로스터/스카우팅, 선수 카드/뉴스`
+1. `타팀 로스터/스카우팅`
    - 다른 팀 박스 클릭 시 상대 팀 기본 로스터/선발 5인을 확인할 수 있는 화면 추가
-   - FIFA식 선수 카드 리디자인과 메시지함/뉴스/일정 알림 1차 구현
+   - 새 `평가` 별점과 `PlayerCard` 컴포넌트를 재사용해 내부 OVR/POT를 숨긴 스카우팅 화면으로 만든다.
+2. `메시지함/뉴스`
+   - 메시지함/뉴스/일정 알림 1차 구현
    - 메시지함/뉴스 1차 구현 때 우리 팀 이적 로그를 메시지함에도 노출해야 함
 
 ### 최근 완료된 베타 전 재정비
 
+- `선수 평가 공개 정책 + 선수 카드 리디자인`
+  - UI에서 내부 OVR/POT/포텐셜 직접 표기 제거
+  - 흰색 별점 `평가`와 공통 선수 카드 컴포넌트 도입
+  - 선발 슬롯/후보/2군/계약/스토브리그/허브 카드의 사진, 이름, 포지션, 평가 표시 정리
+- `닫힌 스토브리그 정보 화면`
+  - 시즌 중에도 `/offseason` 접근 가능
+  - 닫힌 시장에서는 FA/무소속 명단, 예산/로스터 요약, 다음 시장 일정, 최근 이적 로그를 읽기 전용으로 표시
+  - MSI 전후 단기 시장은 후속 확장 여지로 안내
 - `베타 피드백 A 묶음`
   - FA/재계약 제안 역할(`1군 주전`, `식스맨`, `2군`) 추가
   - 유저 FA 승리 후 영입 확정 대기 -> 최종 확정/취소 흐름 구현
@@ -265,8 +279,55 @@ UI 변경 후 가능하면 16:9와 모바일 폭을 확인한다.
 - 베타 전 재정비 1번: 리렌더링/Route 왕복 버그 수정 완료
 - 베타 전 재정비 2번: 2026 시작 전 프리시즌 스토브리그 완료
 - 베타 전 재정비 3번: 1군/2군 로스터 분리와 콜업/콜다운 완료
+- 베타 전 재정비 4번: 닫힌 스토브리그 정보 화면 완료
+- 베타 전 재정비 6번: 선수 평가 공개 정책 + 선수 카드 리디자인 완료
 
 ## 최근 작업 로그
+
+### 2026-06-09 - 베타 전 재정비 6번: 선수 평가 공개 정책 + 선수 카드 리디자인
+
+작업 범위:
+
+- `PlayerStatus`에 optional `evaluationForm`, `evaluationStars` 추가
+- `src/domain/players/playerEvaluation.ts`에 평가 점수, 별점 경계, hysteresis, smoothing helper 추가
+- `normalizeCareerSave`와 선수 시즌 롤오버에서 오래된 저장/새 시즌 상태에 평가 필드 보강
+- `EvaluationStars`, `PlayerCard` 공통 UI 추가
+- 로스터 1군/2군/계약, 메인 허브 선발 5인, 스토브리그, 로스터 빌더, 선수 상세 모달에서 OVR/POT 직접 노출 제거
+- 선발 슬롯 카드와 사진 영역 CSS를 고정 높이/비율 중심으로 조정해 사진/텍스트/평가가 밀리지 않도록 수정
+
+검증:
+
+- `npm.cmd test -- tests/unit/player-evaluation.test.ts tests/unit/career-save-normalization.test.ts` 통과
+- `npm.cmd test -- tests/integration/season-roster-manager.test.tsx tests/integration/offseason-market.test.tsx tests/integration/roster-builder.test.tsx` 통과
+- `npm.cmd test` 통과: 47 files / 207 tests
+- `npm.cmd run build` 통과. Vite chunk-size 경고는 기존 경고
+- `screenshots/live-preview/roster-main-evaluation-cards.png`, `roster-academy-evaluation-cards.png`, `roster-contracts-evaluation-cards.png`, `offseason-evaluation-cards.png`, `hub-starter-evaluation-cards.png` 캡처 확인
+- 시각 확인 결과 선발 슬롯/후보/2군/허브 카드의 사진, 이름, 평가 별점 잘림 없음
+
+다음 작업:
+
+- 타팀 로스터/스카우팅 화면 추가
+
+### 2026-06-09 - 베타 전 재정비 4번: 닫힌 스토브리그 정보 화면
+
+작업 범위:
+
+- `/offseason`을 커리어가 있으면 항상 접근 가능한 스토브리그 허브로 변경
+- 실제 시장 기간이 아니면 닫힌 시장 정보 화면을 렌더링
+- 닫힌 시장 화면에 시장 개요, 내 팀 예산/연봉/1군/2군 요약, FA 명단 필터, 일정 안내, 최근 이적 로그 표시
+- 닫힌 시장에서는 협상/방출/영입 확정 버튼을 노출하지 않음
+- MSI 전후 단기 시장은 후속 확장 예정으로 안내
+
+검증:
+
+- `npm.cmd test -- tests/integration/offseason-market.test.tsx tests/integration/app-routing.test.tsx` 통과
+- `npm.cmd test -- tests/unit/offseason-market.test.ts` 통과
+- `npm.cmd test` 통과
+- `npm.cmd run build` 통과
+
+다음 작업:
+
+- 타팀 로스터/스카우팅 화면 추가
 
 ### 2026-06-09 - README 최신화
 

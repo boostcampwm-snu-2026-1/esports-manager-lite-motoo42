@@ -1,6 +1,7 @@
 import { sampleOpponents } from "../../data/sampleOpponents";
 import { lck2026Players } from "../../data/lck2026Players";
 import { getLck2026PlayerPortrait } from "../../data/lck2026PlayerPortraits";
+import { ensurePlayerEvaluationStatus } from "../players";
 import type {
   CareerSave,
   OffseasonLogEntry,
@@ -120,6 +121,15 @@ function normalizeTeamRosterBuckets(team: Team, players: Player[]): Team {
 }
 
 function normalizePlayer(player: Player): Player {
+  const baseStatus: Player["status"] = {
+    form: player.status?.form ?? 50,
+    evaluationForm: player.status?.evaluationForm,
+    evaluationStars: player.status?.evaluationStars,
+    fatigue: player.status?.fatigue ?? 0,
+    morale: player.status?.morale ?? "neutral",
+    condition: player.status?.condition ?? 100,
+    injuryRisk: player.status?.injuryRisk ?? 5,
+  };
   const normalized: Player = {
     ...player,
     secondaryRoles: player.secondaryRoles ?? [],
@@ -127,13 +137,7 @@ function normalizePlayer(player: Player): Player {
     militaryServiceStatus: player.militaryServiceStatus ?? "none",
     retirementCandidate: player.retirementCandidate ?? false,
     traits: player.traits ?? [],
-    status: {
-      form: player.status?.form ?? 50,
-      fatigue: player.status?.fatigue ?? 0,
-      morale: player.status?.morale ?? "neutral",
-      condition: player.status?.condition ?? 100,
-      injuryRisk: player.status?.injuryRisk ?? 5,
-    },
+    status: baseStatus,
     mindset: {
       pressureResistance: player.mindset?.pressureResistance ?? player.mental,
       clutch: player.mindset?.clutch ?? player.mental,
@@ -186,6 +190,7 @@ function normalizePlayer(player: Player): Player {
       buyoutEstimate: player.marketProfile?.buyoutEstimate,
     },
   };
+  normalized.status = ensurePlayerEvaluationStatus(normalized, normalized.status);
   const portrait = getLck2026PlayerPortrait(normalized);
 
   if (!portrait) {

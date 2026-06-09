@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { createInitialCareer } from "../../src/domain/career/createInitialCareer";
 import {
+  completeStoveLeague,
   completeSeasonAfterWorlds,
   initializeOffseasonMarket,
 } from "../../src/domain/season";
@@ -102,6 +103,36 @@ function createActiveOffseasonCareer(): CareerSave {
 }
 
 describe("OffseasonMarket", () => {
+  it("renders a read-only closed market hub during the competition season", () => {
+    const preseasonCareer = createInitialCareer("T1");
+    const competitionCareer: CareerSave = {
+      ...preseasonCareer,
+      seasonState: {
+        ...completeStoveLeague(preseasonCareer.seasonState),
+        offseason: undefined,
+      },
+    };
+
+    render(
+      <OffseasonMarket
+        career={competitionCareer}
+        onCancelFreeAgentSigning={vi.fn()}
+        onConfirmFreeAgentSigning={vi.fn()}
+        onReleaseExpiredPlayer={vi.fn()}
+        onSubmitFreeAgentOffer={vi.fn()}
+        onSubmitRenewalOffer={vi.fn()}
+        onViewRoster={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("현재 이적시장은 닫혀 있습니다.")).toBeVisible();
+    expect(screen.getByText("시장 개요")).toBeVisible();
+    expect(screen.getByText("FA 명단")).toBeVisible();
+    expect(screen.getByText("MSI 전후 단기 시장")).toBeVisible();
+    expect(screen.getByText("BeryL")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "FA 협상" })).not.toBeInTheDocument();
+  });
+
   it("renders the new career preseason renewals and full LCK market filters", () => {
     const career = createInitialCareer("T1");
 
@@ -159,6 +190,8 @@ describe("OffseasonMarket", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "재계약 협상" }));
     expect(screen.getByRole("dialog", { name: "재계약 협상" })).toBeVisible();
+    expect(screen.getAllByLabelText(/평가/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/OVR|POT|오버롤|포텐셜/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("제안 역할")).toBeVisible();
     expect(screen.getByText("협상 분위기")).toBeVisible();
     expect(screen.queryByText("현재 최소 수락선")).not.toBeInTheDocument();
