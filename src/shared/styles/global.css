@@ -1158,7 +1158,7 @@ select {
 }
 
 .evaluation-star-empty {
-  color: rgb(248 250 252 / 20%);
+  color: rgb(248 250 252 / 34%);
 }
 
 .evaluation-star-fill {
@@ -1172,6 +1172,7 @@ select {
 
 .evaluation-star-half .evaluation-star-fill {
   width: 50%;
+  overflow: hidden;
 }
 
 .evaluation-stars-compact {

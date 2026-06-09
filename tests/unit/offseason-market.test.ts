@@ -12,6 +12,8 @@ import {
   getOffseasonMarketViewStatus,
   getOffseasonNegotiationSnapshot,
   getOffseasonVisibleDemandSalary,
+  isFreeAgentMarketPlayer,
+  isObservableFreeAgentPlayer,
   progressOffseasonDay,
   releaseExpiredOffseasonPlayer,
   submitFreeAgentOffer,
@@ -196,7 +198,39 @@ describe("offseason market", () => {
     expect(getOffseasonMarketViewStatus(competitionCareer)).toBe("closed-info");
   });
 
-  it("starts a new career in the 2026 preseason market with selected-team renewals and the full LCK market", () => {
+  it("treats only unassigned registered players as FA market players", () => {
+    const career = startMarket();
+    const beryl = getPlayer(career, "fa-2026-beryl");
+
+    expect(isFreeAgentMarketPlayer(career, beryl)).toBe(true);
+    expect(isObservableFreeAgentPlayer(career, beryl)).toBe(true);
+
+    const assignedCareer: CareerSave = {
+      ...career,
+      lckPlayers: career.lckPlayers.map((player) =>
+        player.id === beryl.id
+          ? {
+              ...player,
+              currentTeam: "Gen.G",
+            }
+          : player,
+      ),
+    };
+    const assignedBeryl = getPlayer(assignedCareer, "fa-2026-beryl");
+    const offered = submitFreeAgentOffer(assignedCareer, {
+      playerId: "fa-2026-beryl",
+      contractType: "one-year",
+      salaryOffer: getFreeAgentAcceptSalary(career, "fa-2026-beryl", "one-year"),
+    });
+
+    expect(isFreeAgentMarketPlayer(assignedCareer, assignedBeryl)).toBe(false);
+    expect(isObservableFreeAgentPlayer(assignedCareer, assignedBeryl)).toBe(false);
+    expect(offered.seasonState.offseason?.pendingOffers ?? []).toHaveLength(
+      assignedCareer.seasonState.offseason?.pendingOffers?.length ?? 0,
+    );
+  });
+
+  it("starts a new career in the 2026 preseason market with selected-team renewals and true FA players", () => {
     const career = createInitialCareer("T1");
     const expiredIds = career.seasonState.offseason?.expiredContractPlayerIds ?? [];
     const marketIds = career.seasonState.offseason?.freeAgentPlayerIds ?? [];
@@ -207,7 +241,9 @@ describe("offseason market", () => {
     expect(expiredIds).toContain("lck-mid-01");
     expect(expiredIds).toContain("lck-2026-t1-cloud");
     expect(marketIds).not.toContain("lck-mid-01");
-    expect(marketIds).toContain("lck-mid-02");
+    expect(marketIds).not.toContain("lck-mid-02");
+    expect(marketIds).toContain("fa-2026-beryl");
+    expect(getPlayer(career, "fa-2026-beryl").currentTeam).toBeUndefined();
   });
 
   it("enters the 2026 LCK Cup from the final preseason day without advancing the season number", () => {

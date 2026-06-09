@@ -5,6 +5,8 @@ import {
   getOffseasonNegotiationSnapshot,
   getOffseasonVisibleDemandSalary,
   getUnresolvedExpiredPlayerIds,
+  isFreeAgentMarketPlayer,
+  isObservableFreeAgentPlayer,
   validateOffseasonRoster,
   type OffseasonContractOfferInput,
 } from "../../domain/season";
@@ -232,9 +234,6 @@ function getClosedMarketPlayers(career: CareerSave) {
   const explicitMarketIds = new Set(
     career.seasonState.offseason?.freeAgentPlayerIds ?? [],
   );
-  const confirmationPendingPlayerIds = new Set(
-    getConfirmationPendingOffers(career).flatMap((offer) => offer.playerIds),
-  );
   const knownPlayerIds = new Set(career.lckPlayers.map((player) => player.id));
   const displayPlayers = [
     ...career.lckPlayers,
@@ -244,9 +243,8 @@ function getClosedMarketPlayers(career: CareerSave) {
   return displayPlayers
     .filter(
       (player) =>
-        player.availableForRoster &&
-        !confirmationPendingPlayerIds.has(player.id) &&
-        (!player.currentTeam || explicitMarketIds.has(player.id)),
+        isObservableFreeAgentPlayer(career, player) &&
+        (explicitMarketIds.size === 0 || explicitMarketIds.has(player.id)),
     )
     .sort((left, right) => {
       const overallDiff = right.overall - left.overall;
@@ -795,15 +793,8 @@ function FreeAgentTab({
       .flatMap((offer) => offer.playerIds),
   );
   const confirmationPendingOffers = getConfirmationPendingOffers(career);
-  const confirmationPendingPlayerIds = new Set(
-    confirmationPendingOffers.flatMap((offer) => offer.playerIds),
-  );
-  const freeAgents = (offseason?.freeAgentPlayerIds ?? [])
-    .map((playerId) => getPlayer(career.lckPlayers, playerId))
-    .filter(
-      (player): player is Player =>
-        player !== undefined && !confirmationPendingPlayerIds.has(player.id),
-    )
+  const freeAgents = career.lckPlayers
+    .filter((player) => isFreeAgentMarketPlayer(career, player))
     .sort((left, right) => right.overall - left.overall);
   const normalizedQuery = query.trim().toLowerCase();
   const teamOptions = [

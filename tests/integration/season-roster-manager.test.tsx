@@ -53,7 +53,7 @@ describe("SeasonRosterManager", () => {
       (player) => player.currentTeam === "KT Rolster" && player.rosterTier === "main",
     );
 
-    render(
+    const { container } = render(
       <SeasonRosterManager
         players={players}
         team={createTeam(players)}
@@ -75,6 +75,14 @@ describe("SeasonRosterManager", () => {
       screen.getAllByRole("img", { name: "Bdd portrait" }).length,
     ).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByLabelText(/평가/).length).toBeGreaterThan(0);
+    expect(
+      screen
+        .getAllByLabelText(/평가/)
+        .some((element) => element.getAttribute("aria-label") !== "평가 5.0성"),
+    ).toBe(true);
+    expect(container.querySelector(".evaluation-star-empty")?.textContent).toBe(
+      "☆",
+    );
     expect(screen.queryByText(/OVR|POT|오버롤|포텐셜/)).not.toBeInTheDocument();
   });
 

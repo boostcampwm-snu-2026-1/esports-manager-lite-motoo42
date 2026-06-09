@@ -6,9 +6,18 @@ import type {
   SeasonCalendarType,
   StandingEntry,
 } from "../../types/game";
+import {
+  assertLckSchedulePolicy,
+  assignMatchesToLckWeekSlots,
+} from "./lckSchedulePolicy";
 import { getDomesticMatchDateKey } from "./seasonScheduleDates";
 
-export const lckCupGroupBattleWeeks = 5;
+export const lckCupGroupBattleWeeks = 3;
+export const lckCupPlayInRound1Week = lckCupGroupBattleWeeks + 1;
+export const lckCupPlayInRound2Week = lckCupGroupBattleWeeks + 2;
+export const lckCupPlayoffsWildcardWeek = lckCupGroupBattleWeeks + 3;
+export const lckCupPlayoffsSemifinalsWeek = lckCupGroupBattleWeeks + 4;
+export const lckCupFinalsWeek = lckCupGroupBattleWeeks + 5;
 
 const baronSeedIndexes = new Set([0, 3, 4, 7, 8]);
 
@@ -29,6 +38,13 @@ type SeededTeam = StandingEntry & {
 type ScheduleDateOptions = {
   year: number;
   calendarType: SeasonCalendarType;
+};
+
+type LckCupCrossGroupPair = {
+  blue: StandingEntry;
+  red: StandingEntry;
+  blueTeamId: string;
+  redTeamId: string;
 };
 
 function getGroupLabel(group: LckCupGroupName) {
@@ -101,6 +117,14 @@ function getLckCupScheduledDate(
         year: options.year,
       })
     : undefined;
+}
+
+function getLckCupWeekDate(
+  options: ScheduleDateOptions | undefined,
+  week: number,
+  dayIndex: number,
+) {
+  return options ? getLckCupScheduledDate(options, week, dayIndex) : undefined;
 }
 
 function sortByInitialSeed(standings: StandingEntry[]) {
@@ -232,6 +256,105 @@ function createPlaceholderStanding(entry: StandingEntry): SeededTeam {
   };
 }
 
+function createCrossGroupPair({
+  baronTeam,
+  elderTeam,
+  shouldSwapSide,
+}: {
+  baronTeam: StandingEntry;
+  elderTeam: StandingEntry;
+  shouldSwapSide: boolean;
+}): LckCupCrossGroupPair {
+  const blue = shouldSwapSide ? elderTeam : baronTeam;
+  const red = shouldSwapSide ? baronTeam : elderTeam;
+
+  return {
+    blue,
+    red,
+    blueTeamId: blue.teamId,
+    redTeamId: red.teamId,
+  };
+}
+
+function createRegularGroupBattleWeekPairs({
+  baronTeams,
+  elderTeams,
+  week,
+}: {
+  baronTeams: StandingEntry[];
+  elderTeams: StandingEntry[];
+  week: number;
+}) {
+  const shiftsByWeek = week === 1 ? [1, 2] : [3, 4];
+
+  return shiftsByWeek.flatMap((shift) =>
+    baronTeams.map((baronTeam, index) =>
+      createCrossGroupPair({
+        baronTeam,
+        elderTeam: elderTeams[(index + shift) % elderTeams.length],
+        shouldSwapSide: (week + shift + index) % 2 === 0,
+      }),
+    ),
+  );
+}
+
+function createRegularGroupBattleSchedule({
+  baronTeams,
+  elderTeams,
+  options,
+}: {
+  baronTeams: StandingEntry[];
+  elderTeams: StandingEntry[];
+  options?: ScheduleDateOptions;
+}) {
+  return [1, 2].flatMap((week) =>
+    assignMatchesToLckWeekSlots(
+      createRegularGroupBattleWeekPairs({
+        baronTeams,
+        elderTeams,
+        week,
+      }),
+    ).map(({ dayIndex, item }) =>
+      createMatch({
+        scheduledDate: getLckCupWeekDate(options, week, dayIndex),
+        week,
+        stageName: lckCupStageNames.groupBattle,
+        blue: item.blue,
+        red: item.red,
+        format: "bo3",
+      }),
+    ),
+  );
+}
+
+function createSuperWeekSchedule({
+  baronTeams,
+  elderTeams,
+  options,
+}: {
+  baronTeams: StandingEntry[];
+  elderTeams: StandingEntry[];
+  options?: ScheduleDateOptions;
+}) {
+  return [4, 3, 2, 1, 0].map((selectionIndex, dayIndex) => {
+    const shouldSwapSide = dayIndex % 2 === 1;
+    const pair = createCrossGroupPair({
+      baronTeam: baronTeams[selectionIndex],
+      elderTeam: elderTeams[selectionIndex],
+      shouldSwapSide,
+    });
+
+    return createMatch({
+      scheduledDate: getLckCupWeekDate(options, lckCupGroupBattleWeeks, dayIndex),
+      week: lckCupGroupBattleWeeks,
+      stageName: lckCupStageNames.superWeek,
+      blue: pair.blue,
+      red: pair.red,
+      format: "bo5",
+    });
+  });
+}
+
 export function assignLckCupGroups(standings: StandingEntry[]): StandingEntry[] {
   const seededStandings = sortByInitialSeed(standings);
   const groupByTeamId = new Map<string, LckCupGroupName>();
@@ -260,31 +383,20 @@ export function createLckCupSchedule(
   const elderTeams = sortByInitialSeed(
     groupedStandings.filter((entry) => entry.lckCupGroup === "elder"),
   );
-  const schedule: MatchSchedule[] = [];
+  const schedule = [
+    ...createRegularGroupBattleSchedule({
+      baronTeams,
+      elderTeams,
+      options,
+    }),
+    ...createSuperWeekSchedule({
+      baronTeams,
+      elderTeams,
+      options,
+    }),
+  ];
 
-  for (let week = 1; week <= lckCupGroupBattleWeeks; week += 1) {
-    const isSuperWeek = week === lckCupGroupBattleWeeks;
-    const stageName = isSuperWeek
-      ? lckCupStageNames.superWeek
-      : lckCupStageNames.groupBattle;
-    const format: MatchSchedule["format"] = isSuperWeek ? "bo5" : "bo3";
-
-    baronTeams.forEach((baronTeam, index) => {
-      const elderTeam = elderTeams[(index + week - 1) % elderTeams.length];
-      const shouldSwapSide = (week + index) % 2 === 0;
-
-      schedule.push(
-        createMatch({
-          scheduledDate: getLckCupScheduledDate(options, week, index),
-          week,
-          stageName,
-          blue: shouldSwapSide ? elderTeam : baronTeam,
-          red: shouldSwapSide ? baronTeam : elderTeam,
-          format,
-        }),
-      );
-    });
-  }
+  assertLckSchedulePolicy(schedule);
 
   return { standings: groupedStandings, schedule };
 }
@@ -412,16 +524,16 @@ export function createLckCupPlayInRound1Schedule(
 
   return [
     createMatch({
-      scheduledDate: getLckCupScheduledDate(options, 6, 0),
-      week: 6,
+      scheduledDate: getLckCupScheduledDate(options, lckCupPlayInRound1Week, 0),
+      week: lckCupPlayInRound1Week,
       stageName: lckCupStageNames.playInRound1,
       blue: seeded[2],
       red: seeded[5],
       format: "bo3",
     }),
     createMatch({
-      scheduledDate: getLckCupScheduledDate(options, 6, 1),
-      week: 6,
+      scheduledDate: getLckCupScheduledDate(options, lckCupPlayInRound1Week, 1),
+      week: lckCupPlayInRound1Week,
       stageName: lckCupStageNames.playInRound1,
       blue: seeded[3],
       red: seeded[4],
@@ -455,16 +567,16 @@ export function createLckCupPlayInRound2Schedule(
 
   return [
     createMatch({
-      scheduledDate: getLckCupScheduledDate(options, 7, 0),
-      week: 7,
+      scheduledDate: getLckCupScheduledDate(options, lckCupPlayInRound2Week, 0),
+      week: lckCupPlayInRound2Week,
       stageName: lckCupStageNames.playInRound2,
       blue: seeded[0],
       red: winnerFromSeed4v5,
       format: "bo3",
     }),
     createMatch({
-      scheduledDate: getLckCupScheduledDate(options, 7, 1),
-      week: 7,
+      scheduledDate: getLckCupScheduledDate(options, lckCupPlayInRound2Week, 1),
+      week: lckCupPlayInRound2Week,
       stageName: lckCupStageNames.playInRound2,
       blue: seeded[1],
       red: winnerFromSeed3v6,
@@ -490,8 +602,8 @@ export function createLckCupPlayoffsWildcardSchedule(
 
   return [
     createMatch({
-      scheduledDate: getLckCupScheduledDate(options, 8, 0),
-      week: 8,
+      scheduledDate: getLckCupScheduledDate(options, lckCupPlayoffsWildcardWeek, 0),
+      week: lckCupPlayoffsWildcardWeek,
       stageName: lckCupStageNames.playoffsWildcard,
       blue: playInWinners[0],
       red: playInWinners[1],
@@ -519,16 +631,16 @@ export function createLckCupPlayoffsSemifinalSchedule(
 
   return [
     createMatch({
-      scheduledDate: getLckCupScheduledDate(options, 9, 0),
-      week: 9,
+      scheduledDate: getLckCupScheduledDate(options, lckCupPlayoffsSemifinalsWeek, 0),
+      week: lckCupPlayoffsSemifinalsWeek,
       stageName: lckCupStageNames.playoffsSemifinals,
       blue: direct[0],
       red: wildcardWinner,
       format: "bo5",
     }),
     createMatch({
-      scheduledDate: getLckCupScheduledDate(options, 9, 1),
-      week: 9,
+      scheduledDate: getLckCupScheduledDate(options, lckCupPlayoffsSemifinalsWeek, 1),
+      week: lckCupPlayoffsSemifinalsWeek,
       stageName: lckCupStageNames.playoffsSemifinals,
       blue: direct[1],
       red: direct[2],
@@ -554,8 +666,8 @@ export function createLckCupFinalsSchedule(
 
   return [
     createMatch({
-      scheduledDate: getLckCupScheduledDate(options, 10, 0),
-      week: 10,
+      scheduledDate: getLckCupScheduledDate(options, lckCupFinalsWeek, 0),
+      week: lckCupFinalsWeek,
       stageName: lckCupStageNames.finals,
       blue: semifinalWinners[0],
       red: semifinalWinners[1],
@@ -570,23 +682,23 @@ export function getNextLckCupKnockoutSchedule(
   completedWeek: number,
   options?: ScheduleDateOptions,
 ): MatchSchedule[] {
-  if (completedWeek === 5) {
+  if (completedWeek === lckCupGroupBattleWeeks) {
     return createLckCupPlayInRound1Schedule(competition, records, options);
   }
 
-  if (completedWeek === 6) {
+  if (completedWeek === lckCupPlayInRound1Week) {
     return createLckCupPlayInRound2Schedule(competition, records, options);
   }
 
-  if (completedWeek === 7) {
+  if (completedWeek === lckCupPlayInRound2Week) {
     return createLckCupPlayoffsWildcardSchedule(competition, records, options);
   }
 
-  if (completedWeek === 8) {
+  if (completedWeek === lckCupPlayoffsWildcardWeek) {
     return createLckCupPlayoffsSemifinalSchedule(competition, records, options);
   }
 
-  if (completedWeek === 9) {
+  if (completedWeek === lckCupPlayoffsSemifinalsWeek) {
     return createLckCupFinalsSchedule(competition, records, options);
   }
 

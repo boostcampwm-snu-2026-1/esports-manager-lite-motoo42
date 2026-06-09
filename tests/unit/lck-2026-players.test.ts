@@ -197,10 +197,17 @@ describe("lck2026Players", () => {
     }
   });
 
-  it("starts new careers with the 2026 LCK full player pool", () => {
+  it("starts new careers with the 2026 LCK full player pool and true preseason FA seeds", () => {
     const career = createInitialCareer("T1");
+    const faker = career.lckPlayers.find((player) => player.id === "lck-mid-01");
+    const beryl = career.lckPlayers.find((player) => player.id === "fa-2026-beryl");
 
-    expect(career.lckPlayers).toBe(lck2026Players);
-    expect(career.lckPlayers.length).toBeGreaterThan(100);
+    expect(career.lckPlayers.length).toBeGreaterThan(lck2026Players.length);
+    expect(faker?.currentTeam).toBe("T1");
+    expect(beryl).toBeDefined();
+    expect(beryl?.currentTeam).toBeUndefined();
+    expect(career.seasonState.offseason?.freeAgentPlayerIds).toContain(
+      "fa-2026-beryl",
+    );
   });
 });

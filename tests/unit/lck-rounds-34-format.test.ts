@@ -12,6 +12,7 @@ import {
   lckRounds34StageNames,
   lckRounds34TotalMatches,
 } from "../../src/domain/season";
+import { getLckSchedulePolicyIssues } from "../../src/domain/season/lckSchedulePolicy";
 import { recordCompletedMatches } from "../../src/domain/season/progressSeason";
 import type {
   MatchRecord,
@@ -148,6 +149,7 @@ describe("LCK Rounds 3-4 format", () => {
       year: 2026,
     });
     const matchesByTeam = new Map<string, number>();
+    const stagesByDate = new Map<string, Set<string>>();
     const groupByTeamId = new Map(
       setup.standings.map((entry) => [entry.teamId, entry.lckRoundsGroup]),
     );
@@ -159,7 +161,7 @@ describe("LCK Rounds 3-4 format", () => {
     expect(setup.schedule.every((match) => match.format === "bo3")).toBe(true);
     expect(setup.schedule.every((match) => match.fearlessEnabled)).toBe(true);
     expect(new Set(setup.schedule.map((match) => match.week))).toEqual(
-      new Set([1, 2, 3, 4, 5]),
+      new Set([1, 2, 3, 4]),
     );
     expect(
       setup.schedule.filter(
@@ -179,6 +181,10 @@ describe("LCK Rounds 3-4 format", () => {
         match.redTeamId,
         (matchesByTeam.get(match.redTeamId) ?? 0) + 1,
       );
+      stagesByDate.set(
+        match.scheduledDate ?? "",
+        new Set([...(stagesByDate.get(match.scheduledDate ?? "") ?? []), match.stageName]),
+      );
       expect(groupByTeamId.get(match.blueTeamId)).toBe(
         groupByTeamId.get(match.redTeamId),
       );
@@ -191,6 +197,15 @@ describe("LCK Rounds 3-4 format", () => {
       lckRounds34RegularWeeks,
     );
     expect(setup.schedule[0].scheduledDate).toBe("2026-07-08");
+    expect(getLckSchedulePolicyIssues(setup.schedule)).toEqual([]);
+    expect(
+      [...stagesByDate.values()].every(
+        (stageNames) =>
+          stageNames.has(lckRounds34StageNames.legend) &&
+          stageNames.has(lckRounds34StageNames.rise) &&
+          stageNames.size === 2,
+      ),
+    ).toBe(true);
   });
 
   it("activates Rounds 3-4 from the carried LCK table", () => {

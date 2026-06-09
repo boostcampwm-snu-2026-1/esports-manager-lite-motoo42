@@ -115,6 +115,8 @@ export {
   getOffseasonNegotiationSnapshot,
   getOffseasonVisibleDemandSalary,
   getUnresolvedExpiredPlayerIds,
+  isFreeAgentMarketPlayer,
+  isObservableFreeAgentPlayer,
   cancelFreeAgentSigning,
   confirmFreeAgentSigning,
   initializeOffseasonMarket,
@@ -137,7 +139,12 @@ export {
   getLckCupGroupPointSummary,
   getLckCupStageNames,
   getNextLckCupKnockoutSchedule,
+  lckCupFinalsWeek,
   lckCupGroupBattleWeeks,
+  lckCupPlayInRound1Week,
+  lckCupPlayInRound2Week,
+  lckCupPlayoffsSemifinalsWeek,
+  lckCupPlayoffsWildcardWeek,
 } from "./lckCupFormat";
 export {
   createLckRounds12Schedule,

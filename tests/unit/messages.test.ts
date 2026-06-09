@@ -54,12 +54,24 @@ describe("career messages", () => {
   });
 
   it("creates schedule messages from progress state changes", () => {
-    const previousCareer = createCompetitionCareer();
-    const match = findUserMatch(previousCareer);
+    const activeCareer = createCompetitionCareer();
+    const match = findUserMatch(activeCareer);
+    const previousCareer = {
+      ...activeCareer,
+      seasonState: {
+        ...activeCareer.seasonState,
+        currentDateKey: "2026-01-13",
+        currentDateLabel: "2026년 1월 13일 (화)",
+        nextMatchIds: [],
+        progressStatus: "idle" as const,
+      },
+    };
     const nextCareer = {
       ...previousCareer,
       seasonState: {
         ...previousCareer.seasonState,
+        currentDateKey: match.scheduledDate ?? "2026-01-14",
+        currentDateLabel: "2026년 1월 14일 (수)",
         nextMatchIds: [match.id],
         progressStatus: "match-preview" as const,
       },

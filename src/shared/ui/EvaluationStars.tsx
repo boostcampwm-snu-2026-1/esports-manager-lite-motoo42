@@ -42,7 +42,7 @@ export function EvaluationStars({
 
           return (
             <span className={`evaluation-star evaluation-star-${fill}`} key={index}>
-              <span className="evaluation-star-empty">★</span>
+              <span className="evaluation-star-empty">☆</span>
               {fill !== "empty" && (
                 <span className="evaluation-star-fill">★</span>
               )}

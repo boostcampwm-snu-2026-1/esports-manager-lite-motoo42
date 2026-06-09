@@ -3,6 +3,10 @@ import type {
   SeasonCalendarType,
   StandingEntry,
 } from "../../types/game";
+import {
+  assertLckSchedulePolicy,
+  assignMatchesToLckWeekSlots,
+} from "./lckSchedulePolicy";
 import { getDomesticMatchDateKey } from "./seasonScheduleDates";
 
 export const lckRounds12RegularWeeks = 9;
@@ -12,6 +16,11 @@ export const lckRounds12RegularStageName = "Rounds 1-2 Regular Season";
 type RoundRobinPair = {
   blue: StandingEntry;
   red: StandingEntry;
+};
+
+type ScheduledRoundRobinPair = RoundRobinPair & {
+  blueTeamId: string;
+  redTeamId: string;
 };
 
 type ScheduleOptions = {
@@ -66,29 +75,6 @@ function createDoubleRoundRobinRounds(standings: StandingEntry[]) {
   return [...firstRound, ...secondRound];
 }
 
-function sharesTeam(left: RoundRobinPair, right: RoundRobinPair) {
-  return [left.blue.teamId, left.red.teamId].some((teamId) =>
-    [right.blue.teamId, right.red.teamId].includes(teamId),
-  );
-}
-
-function pairRoundMatchesByDay(
-  firstRoundMatches: RoundRobinPair[],
-  secondRoundMatches: RoundRobinPair[],
-) {
-  const remainingSecondRound = [...secondRoundMatches];
-
-  return firstRoundMatches.map((firstMatch) => {
-    const compatibleIndex = remainingSecondRound.findIndex(
-      (secondMatch) => !sharesTeam(firstMatch, secondMatch),
-    );
-    const pickedIndex = compatibleIndex >= 0 ? compatibleIndex : 0;
-    const [secondMatch] = remainingSecondRound.splice(pickedIndex, 1);
-
-    return [firstMatch, secondMatch] as const;
-  });
-}
-
 function createScheduleId({
   blueTeamId,
   redTeamId,
@@ -103,6 +89,14 @@ function createScheduleId({
   return `lck-r12-week-${week}-round-${roundNumber}-${blueTeamId}-vs-${redTeamId}`
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-");
+}
+
+function createSchedulablePair(match: RoundRobinPair): ScheduledRoundRobinPair {
+  return {
+    ...match,
+    blueTeamId: match.blue.teamId,
+    redTeamId: match.red.teamId,
+  };
 }
 
 function createMatch({
@@ -154,32 +148,37 @@ export function createLckRounds12Schedule(
 
   for (let week = 1; week <= lckRounds12RegularWeeks; week += 1) {
     const firstRoundIndex = (week - 1) * 2;
-    const pairedMatches = pairRoundMatchesByDay(
-      rounds[firstRoundIndex],
-      rounds[firstRoundIndex + 1],
-    );
+    const weeklyMatches = [
+      ...rounds[firstRoundIndex].map((match) => ({
+        match: createSchedulablePair(match),
+        roundNumber: firstRoundIndex + 1,
+      })),
+      ...rounds[firstRoundIndex + 1].map((match) => ({
+        match: createSchedulablePair(match),
+        roundNumber: firstRoundIndex + 2,
+      })),
+    ];
 
-    pairedMatches.forEach(([firstMatch, secondMatch], dayIndex) => {
+    assignMatchesToLckWeekSlots(
+      weeklyMatches.map((entry) => ({
+        ...entry,
+        blueTeamId: entry.match.blueTeamId,
+        redTeamId: entry.match.redTeamId,
+      })),
+    ).forEach(({ dayIndex, item }) => {
       schedule.push(
         createMatch({
-          match: firstMatch,
+          match: item.match,
           matchIndexInWeek: dayIndex,
           options,
-          roundNumber: firstRoundIndex + 1,
-          week,
-        }),
-      );
-      schedule.push(
-        createMatch({
-          match: secondMatch,
-          matchIndexInWeek: dayIndex,
-          options,
-          roundNumber: firstRoundIndex + 2,
+          roundNumber: item.roundNumber,
           week,
         }),
       );
     });
   }
+
+  assertLckSchedulePolicy(schedule);
 
   return schedule;
 }

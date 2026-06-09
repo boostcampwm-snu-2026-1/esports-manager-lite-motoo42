@@ -130,10 +130,11 @@ describe("OffseasonMarket", () => {
     expect(screen.getByText("FA 명단")).toBeVisible();
     expect(screen.getByText("MSI 전후 단기 시장")).toBeVisible();
     expect(screen.getByText("BeryL")).toBeVisible();
+    expect(screen.queryByText("Chovy")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "FA 협상" })).not.toBeInTheDocument();
   });
 
-  it("renders the new career preseason renewals and full LCK market filters", () => {
+  it("renders the new career preseason renewals and true FA market filters", () => {
     const career = createInitialCareer("T1");
 
     render(
@@ -156,18 +157,57 @@ describe("OffseasonMarket", () => {
     expect(screen.getByLabelText("시장 포지션 필터")).toBeVisible();
     expect(screen.getByLabelText("시장 1군 2군 필터")).toBeVisible();
 
-    fireEvent.change(screen.getByLabelText("시장 팀 필터"), {
-      target: { value: "Gen.G" },
-    });
+    expect(screen.getByText("BeryL")).toBeVisible();
+    expect(screen.queryByText("Chovy")).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("시장 포지션 필터"), {
-      target: { value: "mid" },
+      target: { value: "support" },
     });
     fireEvent.change(screen.getByLabelText("시장 1군 2군 필터"), {
-      target: { value: "main" },
+      target: { value: "free-agent" },
     });
 
-    expect(screen.getByText("Chovy")).toBeVisible();
+    expect(screen.getByText("BeryL")).toBeVisible();
     expect(screen.queryByText("Faker")).not.toBeInTheDocument();
+  });
+
+  it("hides team-owned players from the active FA market even if stale ids remain", () => {
+    const career = createActiveOffseasonCareer();
+    const staleTeamOwnedPlayer = career.lckPlayers.find(
+      (player) => player.name === "Chovy",
+    )!;
+    const weekTwoCareer: CareerSave = {
+      ...career,
+      seasonState: {
+        ...career.seasonState,
+        offseason: {
+          ...career.seasonState.offseason!,
+          currentDay: 8,
+          currentWeek: 2,
+          marketStatus: "free-agency",
+          freeAgentPlayerIds: [
+            ...(career.seasonState.offseason?.freeAgentPlayerIds ?? []),
+            staleTeamOwnedPlayer.id,
+          ],
+        },
+      },
+    };
+
+    render(
+      <OffseasonMarket
+        career={weekTwoCareer}
+        onCancelFreeAgentSigning={vi.fn()}
+        onConfirmFreeAgentSigning={vi.fn()}
+        onReleaseExpiredPlayer={vi.fn()}
+        onSubmitFreeAgentOffer={vi.fn()}
+        onSubmitRenewalOffer={vi.fn()}
+        onViewRoster={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "FA 시장" }));
+
+    expect(screen.getByText("BeryL")).toBeVisible();
+    expect(screen.queryByText("Chovy")).not.toBeInTheDocument();
   });
 
   it("renders the renewal week and submits a renewal offer", () => {
@@ -232,7 +272,7 @@ describe("OffseasonMarket", () => {
       },
     };
 
-    render(
+    const { container } = render(
       <OffseasonMarket
         career={weekTwoCareer}
         onCancelFreeAgentSigning={vi.fn()}
@@ -247,6 +287,14 @@ describe("OffseasonMarket", () => {
     fireEvent.click(screen.getByRole("button", { name: "FA 시장" }));
 
     expect(screen.getByText("BeryL")).toBeVisible();
+    expect(
+      screen
+        .getAllByLabelText(/평가/)
+        .some((element) => element.getAttribute("aria-label") !== "평가 5.0성"),
+    ).toBe(true);
+    expect(container.querySelector(".evaluation-star-empty")?.textContent).toBe(
+      "☆",
+    );
     fireEvent.click(screen.getAllByRole("button", { name: "FA 협상" })[0]);
     expect(screen.getByRole("dialog", { name: "FA 계약 협상" })).toBeVisible();
     expect(screen.getByLabelText("제안 역할")).toBeVisible();

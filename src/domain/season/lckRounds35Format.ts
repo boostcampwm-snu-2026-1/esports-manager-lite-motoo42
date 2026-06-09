@@ -4,9 +4,14 @@ import type {
   SeasonCalendarType,
   StandingEntry,
 } from "../../types/game";
+import {
+  assertLckSchedulePolicy,
+  createFiveTeamLckWeekPairs,
+  type LckFiveTeamWeekPair,
+} from "./lckSchedulePolicy";
 import { getDomesticMatchDateKey } from "./seasonScheduleDates";
 
-export const lckRounds35RegularWeeks = 8;
+export const lckRounds35RegularWeeks = 6;
 export const lckRounds35MatchesPerTeam = 12;
 export const lckRounds35TotalMatches = 60;
 export const lckRounds35StageNames = {
@@ -14,13 +19,6 @@ export const lckRounds35StageNames = {
   rise: "Rise Group",
 } as const;
 export const lckRounds35CurrentStageName = "Legend / Rise Groups";
-
-type RoundRobinEntrant = StandingEntry | null;
-
-type RoundRobinPair = {
-  blue: StandingEntry;
-  red: StandingEntry;
-};
 
 type ScheduleOptions = {
   year: number;
@@ -33,64 +31,6 @@ function sortByRank(standings: StandingEntry[]) {
 
 function sortByInitialSeed(standings: StandingEntry[]) {
   return [...standings].sort((left, right) => left.initialSeed - right.initialSeed);
-}
-
-function rotateRoundRobinTeams(teams: RoundRobinEntrant[]) {
-  return [teams[0], teams[teams.length - 1], ...teams.slice(1, -1)];
-}
-
-function createSingleRoundRobinRounds(standings: StandingEntry[]) {
-  let rotation: RoundRobinEntrant[] = [...sortByInitialSeed(standings), null];
-  const roundCount = rotation.length - 1;
-  const matchesPerRound = rotation.length / 2;
-  const rounds: RoundRobinPair[][] = [];
-
-  for (let roundIndex = 0; roundIndex < roundCount; roundIndex += 1) {
-    const round: RoundRobinPair[] = [];
-
-    for (let matchIndex = 0; matchIndex < matchesPerRound; matchIndex += 1) {
-      const left = rotation[matchIndex];
-      const right = rotation[rotation.length - 1 - matchIndex];
-
-      if (!left || !right) {
-        continue;
-      }
-
-      const shouldSwapSide = (roundIndex + matchIndex) % 2 === 1;
-
-      round.push({
-        blue: shouldSwapSide ? right : left,
-        red: shouldSwapSide ? left : right,
-      });
-    }
-
-    rounds.push(round);
-    rotation = rotateRoundRobinTeams(rotation);
-  }
-
-  return rounds;
-}
-
-function createTripleRoundRobinRounds(standings: StandingEntry[]) {
-  const firstRound = createSingleRoundRobinRounds(standings);
-  const secondRound = firstRound.map((round) =>
-    round.map((match) => ({
-      blue: match.red,
-      red: match.blue,
-    })),
-  );
-  const thirdRound = firstRound.map((round, roundIndex) =>
-    round.map((match, matchIndex) => {
-      const shouldSwapSide = (roundIndex + matchIndex) % 2 === 0;
-
-      return {
-        blue: shouldSwapSide ? match.red : match.blue,
-        red: shouldSwapSide ? match.blue : match.red,
-      };
-    }),
-  );
-
-  return [...firstRound, ...secondRound, ...thirdRound];
 }
 
 function createScheduleId({
@@ -110,23 +50,20 @@ function createScheduleId({
 }
 
 function createMatch({
+  dayIndex,
   group,
   match,
-  matchIndex,
   options,
   roundNumber,
+  week,
 }: {
+  dayIndex: number;
   group: LckRoundsGroupName;
-  match: RoundRobinPair;
-  matchIndex: number;
+  match: LckFiveTeamWeekPair;
   options: ScheduleOptions;
   roundNumber: number;
+  week: number;
 }): MatchSchedule {
-  const matchDayIndex = roundNumber - 1;
-  const week = Math.floor(matchDayIndex / 2) + 1;
-  const matchDayOffset = matchDayIndex % 2 === 0 ? 0 : 3;
-  const matchIndexInWeek = matchDayOffset + matchIndex;
-
   return {
     id: createScheduleId({
       blueTeamId: match.blue.teamId,
@@ -139,7 +76,7 @@ function createMatch({
     scheduledDate: getDomesticMatchDateKey({
       calendarType: options.calendarType,
       competitionId: "lck-rounds-3-5",
-      matchIndexInWeek,
+      matchIndexInWeek: dayIndex,
       week,
       year: options.year,
     }),
@@ -163,17 +100,21 @@ function createGroupSchedule({
   options: ScheduleOptions;
   standings: StandingEntry[];
 }) {
-  return createTripleRoundRobinRounds(standings).flatMap((round, roundIndex) =>
-    round.map((match, matchIndex) =>
-      createMatch({
-        group,
-        match,
-        matchIndex,
-        options,
-        roundNumber: roundIndex + 1,
-      }),
-    ),
-  );
+  const seededStandings = sortByInitialSeed(standings);
+
+  return Array.from({ length: lckRounds35RegularWeeks }, (_, index) => index + 1)
+    .flatMap((week) =>
+      createFiveTeamLckWeekPairs(seededStandings, week).map(({ dayIndex, item }) =>
+        createMatch({
+          dayIndex,
+          group,
+          match: item,
+          options,
+          roundNumber: (week - 1) * 5 + dayIndex + 1,
+          week,
+        }),
+      ),
+    );
 }
 
 function assignLckRounds35Group(
@@ -219,6 +160,8 @@ export function createLckRounds35Setup(
 
     return dateDiff !== 0 ? dateDiff : left.id.localeCompare(right.id);
   });
+
+  assertLckSchedulePolicy(schedule);
 
   return {
     legendGroup,

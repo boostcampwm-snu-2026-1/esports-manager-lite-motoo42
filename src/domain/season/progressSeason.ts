@@ -19,6 +19,7 @@ import {
 import {
   getLckCupFinalists,
   getNextLckCupKnockoutSchedule,
+  lckCupFinalsWeek,
 } from "./lckCupFormat";
 import { lckRounds12RegularStageName } from "./lckRounds12Format";
 import { isLckRounds34RegularStageName } from "./lckRounds34Format";
@@ -527,11 +528,11 @@ export function advanceLckCupAfterCompletedWeek(
     return seasonState;
   }
 
-  if (completedWeek === 10) {
+  if (completedWeek === lckCupFinalsWeek) {
     const finalRecord = seasonState.matchRecords.find(
       (record) =>
         record.competitionId === "lck-cup" &&
-        record.week === 10 &&
+        record.week === lckCupFinalsWeek &&
         record.stageName === "Finals",
     );
     const finalists = getLckCupFinalists(lckCup, seasonState.matchRecords);

@@ -1476,7 +1476,7 @@ function resolveFreeAgentOffers(career: CareerSave): CareerSave {
     if (
       !currentOffseason ||
       !player ||
-      !(currentOffseason.freeAgentPlayerIds ?? []).includes(playerId)
+      !isFreeAgentMarketPlayer(currentCareer, player)
     ) {
       return currentCareer;
     }
@@ -1638,16 +1638,9 @@ function getAvailableFreeAgentPlayers(
   career: CareerSave,
   excludedPlayerIds: Set<string>,
 ) {
-  const freeAgentIds = new Set(
-    career.seasonState.offseason?.freeAgentPlayerIds ?? [],
-  );
-  const confirmationPendingIds = getConfirmationPendingPlayerIds(career);
-
   return career.lckPlayers.filter(
     (player) =>
-      player.availableForRoster &&
-      freeAgentIds.has(player.id) &&
-      !confirmationPendingIds.has(player.id) &&
+      isFreeAgentMarketPlayer(career, player) &&
       !excludedPlayerIds.has(player.id),
   );
 }
@@ -1807,6 +1800,25 @@ function getConfirmationPendingPlayerIds(career: CareerSave) {
   );
 }
 
+export function isObservableFreeAgentPlayer(
+  career: CareerSave,
+  player: Player,
+) {
+  return (
+    player.availableForRoster &&
+    !player.currentTeam &&
+    !getConfirmationPendingPlayerIds(career).has(player.id)
+  );
+}
+
+export function isFreeAgentMarketPlayer(career: CareerSave, player: Player) {
+  const freeAgentIds = new Set(
+    career.seasonState.offseason?.freeAgentPlayerIds ?? [],
+  );
+
+  return freeAgentIds.has(player.id) && isObservableFreeAgentPlayer(career, player);
+}
+
 function getRoleLimitError(career: CareerSave, player: Player) {
   const roleCount = getContractedRoleCount(career, player.role);
 
@@ -1862,6 +1874,7 @@ export function confirmFreeAgentSigning(
     !offer ||
     !player ||
     !player.availableForRoster ||
+    player.currentTeam ||
     !(offseason.freeAgentPlayerIds ?? []).includes(player.id)
   ) {
     return career;
@@ -1986,8 +1999,7 @@ export function submitFreeAgentOffer(
     currentDay < 8 ||
     currentDay >= 28 ||
     !player ||
-    !player.availableForRoster ||
-    !(offseason.freeAgentPlayerIds ?? []).includes(player.id)
+    !isFreeAgentMarketPlayer(career, player)
   ) {
     return career;
   }

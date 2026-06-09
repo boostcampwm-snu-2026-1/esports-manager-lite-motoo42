@@ -166,12 +166,12 @@ describe("createInitialSeasonState", () => {
     expect(activeSeason.currentCompetitionId).toBe("lck-cup");
     expect(activeSeason.currentDateKey).toBe("2026-01-14");
     expect(activeSeason.currentDateLabel).toBe("2026년 1월 14일 (수)");
-    expect(activeSeason.progressStatus).toBe("idle");
+    expect(activeSeason.progressStatus).toBe("match-preview");
     expect(activeSeason.stoveLeague.completed).toBe(true);
     expect(activeLckCup?.status).toBe("active");
     expect(activeLckCup?.schedule).toHaveLength(25);
     expect(activeLckCup?.schedule[0].scheduledDate).toBe("2026-01-14");
-    expect(activeSeason.nextMatchIds).toHaveLength(0);
+    expect(activeSeason.nextMatchIds).toHaveLength(2);
     expect(activeLckCup?.standings.filter((entry) => entry.lckCupGroup === "baron")).toHaveLength(5);
     expect(activeLckCup?.standings.filter((entry) => entry.lckCupGroup === "elder")).toHaveLength(5);
   });
@@ -200,7 +200,8 @@ describe("createInitialSeasonState", () => {
     expect(career.seasonState.offseason?.context).toBe("preseason");
     expect(career.seasonState.offseason?.status).toBe("active");
     expect(career.seasonState.offseason?.expiredContractPlayerIds.length).toBeGreaterThanOrEqual(10);
-    expect(career.seasonState.offseason?.freeAgentPlayerIds?.length).toBeGreaterThan(50);
+    expect(career.seasonState.offseason?.freeAgentPlayerIds).toContain("fa-2026-beryl");
+    expect(career.seasonState.offseason?.freeAgentPlayerIds).not.toContain("lck-mid-02");
     expect(career.seasonState.competitions).toHaveLength(7);
   });
 });
