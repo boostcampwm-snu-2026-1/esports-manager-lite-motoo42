@@ -10,8 +10,8 @@ Use this skill when creating or revising reflection content.
 ## Inputs
 
 1. Read `../README.md`.
-2. Read `../CODEX_HANDOFF.md`.
-3. Read `../docs/development-checklist.md`.
+2. Read `../docs/development-checklist.md`.
+3. Read `../IMPLEMENTATION_ORDER.md`.
 4. Read recent PR descriptions, issue notes, screenshots, or changed files if available.
 5. Read `agent-workflow-curator.md` when reflecting on AI usage.
 

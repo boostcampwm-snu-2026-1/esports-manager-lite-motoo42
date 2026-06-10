@@ -3,6 +3,7 @@ import type { TeamBalanceAdjustment, TeamBalanceTier } from "../types/game";
 export type LckTeamSeed = {
   id: string;
   name: string;
+  displayNameKo: string;
   shortName: string;
   logoUrl?: string;
   logoSourceUrl?: string;
@@ -27,6 +28,7 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "gen-g",
     name: "Gen.G",
+    displayNameKo: "젠지",
     shortName: "GEN",
     logoUrl: `${lckTeamLogoBasePath}/gen-g.webp`,
     logoSourceUrl: "https://lol.fandom.com/wiki/File:Gen.Glogo_std.png",
@@ -41,6 +43,7 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "hanwha-life-esports",
     name: "Hanwha Life Esports",
+    displayNameKo: "한화생명e스포츠",
     shortName: "HLE",
     logoUrl: `${lckTeamLogoBasePath}/hanwha-life-esports.webp`,
     logoSourceUrl:
@@ -56,6 +59,7 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "t1",
     name: "T1",
+    displayNameKo: "T1",
     shortName: "T1",
     logoUrl: `${lckTeamLogoBasePath}/t1.webp`,
     logoSourceUrl: "https://lol.fandom.com/wiki/File:T1logo_std.png",
@@ -70,6 +74,7 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "kt-rolster",
     name: "KT Rolster",
+    displayNameKo: "KT 롤스터",
     shortName: "KT",
     logoUrl: `${lckTeamLogoBasePath}/kt-rolster.webp`,
     logoSourceUrl: "https://lol.fandom.com/wiki/File:KT_Rolsterlogo_std.png",
@@ -84,6 +89,7 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "dplus-kia",
     name: "Dplus KIA",
+    displayNameKo: "디플러스 기아",
     shortName: "DK",
     logoUrl: `${lckTeamLogoBasePath}/dplus-kia.webp`,
     logoSourceUrl: "https://lol.fandom.com/wiki/File:Dplus_Kialogo_std.png",
@@ -98,6 +104,7 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "hanjin-brion",
     name: "Hanjin BRION",
+    displayNameKo: "한진 브리온",
     shortName: "BRO",
     logoUrl: `${lckTeamLogoBasePath}/hanjin-brion.webp`,
     logoSourceUrl: "https://lol.fandom.com/wiki/File:BRIONlogo_std.png",
@@ -112,6 +119,7 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "bnk-fearx",
     name: "BNK FEARX",
+    displayNameKo: "BNK 피어엑스",
     shortName: "BFX",
     logoUrl: `${lckTeamLogoBasePath}/bnk-fearx.webp`,
     logoSourceUrl: "https://lol.fandom.com/wiki/File:FearXlogo_std.png",
@@ -126,6 +134,7 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "nongshim-redforce",
     name: "Nongshim RedForce",
+    displayNameKo: "농심 레드포스",
     shortName: "NS",
     logoUrl: `${lckTeamLogoBasePath}/nongshim-redforce.webp`,
     logoSourceUrl:
@@ -141,6 +150,7 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "kiwoom-drx",
     name: "Kiwoom DRX",
+    displayNameKo: "키움 DRX",
     shortName: "DRX",
     logoUrl: `${lckTeamLogoBasePath}/kiwoom-drx.webp`,
     logoSourceUrl: "https://lol.fandom.com/wiki/File:Kiwoom_DRXlogo_std.png",
@@ -155,6 +165,7 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "dn-soopers",
     name: "DN SOOPers",
+    displayNameKo: "DN 수퍼스",
     shortName: "DNF",
     logoUrl: `${lckTeamLogoBasePath}/dn-soopers.webp`,
     logoSourceUrl: "https://lol.fandom.com/wiki/File:DN_SOOPerslogo_std.png",
@@ -215,9 +226,24 @@ export function findLckTeamSeed(value: string) {
   return lck2026Teams.find(
     (team) =>
       normalizeTeamName(team.name) === normalizedValue ||
+      normalizeTeamName(team.displayNameKo) === normalizedValue ||
       normalizeTeamName(team.shortName) === normalizedValue ||
       team.id === normalizedValue,
   );
+}
+
+export function getLckTeamDisplayName(
+  teamOrValue: LckTeamSeed | string | null | undefined,
+) {
+  if (!teamOrValue) {
+    return "";
+  }
+
+  if (typeof teamOrValue !== "string") {
+    return teamOrValue.displayNameKo || teamOrValue.name;
+  }
+
+  return findLckTeamSeed(teamOrValue)?.displayNameKo ?? teamOrValue;
 }
 
 export function getLckTeamProfile(
@@ -233,6 +259,7 @@ export function getLckTeamProfile(
           ...fallbackTeam,
           id: "user-team",
           name: value.trim() || "T1",
+          displayNameKo: value.trim() || "T1",
           shortName: "USER",
         }
       : undefined);
@@ -267,6 +294,7 @@ export function createPlayableLckTeams(
       ...team,
       id: "user-team",
       name: userTeamName.trim() || "T1",
+      displayNameKo: userTeamName.trim() || "T1",
       shortName: "USER",
     };
 

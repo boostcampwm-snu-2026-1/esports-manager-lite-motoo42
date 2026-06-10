@@ -100,10 +100,6 @@ function MessageDetail({ message }: { message: CareerMessage | undefined }) {
       <p>{message.body}</p>
       <dl className="inbox-detail-meta">
         <div>
-          <dt>생성 턴</dt>
-          <dd>{message.createdTurn}</dd>
-        </div>
-        <div>
           <dt>상태</dt>
           <dd>{message.read ? "읽음" : "읽지 않음"}</dd>
         </div>

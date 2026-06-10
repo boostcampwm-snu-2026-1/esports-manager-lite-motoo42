@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from "react";
-import { lck2026Teams } from "../../data/lckTeams";
+import { getLckTeamDisplayName, lck2026Teams } from "../../data/lckTeams";
 import { formatSalaryAmount } from "../../shared/format/money";
 import { Button } from "../../shared/ui/Button";
 import { Card } from "../../shared/ui/Card";
@@ -33,9 +33,11 @@ export function CareerSetup({ savePanel, onStart }: CareerSetupProps) {
         <div className="career-team-selection">
           {lck2026Teams.map((team) => {
             const isSelected = team.id === selectedTeam.id;
+            const displayName = getLckTeamDisplayName(team);
 
             return (
               <button
+                aria-label={`${displayName} ${team.name} 선택`}
                 aria-pressed={isSelected}
                 className={`career-team-card ${isSelected ? "career-team-card-selected" : ""}`}
                 key={team.id}
@@ -48,7 +50,10 @@ export function CareerSetup({ savePanel, onStart }: CareerSetupProps) {
                     <span className="career-team-short-name">
                       {team.shortName}
                     </span>
-                    <strong>{team.name}</strong>
+                    <strong>{displayName}</strong>
+                    {displayName !== team.name && (
+                      <small className="career-team-english-name">{team.name}</small>
+                    )}
                   </div>
                 </div>
                 <dl>
@@ -75,7 +80,7 @@ export function CareerSetup({ savePanel, onStart }: CareerSetupProps) {
         </div>
         <div className="career-team-start-row">
           <p>
-            선택 팀: <strong>{selectedTeam.name}</strong>
+            선택 팀: <strong>{getLckTeamDisplayName(selectedTeam)}</strong>
           </p>
           <Button onClick={() => onStart(selectedTeam.name)}>Start career</Button>
         </div>

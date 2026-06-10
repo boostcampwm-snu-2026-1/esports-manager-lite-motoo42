@@ -14,6 +14,28 @@ html,
 
 * {
   box-sizing: border-box;
+  scrollbar-color: #475569 rgba(15, 23, 42, 0.36);
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.28);
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(15, 23, 42, 0.72);
+  border-radius: 999px;
+  background: #475569;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 body {
@@ -141,8 +163,8 @@ select {
 
 .shell-sidebar-header {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
   align-items: center;
   min-width: 0;
 }
@@ -158,18 +180,21 @@ select {
 }
 
 .shell-sidebar-header strong {
-  display: block;
+  display: -webkit-box;
   overflow: hidden;
   color: #ffffff;
-  font-size: 0.98rem;
+  font-size: 0.9rem;
+  line-height: 1.18;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: keep-all;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .club-mark {
   display: grid;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   place-items: center;
   border: 1px solid #7259f0;
   border-radius: 12px;
@@ -329,8 +354,35 @@ select {
 }
 
 .career-team-card strong {
+  display: block;
+  overflow: hidden;
   color: #ffffff;
   font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.career-team-english-name {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: #9aa7bd;
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lck-team-card-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 5px 0 0;
+  color: #b7c3d9;
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .career-team-card dl {
@@ -382,10 +434,13 @@ select {
 
 .lck-team-info-grid {
   align-items: stretch;
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  width: min(1040px, 100%);
+  margin: 0 auto;
 }
 
 .lck-team-info-card {
-  min-height: 176px;
+  min-height: 152px;
 }
 
 .lck-team-detail-header {
@@ -1908,6 +1963,47 @@ h1 {
 .panel-note {
   color: #9aa7bd;
   font-size: 0.84rem;
+}
+
+.competition-summary-card-format {
+  grid-column: 1 / -1;
+}
+
+.competition-format-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.competition-format-list li {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.32fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  border-top: 1px solid #253048;
+  padding-top: 7px;
+}
+
+.competition-format-list b {
+  color: #ffffff;
+  font-size: 0.82rem;
+}
+
+.competition-format-list span {
+  color: #c7d2e6;
+  line-height: 1.45;
+}
+
+.competition-overview-copy {
+  margin: 0;
+  border: 1px solid #253048;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: #0d1424;
+  color: #c7d2e6;
+  line-height: 1.55;
 }
 
 .format-summary-button {
@@ -4354,6 +4450,18 @@ h1 {
   gap: 10px;
 }
 
+.roster-management-budget-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  border: 1px solid #303a52;
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(135deg, rgba(56, 189, 248, 0.1), transparent 45%),
+    #111827;
+}
+
 .roster-management-metric {
   display: grid;
   gap: 5px;
@@ -4373,6 +4481,24 @@ h1 {
 .roster-management-metric strong {
   color: #ffffff;
   font-size: 1rem;
+}
+
+.roster-management-metric-good strong,
+.budget-metric-good strong {
+  color: #86efac;
+}
+
+.roster-management-metric-danger,
+.budget-metric-danger {
+  border-color: rgba(248, 113, 113, 0.55) !important;
+  background:
+    linear-gradient(135deg, rgba(127, 29, 29, 0.26), transparent 68%),
+    #0d1424 !important;
+}
+
+.roster-management-metric-danger strong,
+.budget-metric-danger strong {
+  color: #fecaca;
 }
 
 .lineup-board,
@@ -5305,6 +5431,10 @@ h1 {
   border-color: rgba(34, 197, 94, 0.5);
 }
 
+.offseason-budget-metrics {
+  margin-top: 10px;
+}
+
 .offseason-tab-list {
   display: flex;
   gap: 8px;
@@ -5713,7 +5843,7 @@ h1 {
 
 .contract-offer-summary {
   display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin: 16px 0 12px;
 }
@@ -5729,6 +5859,21 @@ h1 {
 
 .contract-offer-mood-card {
   min-width: 0;
+}
+
+.contract-offer-budget-card strong {
+  color: #86efac;
+}
+
+.contract-offer-budget-card-danger {
+  border-color: rgba(248, 113, 113, 0.5) !important;
+  background:
+    linear-gradient(135deg, rgba(127, 29, 29, 0.26), transparent 72%),
+    rgba(15, 23, 42, 0.42) !important;
+}
+
+.contract-offer-budget-card-danger strong {
+  color: #fecaca;
 }
 
 .negotiation-mood-value {
@@ -6367,6 +6512,7 @@ h1 {
     .lineup-board,
     .roster-management-filter-row,
     .roster-management-metrics,
+    .roster-management-budget-panel,
     .roster-contract-table-header,
     .roster-contract-row,
     .bench-player-grid,
@@ -6376,6 +6522,7 @@ h1 {
   .competition-overview-grid,
   .competition-schedule-columns,
     .competition-group-grid,
+    .lck-team-info-grid,
     .lck-rounds-content-grid,
     .asian-games-decision-roster,
     .asian-games-decision-actions,
@@ -6402,6 +6549,10 @@ h1 {
   }
 
   .worlds-bracket-frame {
+    grid-template-columns: 1fr;
+  }
+
+  .contract-offer-summary {
     grid-template-columns: 1fr;
   }
 
@@ -6679,10 +6830,17 @@ h1 {
 }
 
 .inbox-priority-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.1rem;
   border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 950;
+  line-height: 1;
   padding: 0.35rem 0.6rem;
+  white-space: nowrap;
 }
 
 .inbox-priority-normal {
@@ -6691,8 +6849,9 @@ h1 {
 }
 
 .inbox-priority-important {
-  background: #f8fafc;
-  color: #0f172a;
+  border: 1px solid rgba(251, 191, 36, 0.75);
+  background: #fbbf24;
+  color: #111827;
 }
 
 .inbox-priority-urgent {
@@ -6713,6 +6872,14 @@ h1 {
   gap: 1rem;
   justify-content: space-between;
   margin-bottom: 1rem;
+}
+
+.inbox-detail-header > div {
+  min-width: 0;
+}
+
+.inbox-detail-header h2 {
+  overflow-wrap: anywhere;
 }
 
 .inbox-detail-header span {

@@ -7,6 +7,9 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../../src/app/App";
+import { Inbox } from "../../src/features/inbox";
+import type { CareerMessage } from "../../src/types/game";
+import { createInitialCareer } from "../../src/domain/career/createInitialCareer";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -110,5 +113,42 @@ describe("Inbox", () => {
       getMainContent().getByRole("button", { name: "메시지함으로 이동" }),
     );
     await waitFor(() => expect(window.location.pathname).toBe("/inbox"));
+  });
+
+  it("keeps priority badges stable for long titles and hides created turn metadata", () => {
+    const career = createInitialCareer("T1");
+    const longMessage: CareerMessage = {
+      id: "long-message",
+      dateKey: "2026-01-01",
+      dateLabel: "2026년 1월 1일",
+      category: "important",
+      priority: "important",
+      title:
+        "아주 긴 제목의 중요 메시지가 들어와도 중요도 배지는 찌그러지지 않아야 합니다",
+      body: "긴 제목 UI 회귀 테스트용 메시지입니다.",
+      read: false,
+      createdTurn: 42,
+      source: "club",
+    };
+
+    render(
+      <Inbox
+        career={{ ...career, messages: [longMessage] }}
+        onMarkAllRead={vi.fn()}
+        onMarkRead={vi.fn()}
+        onSubPageChange={vi.fn()}
+        subPage="important"
+      />,
+    );
+
+    const chip = document.querySelector(".inbox-priority-chip");
+
+    expect(chip).not.toBeNull();
+    expect(chip as HTMLElement).toHaveClass(
+      "inbox-priority-chip",
+      "inbox-priority-important",
+    );
+    expect(screen.queryByText("생성 턴")).not.toBeInTheDocument();
+    expect(screen.queryByText("42")).not.toBeInTheDocument();
   });
 });

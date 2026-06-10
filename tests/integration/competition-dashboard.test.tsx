@@ -437,6 +437,7 @@ describe("CompetitionDashboard", () => {
 
     expect(screen.getByRole("heading", { name: "First Stand" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Entrants" })).toBeVisible();
+    expect(screen.getByText(/첫 국제전입니다/)).toBeVisible();
     expect(screen.getByText("Top Esports")).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "Groups" }));
@@ -471,6 +472,7 @@ describe("CompetitionDashboard", () => {
     expect(
       screen.getByRole("heading", { name: "MSI 참가팀과 진출 경로" }),
     ).toBeVisible();
+    expect(screen.getAllByText(/Worlds 추가 시드/).length).toBeGreaterThan(0);
     expect(screen.getByText("Bilibili Gaming")).toBeVisible();
     expect(screen.getAllByText("Gen.G").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Bracket Stage").length).toBeGreaterThan(0);

@@ -14,8 +14,8 @@ Keep AI-assisted work repeatable, inspectable, and easy to hand off.
 ## Inputs
 
 1. Read `../README.md`.
-2. Read `../CODEX_HANDOFF.md`.
-3. Read `../docs/development-checklist.md`.
+2. Read `../docs/development-checklist.md`.
+3. Read `../IMPLEMENTATION_ORDER.md`.
 4. Read `../docs/risks-and-ai-workflow.md`.
 5. Read related docs or changed files for the current task.
 

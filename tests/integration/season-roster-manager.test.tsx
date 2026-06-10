@@ -67,6 +67,9 @@ describe("SeasonRosterManager", () => {
 
     expect(screen.getByRole("img", { name: "Bdd portrait" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Effort portrait" })).toBeInTheDocument();
+    expect(screen.getByLabelText("로스터 예산 요약")).toBeVisible();
+    expect(screen.getByText("총 예산")).toBeVisible();
+    expect(screen.getByText("잔여 예산")).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: /Bdd/i }));
 

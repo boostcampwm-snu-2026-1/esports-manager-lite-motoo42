@@ -26,6 +26,12 @@ describe("LCK team info", () => {
 
     expect(grid).not.toBeNull();
     expect(within(grid as HTMLElement).getAllByRole("button")).toHaveLength(10);
+    expect(within(grid as HTMLElement).queryByText("GEN")).not.toBeInTheDocument();
+    expect(within(grid as HTMLElement).getByText("젠지")).toBeVisible();
+    expect(within(grid as HTMLElement).getByText("DN 수퍼스")).toBeVisible();
+    expect(
+      screen.queryByText("정교한 운영과 우승권 기준을 상징하는 강팀."),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Gen\.G/ }));
 
@@ -46,6 +52,12 @@ describe("LCK team info", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "T1" })).toBeVisible();
     expect(screen.getAllByRole("img", { name: "T1 logo" }).length).toBeGreaterThan(0);
+    expect(
+      screen.getByText(/LCK와 국제대회 역사를 대표하는 명문 구단/),
+    ).toBeVisible();
+    expect(
+      screen.queryByText(/선발 5인과 후보, 아카데미 구성을 스카우팅 관점/),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "선발 5인" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "1군 후보" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "2군 / 아카데미" })).toBeVisible();
@@ -69,7 +81,7 @@ describe("LCK team info", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "LCK 구단 정보" }),
     ).toBeVisible();
-    expect(screen.getByRole("button", { name: /Gen\.G/ })).toBeVisible();
+    expect(screen.getByRole("button", { name: /젠지.*Gen\.G/ })).toBeVisible();
   });
 
   it("links LCK standings team names to team scouting details", () => {

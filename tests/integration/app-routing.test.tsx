@@ -213,10 +213,10 @@ describe("App routing", () => {
     fireEvent.click(screen.getByRole("button", { name: /Gen\.G/ }));
 
     await waitFor(() => expect(window.location.pathname).toBe("/teams/gen-g"));
-    expect(screen.getByRole("heading", { level: 1, name: "Gen.G" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 1, name: "젠지" })).toBeVisible();
   });
 
-  it("connects sidebar submenus to real pages, filters, and dashboard sections", async () => {
+  it("connects sidebar submenus to real pages and filters", async () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: "Start career" }));
@@ -225,12 +225,9 @@ describe("App routing", () => {
 
     fireEvent.click(await screen.findByTestId("shell-menu-home"));
     await waitFor(() => expect(window.location.pathname).toBe("/hub"));
-
-    fireEvent.click(sidebar.getByRole("button", { name: "최근 메시지" }));
-    await waitFor(() => expect(window.location.hash).toBe("#recent-messages"));
-
-    fireEvent.click(sidebar.getByRole("button", { name: "다음 일정" }));
-    await waitFor(() => expect(window.location.hash).toBe("#schedule"));
+    expect(sidebar.queryByRole("button", { name: "대시보드" })).not.toBeInTheDocument();
+    expect(sidebar.queryByRole("button", { name: "최근 메시지" })).not.toBeInTheDocument();
+    expect(sidebar.queryByRole("button", { name: "다음 일정" })).not.toBeInTheDocument();
 
     fireEvent.click(await screen.findByTestId("shell-menu-inbox"));
     await waitFor(() => expect(window.location.pathname).toBe("/inbox"));
@@ -269,8 +266,20 @@ describe("App routing", () => {
 
     fireEvent.click(await screen.findByTestId("shell-menu-lck-team-info"));
     await waitFor(() => expect(window.location.pathname).toBe("/teams"));
-    expect(sidebar.getByRole("button", { name: "구단 목록" })).toBeVisible();
+    expect(sidebar.queryByRole("button", { name: "구단 목록" })).not.toBeInTheDocument();
     expect(sidebar.queryByRole("button", { name: "1군 후보" })).not.toBeInTheDocument();
+
+    fireEvent.click(await screen.findByTestId("shell-menu-roster"));
+    await waitFor(() => expect(window.location.pathname).toBe("/roster"));
+    const rosterSubMenus = ["선발 5인", "2군", "계약"].map((name) =>
+      sidebar.getByRole("button", { name }),
+    );
+
+    expect(rosterSubMenus.map((button) => button.textContent)).toEqual([
+      "선발 5인",
+      "2군",
+      "계약",
+    ]);
 
     fireEvent.click(await screen.findByTestId("shell-menu-save"));
     await waitFor(() => expect(window.location.pathname).toBe("/saves"));

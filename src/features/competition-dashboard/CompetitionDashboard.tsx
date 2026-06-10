@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { findLckTeamSeed } from "../../data/lckTeams";
+import { getCompetitionTemplate } from "../../data/competitions";
+import { findLckTeamSeed, getLckTeamDisplayName } from "../../data/lckTeams";
 import type { CompetitionSubPage } from "../../app/routes";
 import { EvaluationStars } from "../../shared/ui/EvaluationStars";
 import { TeamLogo } from "../../shared/ui/TeamLogo";
@@ -240,9 +241,12 @@ function TeamNameCell({
   onViewTeam?: (teamId: string) => void;
 }) {
   const lckTeam = findLckTeamSeed(entry.teamId) ?? findLckTeamSeed(entry.teamName);
+  const displayName = lckTeam
+    ? getLckTeamDisplayName(lckTeam)
+    : getLckTeamDisplayName(entry.teamName);
 
   if (!lckTeam || !onViewTeam) {
-    return <strong>{entry.teamName}</strong>;
+    return <strong>{displayName}</strong>;
   }
 
   return (
@@ -252,7 +256,7 @@ function TeamNameCell({
       type="button"
     >
       <TeamLogo team={lckTeam} size="sm" />
-      <span>{entry.teamName}</span>
+      <span>{displayName}</span>
     </button>
   );
 }
@@ -289,7 +293,9 @@ function getScoreLabel(record: MatchRecord | undefined) {
 }
 
 function getMatchTitle(match: MatchSchedule) {
-  return `${match.blueTeamName} vs ${match.redTeamName}`;
+  return `${getLckTeamDisplayName(match.blueTeamName)} vs ${getLckTeamDisplayName(
+    match.redTeamName,
+  )}`;
 }
 
 function getFormatLabel(match: MatchSchedule) {
@@ -843,6 +849,11 @@ function FirstStandOverview({
         <span>Semifinals · BO5</span>
         <span>Final · BO5</span>
       </div>
+      <p className="competition-overview-copy">
+        First Stand는 LCK Cup 이후 열리는 첫 국제전입니다. LCK/LPL 대표와
+        주요 지역 대표가 조별리그를 거쳐 BO5 토너먼트로 첫 국제 우승팀을
+        가립니다.
+      </p>
     </section>
   );
 }
@@ -1159,6 +1170,11 @@ function FirstStandLiveOverview({
         <span>Semifinals · BO5</span>
         <span>Final · BO5</span>
       </div>
+      <p className="competition-overview-copy">
+        First Stand는 LCK Cup 이후 열리는 첫 국제전입니다. LCK/LPL 대표와
+        주요 지역 대표가 조별리그를 거쳐 BO5 토너먼트로 첫 국제 우승팀을
+        가립니다.
+      </p>
     </section>
   );
 }
@@ -1999,6 +2015,11 @@ function MsiOverview({
         <span>Upper/Lower Bracket · 8 teams</span>
         <span>Upper Final / Lower Final / Grand Finals · BO5</span>
       </div>
+      <p className="competition-overview-copy">
+        MSI는 각 지역 상위권 팀이 모여 Worlds 전 국제 서열과 보너스 시드를
+        결정하는 대회입니다. 최종 리그 성적 상위 2개 지역은 Worlds 추가 시드를
+        획득합니다.
+      </p>
       <MsiWorldsBonusStrip qualification={qualification} />
     </section>
   );
@@ -2872,7 +2893,36 @@ function CompetitionSummary({
             : "다음 단계 연결을 기다리는 중입니다."}
         </span>
       </article>
+      <CompetitionFormatSummary competition={competition} />
     </section>
+  );
+}
+
+function CompetitionFormatSummary({
+  competition,
+}: {
+  competition: CompetitionState;
+}) {
+  const template = getCompetitionTemplate(competition.competitionId);
+
+  if (!template) {
+    return null;
+  }
+
+  return (
+    <article className="competition-summary-card competition-summary-card-format">
+      <p className="eyebrow">Format</p>
+      <strong>{template.formatSummary}</strong>
+      <span>{template.qualificationRule ?? "대회 결과에 따라 다음 경로가 연결됩니다."}</span>
+      <ul className="competition-format-list">
+        {template.stages.slice(0, 3).map((stage) => (
+          <li key={stage.name}>
+            <b>{stage.name}</b>
+            <span>{stage.format}</span>
+          </li>
+        ))}
+      </ul>
+    </article>
   );
 }
 
@@ -2908,6 +2958,7 @@ function LckRoundsSummary({
           <span>대회 포맷 상세 보기</span>
         </button>
       </article>
+      <CompetitionFormatSummary competition={competition} />
       {showFormatRules && (
         <LckRoundsFormatModal
           competition={competition}
@@ -4562,6 +4613,11 @@ function AsianGamesOverview({ career }: { career: CareerSave }) {
           </div>
           <span className="panel-note">8개 국가 싱글 엘리미네이션</span>
         </div>
+        <p className="competition-overview-copy">
+          Asian Games는 2026 시즌에만 삽입되는 국가대표 이벤트입니다. 대한민국은
+          LCK 선수 풀에서 선발한 6인 로스터로 참가하며, 진행 방식 선택에 따라
+          직접 플레이하거나 자동 진행할 수 있습니다.
+        </p>
         <div className="asian-games-country-grid">
           {asianGamesCountryProfiles.map((country) => (
             <article
@@ -5082,6 +5138,11 @@ function WorldsOverview({
           LCK/LPL/LCS/LEC 1-3시드 직행 · 나머지 8팀 Play-In
         </span>
       </div>
+      <p className="competition-overview-copy">
+        Worlds는 시즌 최종 국제전입니다. 20팀 참가 풀은 지역 시드, MSI 보너스
+        시드, LCQ 슬롯으로 구성되며 Play-In, Group Stage, Knockout을 거쳐 최종
+        우승팀을 저장합니다.
+      </p>
       <div className="worlds-overview-split">
         <article>
           <header>

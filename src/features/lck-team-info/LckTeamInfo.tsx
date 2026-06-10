@@ -1,4 +1,8 @@
-import { lck2026Teams, type LckTeamSeed } from "../../data/lckTeams";
+import {
+  getLckTeamDisplayName,
+  lck2026Teams,
+  type LckTeamSeed,
+} from "../../data/lckTeams";
 import { formatSalaryAmount } from "../../shared/format/money";
 import { PlayerCard } from "../../shared/ui/PlayerCard";
 import { TeamLogo } from "../../shared/ui/TeamLogo";
@@ -9,6 +13,7 @@ import type {
   StandingEntry,
   Team,
 } from "../../types/game";
+import { getLckTeamIntroduction } from "./lckTeamIntroductions";
 
 type LckTeamInfoProps = {
   career: CareerSave;
@@ -214,9 +219,11 @@ function TeamCard({
   team: LckTeamSeed;
 }) {
   const snapshot = getLatestStandingSnapshot(career, team);
+  const displayName = getLckTeamDisplayName(team);
 
   return (
     <button
+      aria-label={`${displayName} ${team.name} 구단 상세 보기`}
       className="career-team-card lck-team-info-card"
       onClick={() => onViewTeam(team.id)}
       type="button"
@@ -224,8 +231,7 @@ function TeamCard({
       <div className="career-team-card-header">
         <TeamLogo team={team} size="md" />
         <div>
-          <span className="career-team-short-name">{team.shortName}</span>
-          <strong>{team.name}</strong>
+          <strong>{displayName}</strong>
         </div>
       </div>
       <dl>
@@ -299,8 +305,7 @@ function TeamListView({
         <p className="eyebrow">Scouting</p>
         <h1>LCK 구단 정보</h1>
         <p className="lede">
-          LCK 10개 구단의 현재 전력, 시즌 흐름, 예상 선발 구성을 읽기 전용으로
-          확인합니다.
+          LCK 10개 구단의 현재 전력과 시즌 흐름을 한눈에 확인합니다.
         </p>
       </header>
 
@@ -332,6 +337,8 @@ function TeamDetailView({
   const { academyPlayers, benchPlayers, starters } = getRosterSections(career, team);
   const displayedAcademyPlayers = academyPlayers.slice(0, 8);
   const salaryTotal = isManagedTeam ? getContractSalaryTotal(career.userTeam) : null;
+  const introduction = getLckTeamIntroduction(team.id);
+  const displayName = getLckTeamDisplayName(team);
 
   return (
     <section className="stack lck-team-info-page">
@@ -341,10 +348,8 @@ function TeamDetailView({
         </button>
         <div>
           <p className="eyebrow">LCK Club Report</p>
-          <h1>{team.name}</h1>
-          <p className="lede">
-            선발 5인과 후보, 아카데미 구성을 스카우팅 관점에서 확인합니다.
-          </p>
+          <h1>{displayName}</h1>
+          <p className="lede">{introduction.description}</p>
         </div>
       </header>
 

@@ -241,6 +241,9 @@ describe("OffseasonMarket", () => {
     );
 
     expect(screen.getByRole("heading", { name: "스토브리그 1일차" })).toBeVisible();
+    expect(screen.getByText("예산 요약")).toBeVisible();
+    expect(screen.getByText("총 예산")).toBeVisible();
+    expect(screen.getByText("제안 후 예상")).toBeVisible();
     expect(screen.getByText("Zeus")).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "재계약 협상" }));
@@ -249,6 +252,7 @@ describe("OffseasonMarket", () => {
     expect(screen.queryByText(/OVR|POT|오버롤|포텐셜/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("제안 역할")).toBeVisible();
     expect(screen.getByText("협상 분위기")).toBeVisible();
+    expect(screen.getByText("제안 후 잔여 예산")).toBeVisible();
     expect(screen.queryByText("현재 최소 수락선")).not.toBeInTheDocument();
     expect(screen.queryByText("수락권")).not.toBeInTheDocument();
     expect(screen.queryByText("거절 위험")).not.toBeInTheDocument();

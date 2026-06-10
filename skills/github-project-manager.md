@@ -10,8 +10,8 @@ Use this skill when the task touches GitHub.
 ## Inputs
 
 1. Read `../README.md`.
-2. Read `../CODEX_HANDOFF.md`.
-3. Read `../docs/development-checklist.md`.
+2. Read `../docs/development-checklist.md`.
+3. Read `../IMPLEMENTATION_ORDER.md`.
 4. Inspect `git status` and current branch.
 5. Read changed files before suggesting commits or PR text.
 

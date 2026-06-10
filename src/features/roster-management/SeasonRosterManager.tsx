@@ -11,6 +11,7 @@ import {
   useDroppable,
 } from "@dnd-kit/core";
 import type { Player, Role, SeasonProgressStatus, Team } from "../../types/game";
+import { getLckTeamDisplayName } from "../../data/lckTeams";
 import { getMoraleLabel } from "../../domain/player-status";
 import {
   formatSeasonDateLabel,
@@ -73,6 +74,12 @@ function getActiveContractedPlayerIds(team: Team, players: Player[]) {
       )
       .map((contract) => contract.playerId),
   );
+}
+
+function getActiveContractSalaryTotal(team: Team) {
+  return team.contracts
+    .filter((contract) => contract.remainingYears > 0)
+    .reduce((total, contract) => total + contract.salary, 0);
 }
 
 function getRosterBuckets(team: Team, players: Player[]) {
@@ -200,7 +207,7 @@ function PlayerDetailModal({
             <p className="eyebrow">{roleLabels[player.role]} 상세</p>
             <h2>{player.name}</h2>
             <p className="muted">
-              {player.currentTeam} · {player.age}세
+              {getLckTeamDisplayName(player.currentTeam)} · {player.age}세
             </p>
             <EvaluationStars player={player} />
           </div>
@@ -390,15 +397,43 @@ function EmptyRosterNotice({ message }: { message: string }) {
 function RosterMetric({
   label,
   value,
+  tone = "default",
 }: {
   label: string;
   value: string | number;
+  tone?: "default" | "good" | "danger";
 }) {
   return (
-    <article className="roster-management-metric">
+    <article className={`roster-management-metric roster-management-metric-${tone}`}>
       <span>{label}</span>
       <strong>{value}</strong>
     </article>
+  );
+}
+
+function RosterBudgetSummary({ team }: { team: Team }) {
+  const salaryTotal = getActiveContractSalaryTotal(team);
+  const remainingBudget = team.budget - salaryTotal;
+  const isOverBudget = remainingBudget < 0;
+
+  return (
+    <section
+      aria-label="로스터 예산 요약"
+      className="roster-management-budget-panel"
+    >
+      <RosterMetric label="총 예산" value={formatSalaryAmount(team.budget)} />
+      <RosterMetric label="연봉 총액" value={formatSalaryAmount(salaryTotal)} />
+      <RosterMetric
+        label="잔여 예산"
+        tone={isOverBudget ? "danger" : "good"}
+        value={formatSalaryAmount(remainingBudget)}
+      />
+      <RosterMetric
+        label="예산 상태"
+        tone={isOverBudget ? "danger" : "good"}
+        value={isOverBudget ? "초과" : "정상"}
+      />
+    </section>
   );
 }
 
@@ -513,10 +548,7 @@ function ContractsView({
         (rightPlayer?.overall ?? 0) - (leftPlayer?.overall ?? 0)
       );
     });
-  const salaryTotal = activeContracts.reduce(
-    (total, contract) => total + contract.salary,
-    0,
-  );
+  const salaryTotal = getActiveContractSalaryTotal(team);
 
   return (
     <section className="bench-board">
@@ -722,78 +754,87 @@ export function SeasonRosterManager({
       </header>
 
       {activeSubPage === "contracts" ? (
-        <ContractsView
-          academyCount={academyRosterPlayers.length}
-          mainCount={mainRosterPlayers.length}
-          players={players}
-          starterCount={starterIds.size}
-          team={team}
-        />
+        <>
+          <RosterBudgetSummary team={team} />
+          <ContractsView
+            academyCount={academyRosterPlayers.length}
+            mainCount={mainRosterPlayers.length}
+            players={players}
+            starterCount={starterIds.size}
+            team={team}
+          />
+        </>
       ) : activeSubPage === "academy" ? (
-        <AcademyRosterView
-          academyPlayers={academyRosterPlayers}
-          onCallUpPlayer={handleCallUp}
-          onViewDetail={setDetailPlayer}
-        />
+        <>
+          <RosterBudgetSummary team={team} />
+          <AcademyRosterView
+            academyPlayers={academyRosterPlayers}
+            onCallUpPlayer={handleCallUp}
+            onViewDetail={setDetailPlayer}
+          />
+        </>
       ) : (
-        <DndContext
-          sensors={sensors}
-          onDragCancel={() => setActiveDragPlayerId(null)}
-          onDragEnd={handleDragEnd}
-          onDragStart={handleDragStart}
-        >
-          <section className="lineup-board">
-            {roleOrder.map((role) => (
-              <StarterSlot
-                key={role}
-                onViewDetail={setDetailPlayer}
-                player={starterPlayers[role]}
-                role={role}
-              />
-            ))}
-          </section>
-
-          <section className="bench-board">
-            <div className="panel-title-row">
-              <div>
-                <p className="eyebrow">Main roster bench</p>
-                <h2>1군 후보</h2>
-              </div>
-              <span className="panel-note">
-                후보 카드는 선발 슬롯으로 드래그하거나 2군으로 내릴 수 있습니다.
-              </span>
-            </div>
-            <div className="bench-player-grid roster-management-main-bench-grid">
-              {mainBenchPlayers.map((player) => (
-                <RosterPlayerCard
-                  action={{
-                    label: "2군으로",
-                    onClick: () => handleSendDown(player),
-                  }}
-                  draggable={canEditLineup}
-                  key={player.id}
+        <>
+          <RosterBudgetSummary team={team} />
+          <DndContext
+            sensors={sensors}
+            onDragCancel={() => setActiveDragPlayerId(null)}
+            onDragEnd={handleDragEnd}
+            onDragStart={handleDragStart}
+          >
+            <section className="lineup-board">
+              {roleOrder.map((role) => (
+                <StarterSlot
+                  key={role}
                   onViewDetail={setDetailPlayer}
-                  player={player}
-                  rosterLabel="1군 후보"
+                  player={starterPlayers[role]}
+                  role={role}
                 />
               ))}
-              {mainBenchPlayers.length === 0 && (
-                <EmptyRosterNotice message="1군 후보가 없습니다. 2군 화면에서 선수를 콜업할 수 있습니다." />
-              )}
-            </div>
-          </section>
-          <DragOverlay className="roster-drag-overlay" dropAnimation={null}>
-            {activeDragPlayer ? (
-              <RosterPlayerCard
-                draggable={false}
-                onViewDetail={setDetailPlayer}
-                overlay
-                player={activeDragPlayer}
-                rosterLabel="1군 후보"
-              />
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+            </section>
+
+            <section className="bench-board">
+              <div className="panel-title-row">
+                <div>
+                  <p className="eyebrow">Main roster bench</p>
+                  <h2>1군 후보</h2>
+                </div>
+                <span className="panel-note">
+                  후보 카드는 선발 슬롯으로 드래그하거나 2군으로 내릴 수 있습니다.
+                </span>
+              </div>
+              <div className="bench-player-grid roster-management-main-bench-grid">
+                {mainBenchPlayers.map((player) => (
+                  <RosterPlayerCard
+                    action={{
+                      label: "2군으로",
+                      onClick: () => handleSendDown(player),
+                    }}
+                    draggable={canEditLineup}
+                    key={player.id}
+                    onViewDetail={setDetailPlayer}
+                    player={player}
+                    rosterLabel="1군 후보"
+                  />
+                ))}
+                {mainBenchPlayers.length === 0 && (
+                  <EmptyRosterNotice message="1군 후보가 없습니다. 2군 화면에서 선수를 콜업할 수 있습니다." />
+                )}
+              </div>
+            </section>
+            <DragOverlay className="roster-drag-overlay" dropAnimation={null}>
+              {activeDragPlayer ? (
+                <RosterPlayerCard
+                  draggable={false}
+                  onViewDetail={setDetailPlayer}
+                  overlay
+                  player={activeDragPlayer}
+                  rosterLabel="1군 후보"
+                />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        </>
       )}
 
       {detailPlayer && (

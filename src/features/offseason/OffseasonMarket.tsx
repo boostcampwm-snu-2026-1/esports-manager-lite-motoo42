@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { OffseasonSubPage } from "../../app/routes";
+import { getLckTeamDisplayName } from "../../data/lckTeams";
 import { offseasonFreeAgentSeeds } from "../../data/offseasonFreeAgents";
 import {
   getOffseasonMarketViewStatus,
@@ -137,7 +138,9 @@ function getRosterTierLabel(player: Player) {
 }
 
 function getMarketTeamLabel(player: Player) {
-  return player.currentTeam ? `${player.currentTeam} 소속` : "무소속 FA";
+  return player.currentTeam
+    ? `${getLckTeamDisplayName(player.currentTeam)} 소속`
+    : "무소속 FA";
 }
 
 function getPlayer(players: Player[], playerId: string) {
@@ -241,6 +244,77 @@ function getActiveSalaryTotal(career: CareerSave) {
   return career.userTeam.contracts
     .filter((contract) => contract.remainingYears > 0)
     .reduce((total, contract) => total + contract.salary, 0);
+}
+
+function BudgetMetric({
+  label,
+  note,
+  tone = "default",
+  value,
+}: {
+  label: string;
+  note?: string;
+  tone?: "default" | "good" | "danger";
+  value: string;
+}) {
+  return (
+    <article className={`season-summary-metric budget-metric-${tone}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      {note && <small>{note}</small>}
+    </article>
+  );
+}
+
+function OffseasonBudgetSummary({
+  career,
+  projectedSalaryOffer = 0,
+}: {
+  career: CareerSave;
+  projectedSalaryOffer?: number;
+}) {
+  const activeSalaryTotal = getActiveSalaryTotal(career);
+  const remainingBudget = career.userTeam.budget - activeSalaryTotal;
+  const projectedRemainingBudget = remainingBudget - projectedSalaryOffer;
+  const isOverBudget = remainingBudget < 0;
+  const isProjectedOverBudget = projectedRemainingBudget < 0;
+
+  return (
+    <Card>
+      <div className="section-label-row">
+        <span>예산 요약</span>
+        <strong>{isOverBudget ? "예산 초과" : "정상"}</strong>
+      </div>
+      <div className="season-summary-metrics offseason-budget-metrics">
+        <BudgetMetric
+          label="총 예산"
+          note="현재 시즌 기준"
+          value={formatSalaryAmount(career.userTeam.budget)}
+        />
+        <BudgetMetric
+          label="연봉 총액"
+          note="확정 계약 기준"
+          value={formatSalaryAmount(activeSalaryTotal)}
+        />
+        <BudgetMetric
+          label="잔여 예산"
+          note="추가 영입 가능 범위"
+          tone={isOverBudget ? "danger" : "good"}
+          value={formatSalaryAmount(remainingBudget)}
+        />
+        <BudgetMetric
+          label="제안 후 예상"
+          note={
+            projectedSalaryOffer > 0
+              ? `${formatSalaryAmount(projectedSalaryOffer)} 제안 반영`
+              : "새 제안 없음"
+          }
+          tone={isProjectedOverBudget ? "danger" : "default"}
+          value={formatSalaryAmount(projectedRemainingBudget)}
+        />
+      </div>
+    </Card>
+  );
 }
 
 function getContractedRoleCount(career: CareerSave, role: Role) {
@@ -450,6 +524,9 @@ function ContractOfferModal({
   });
   const latestOffer = findLatestOffer(career, modalPlayer.id, context);
   const title = target.mode === "renewal" ? "재계약 협상" : "FA 계약 협상";
+  const activeSalaryTotal = getActiveSalaryTotal(career);
+  const projectedRemainingBudget =
+    career.userTeam.budget - activeSalaryTotal - salaryOffer;
 
   function handleContractTypeChange(nextContractType: ContractType) {
     setContractType(nextContractType);
@@ -546,6 +623,19 @@ function ContractOfferModal({
           <article>
             <span>선수 측 요구액</span>
             <strong>{formatSalaryAmount(negotiation.visibleDemand)}</strong>
+          </article>
+          <article
+            className={
+              projectedRemainingBudget < 0
+                ? "contract-offer-budget-card contract-offer-budget-card-danger"
+                : "contract-offer-budget-card"
+            }
+          >
+            <span>제안 후 잔여 예산</span>
+            <strong>{formatSalaryAmount(projectedRemainingBudget)}</strong>
+            <small>
+              현재 잔여 {formatSalaryAmount(career.userTeam.budget - activeSalaryTotal)}
+            </small>
           </article>
           <article className="contract-offer-mood-card">
             <span>협상 분위기</span>
@@ -1339,7 +1429,7 @@ function ClosedMarketOverviewPanel({ career }: { career: CareerSave }) {
         </div>
         <div className="season-summary-metrics">
           <article className="season-summary-metric">
-            <span>팀 예산</span>
+            <span>총 예산</span>
             <strong>{formatSalaryAmount(career.userTeam.budget)}</strong>
             <small>현재 시즌 기준</small>
           </article>
@@ -1347,6 +1437,15 @@ function ClosedMarketOverviewPanel({ career }: { career: CareerSave }) {
             <span>연봉 총액</span>
             <strong>{formatSalaryAmount(activeSalaryTotal)}</strong>
             <small>잔여 {formatSalaryAmount(remainingBudget)}</small>
+          </article>
+          <article
+            className={`season-summary-metric budget-metric-${
+              remainingBudget < 0 ? "danger" : "good"
+            }`}
+          >
+            <span>예산 상태</span>
+            <strong>{remainingBudget < 0 ? "초과" : "정상"}</strong>
+            <small>{formatSalaryAmount(remainingBudget)}</small>
           </article>
           <article className="season-summary-metric">
             <span>1군 등록</span>
@@ -1473,6 +1572,7 @@ export function OffseasonMarket({
   return (
     <section className="stack offseason-page">
       <WeekTimeline career={career} />
+      <OffseasonBudgetSummary career={career} />
       {validationErrors.length > 0 && (
         <div className="offseason-validation-box">
           {validationErrors.map((error) => (

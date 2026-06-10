@@ -3,7 +3,7 @@ import {
   getStrategyLabel,
   getTrainingIntensityLabel,
 } from "../../domain/weekly-plan";
-import { findLckTeamSeed } from "../../data/lckTeams";
+import { findLckTeamSeed, getLckTeamDisplayName } from "../../data/lckTeams";
 import { getSeasonProgressActionLabel } from "../../domain/season";
 import { TeamLogo } from "../ui/TeamLogo";
 import type {
@@ -213,7 +213,7 @@ const shellMenuGroups: ShellMenuGroup[] = [
         label: "홈",
         icon: "home",
         route: "main-dashboard",
-        subItems: ["대시보드", "최근 메시지", "다음 일정"],
+        subItems: [],
       },
       {
         id: "inbox",
@@ -227,7 +227,7 @@ const shellMenuGroups: ShellMenuGroup[] = [
         label: "로스터 관리",
         icon: "roster",
         route: "roster-builder",
-        subItems: ["선발 5인", "계약", "2군"],
+        subItems: ["선발 5인", "2군", "계약"],
       },
       {
         id: "training",
@@ -268,7 +268,7 @@ const shellMenuGroups: ShellMenuGroup[] = [
         label: "LCK 구단 정보",
         icon: "teams",
         route: "lck-team-info",
-        subItems: ["구단 목록"],
+        subItems: [],
       },
     ],
   },
@@ -574,40 +574,16 @@ function getRosterSubMenuItems(): ShellSubMenuItem[] {
       isDefault: true,
     },
     {
-      id: "contracts",
-      label: "계약",
-      route: "roster-builder",
-      subPage: "contracts",
-    },
-    {
       id: "academy",
       label: "2군",
       route: "roster-builder",
       subPage: "academy",
     },
-  ];
-}
-
-function getHomeSubMenuItems(): ShellSubMenuItem[] {
-  return [
     {
-      id: "dashboard",
-      label: "대시보드",
-      route: "main-dashboard",
-      hash: "dashboard",
-      isDefault: true,
-    },
-    {
-      id: "recent-messages",
-      label: "최근 메시지",
-      route: "main-dashboard",
-      hash: "recent-messages",
-    },
-    {
-      id: "schedule",
-      label: "다음 일정",
-      route: "main-dashboard",
-      hash: "schedule",
+      id: "contracts",
+      label: "계약",
+      route: "roster-builder",
+      subPage: "contracts",
     },
   ];
 }
@@ -668,17 +644,6 @@ function getOffseasonSubMenuItems(): ShellSubMenuItem[] {
       label: "이적 로그",
       route: "offseason",
       subPage: "log",
-    },
-  ];
-}
-
-function getLckTeamSubMenuItems(): ShellSubMenuItem[] {
-  return [
-    {
-      id: "teams",
-      label: "구단 목록",
-      route: "lck-team-info",
-      isDefault: true,
     },
   ];
 }
@@ -849,15 +814,11 @@ export function AppShell({
   const activeMenuItem = getActiveMenuItem(route);
   const selectedCompetition = getSelectedCompetition(career, selectedCompetitionId);
   const subMenuItems =
-    activeMenuItem.route === "main-dashboard"
-      ? getHomeSubMenuItems()
-      : activeMenuItem.route === "inbox"
-        ? getInboxSubMenuItems()
-        : activeMenuItem.route === "offseason"
-          ? getOffseasonSubMenuItems()
-          : activeMenuItem.route === "lck-team-info"
-            ? getLckTeamSubMenuItems()
-            : activeMenuItem.route === "competition-dashboard"
+    activeMenuItem.route === "inbox"
+      ? getInboxSubMenuItems()
+      : activeMenuItem.route === "offseason"
+        ? getOffseasonSubMenuItems()
+        : activeMenuItem.route === "competition-dashboard"
       ? getCompetitionSubMenuItems(selectedCompetition)
       : activeMenuItem.route === "season-calendar"
         ? getCalendarSubMenuItems()
@@ -880,6 +841,7 @@ export function AppShell({
     isProgressing ||
     isProgressBlocked;
   const userTeamSeed = career ? findLckTeamSeed(career.userTeam.name) : undefined;
+  const userTeamDisplayName = getLckTeamDisplayName(userTeamSeed ?? career?.userTeam.name);
   const unreadImportantMessageCount =
     career?.messages?.filter(
       (message) =>
@@ -893,7 +855,7 @@ export function AppShell({
         <div className="shell-sidebar-header">
           <div className="club-mark">
             <TeamLogo
-              fallbackLabel={career?.userTeam.name.slice(0, 2).toUpperCase() ?? "LM"}
+              fallbackLabel={userTeamDisplayName.slice(0, 2).toUpperCase() || "LM"}
               size="md"
               team={userTeamSeed}
               teamName={career?.userTeam.name}
@@ -901,7 +863,7 @@ export function AppShell({
           </div>
           <div>
             <span>Manager</span>
-            <strong>{career?.userTeam.name ?? "LoL Manager"}</strong>
+            <strong title={career?.userTeam.name}>{userTeamDisplayName || "LoL Manager"}</strong>
           </div>
         </div>
 
@@ -989,7 +951,7 @@ export function AppShell({
         <header className="shell-topbar">
           <div>
             <p className="eyebrow">League Manager</p>
-            <h1>{career?.userTeam.name ?? "LoL Manager"}</h1>
+            <h1>{userTeamDisplayName || "LoL Manager"}</h1>
           </div>
           <div className="shell-status-strip">
             <span>{seasonLabel}</span>

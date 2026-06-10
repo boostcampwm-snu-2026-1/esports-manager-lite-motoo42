@@ -8,18 +8,23 @@ const lckCup: Competition = {
   calendarType: "both",
   qualificationRule: "LCK Cup result decides the LCK First Stand representatives.",
   formatSummary:
-    "Uses the official-current LCK Cup regular and postseason schedule as closely as possible.",
-  entrantsSummary: "LCK teams",
+    "Baron/Elder Group Battle, Super Week BO5, Play-In, and Playoffs decide the first domestic champion.",
+  entrantsSummary: "LCK 10 teams",
   stages: [
     {
-      name: "Regular stage",
-      format: "Follow official-current LCK Cup regular schedule.",
-      notes: "Exact match list will be modeled after the reference LCK season data.",
+      name: "Group Battle",
+      format: "Baron Group and Elder Group play cross-group series.",
+      notes: "Regular group battle wins are worth 1 point.",
     },
     {
-      name: "Postseason",
-      format: "Follow official-current LCK Cup postseason schedule.",
-      notes: "Top teams qualify toward First Stand slots.",
+      name: "Super Week",
+      format: "Same selection-rank teams meet in fixed BO5 matches.",
+      notes: "Super Week wins are worth 2 points and shape Play-In/Playoffs seeding.",
+    },
+    {
+      name: "Play-In / Playoffs",
+      format: "Cup seeding leads into BO5 postseason matches.",
+      notes: "The winner and runner-up become the LCK First Stand representatives.",
     },
   ],
   status: "available",
@@ -33,7 +38,8 @@ const firstStand: Competition = {
   calendarType: "both",
   qualificationRule:
     "LCK top 2, LPL top 2, and one team each from the 3rd-6th ranked leagues.",
-  formatSummary: "8-team custom First Stand format.",
+  formatSummary:
+    "Eight teams begin in two BO1 groups, then the top four enter a BO5 knockout bracket.",
   entrantsSummary:
     "LCK 2, LPL 2, other 3rd-6th ranked leagues 1 each, total 8 teams.",
   stages: [
@@ -42,14 +48,14 @@ const firstStand: Competition = {
       format: "Two groups of four teams.",
       entrants: 8,
       advancing: 4,
-      notes: "Top two teams from each group advance.",
+      notes: "Top two teams from each group advance to the knockout bracket.",
     },
     {
       name: "Semifinals and Final",
       format: "Four-team knockout bracket.",
       entrants: 4,
       advancing: 1,
-      notes: "World Cup-style single elimination.",
+      notes: "Semifinals and final are played as BO5 series.",
     },
   ],
   status: "locked",
@@ -63,16 +69,18 @@ const lckRounds12: Competition = {
   calendarType: "both",
   qualificationRule: "Determines MSI qualification and later LCK seeding.",
   formatSummary:
-    "Uses the official-current LCK Rounds 1-2 regular and postseason schedule.",
-  entrantsSummary: "LCK teams",
+    "Full LCK double round robin followed by Road to MSI postseason qualification.",
+  entrantsSummary: "LCK 10 teams",
   stages: [
     {
       name: "Rounds 1-2 regular stage",
-      format: "Follow official-current LCK Rounds 1-2 schedule.",
+      format: "Double round robin, 90 total series, team spacing constrained to LCK match days.",
+      notes: "The table is later carried into the post-MSI LCK phase.",
     },
     {
       name: "Road to MSI / postseason",
-      format: "Follow official-current LCK postseason schedule for MSI qualification.",
+      format: "Postseason bracket decides the LCK MSI representatives.",
+      notes: "Final placements also influence later domestic seeding.",
     },
   ],
   status: "locked",
@@ -87,7 +95,7 @@ const msi: Competition = {
   qualificationRule:
     "Top two teams from each major league except CBLOL, plus the CBLOL champion. First Stand winner league grants its second seed a bracket bye.",
   formatSummary:
-    "11-team 2026 MSI format with play-in and upper/lower bracket stage.",
+    "11-team 2026 MSI format with a small Play-In and an eight-team upper/lower bracket stage.",
   entrantsSummary:
     "LCK 2, LPL 2, LEC 2, LCS 2, LCP 2, CBLOL 1, total 11 teams.",
   stages: [
@@ -96,14 +104,14 @@ const msi: Competition = {
       format: "Four-team single elimination.",
       entrants: 4,
       advancing: 1,
-      notes: "The winner joins seven direct bracket-stage teams.",
+      notes: "The Play-In winner joins seven direct bracket-stage teams.",
     },
     {
       name: "Bracket Stage",
       format: "Eight-team upper/lower bracket double elimination.",
       entrants: 8,
       advancing: 1,
-      notes: "Play-in final, upper final, lower final, and Grand Finals are BO5.",
+      notes: "MSI final placement also awards Worlds bonus seeds to the top two leagues.",
     },
   ],
   status: "locked",
@@ -117,16 +125,18 @@ const lckRounds35: Competition = {
   calendarType: "normal",
   qualificationRule: "Determines Worlds qualification.",
   formatSummary:
-    "2025-reference normal season path. Uses official-current LCK Rounds 3-5 regular and postseason schedule.",
-  entrantsSummary: "LCK teams",
+    "Normal-season path after MSI: Legend/Rise groups, continued standings, and Worlds qualification playoffs.",
+  entrantsSummary: "LCK 10 teams",
   stages: [
     {
       name: "Rounds 3-5 regular stage",
-      format: "Follow official-current LCK Rounds 3-5 schedule.",
+      format: "Legend and Rise groups play internal regular-season series.",
+      notes: "Each match day pairs one Legend match with one Rise match when two series are scheduled.",
     },
     {
       name: "LCK Playoffs",
-      format: "Follow official-current LCK Worlds qualification postseason schedule.",
+      format: "Postseason bracket determines Worlds seeds.",
+      notes: "Final LCK placements feed into the Worlds 20-team entrant pool.",
     },
   ],
   status: "locked",
@@ -140,12 +150,13 @@ const lckRounds34: Competition = {
   calendarType: "asian-games",
   qualificationRule: "Determines Worlds qualification path in Asian Games seasons.",
   formatSummary:
-    "2026-reference Asian Games path. Rounds 3-5 are shortened to Rounds 3-4 before Asian Games.",
-  entrantsSummary: "LCK teams",
+    "Asian Games season path: post-MSI LCK play is shortened to Rounds 3-4 before the national-team event.",
+  entrantsSummary: "LCK 10 teams",
   stages: [
     {
       name: "Rounds 3-4 regular stage",
-      format: "Follow official-current shortened LCK Rounds 3-4 schedule.",
+      format: "Legend and Rise groups play a shortened internal regular stage.",
+      notes: "The shortened phase preserves Worlds qualification before Asian Games.",
     },
     {
       name: "LCK Playoffs",
@@ -165,13 +176,14 @@ const asianGames: Competition = {
   order: 6,
   calendarType: "asian-games",
   qualificationRule: "National team selection from the LCK player pool.",
-  formatSummary: "Special international national-team event inserted before Worlds.",
+  formatSummary:
+    "Special eight-country national-team event inserted before Worlds in Asian Games seasons.",
   entrantsSummary: "National teams",
   stages: [
     {
       name: "National team event",
-      format: "Compressed Asian Games event.",
-      notes: "Selection rules, fatigue, morale, and reward effects are still open.",
+      format: "Eight-team knockout event with Korea selected from the LCK player pool.",
+      notes: "The user can choose direct control or automatic national-team progression.",
     },
   ],
   status: "locked",
@@ -184,30 +196,31 @@ const worldsNormal: Competition = {
   order: 6,
   calendarType: "normal",
   qualificationRule: "Based on final regional placements.",
-  formatSummary: "20-team custom Worlds format.",
+  formatSummary:
+    "20-team Worlds format: Play-In, Group Stage, Knockout, and champion storage.",
   entrantsSummary:
     "LCK/LPL/LCS/LEC base 3, LCP/CBLOL base 2, MSI bonus 2, LCQ 2, total 20 teams.",
   stages: [
     {
       name: "Qualification Pool",
-      format: "Participant pool finalized first; play-in structure is implemented later.",
+      format: "Participant pool is finalized from regional seeds, MSI bonus seeds, and LCQ placeholders.",
       entrants: 20,
       notes:
-        "The 20-team pool is stored after MSI bonus seeds and regional results are known.",
+        "LCK/LPL/LCS/LEC 1-3 seeds go direct to groups; LCP/CBLOL, bonus seeds, and LCQ begin in Play-In.",
     },
     {
       name: "Group Stage",
       format: "Four groups of four teams.",
       entrants: 16,
       advancing: 8,
-      notes: "Top two teams from each group advance.",
+      notes: "Top two teams from each group advance to Knockout.",
     },
     {
       name: "Knockout Stage",
       format: "Eight-team World Cup-style knockout bracket.",
       entrants: 8,
       advancing: 1,
-      notes: "Quarterfinals, semifinals, final.",
+      notes: "Quarterfinals, semifinals, and final are BO5; the final winner is stored as Worlds champion.",
     },
   ],
   status: "locked",
@@ -258,3 +271,11 @@ export const seasonTemplates: SeasonTemplate[] = [
     competitions: asianGamesSeasonCompetitions,
   },
 ];
+
+export function getCompetitionTemplate(competitionId: Competition["id"]) {
+  return (
+    [...normalSeasonCompetitions, ...asianGamesSeasonCompetitions].find(
+      (competition) => competition.id === competitionId,
+    ) ?? null
+  );
+}

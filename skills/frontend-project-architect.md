@@ -10,8 +10,8 @@ Use this skill when the frontend structure or implementation boundary matters.
 ## Inputs
 
 1. Read `../README.md`.
-2. Read `../CODEX_HANDOFF.md`.
-3. Read `../docs/development-checklist.md`.
+2. Read `../docs/development-checklist.md`.
+3. Read `../IMPLEMENTATION_ORDER.md`.
 4. Read `../docs/ui-design-decisions.md` for UI work.
 5. Inspect the current tree with `rg --files`.
 6. Read `package.json`, route files, state files, and relevant domain files.

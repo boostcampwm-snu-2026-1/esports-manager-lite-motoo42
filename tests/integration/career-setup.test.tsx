@@ -15,6 +15,9 @@ describe("CareerSetup", () => {
       ).toBeVisible();
     }
 
+    expect(screen.getByText("젠지")).toBeVisible();
+    expect(screen.getByText("DN 수퍼스")).toBeVisible();
+
     expect(screen.getByRole("img", { name: "LCK logo" })).toBeVisible();
     expect(screen.getByRole("img", { name: "T1 logo" })).toBeVisible();
 

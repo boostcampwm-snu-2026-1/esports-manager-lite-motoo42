@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { lck2026Players } from "../../src/data/lck2026Players";
 import { lck2026MainPortraitCount } from "../../src/data/lck2026PlayerPortraits";
-import { lck2026Teams, lckLeagueLogo } from "../../src/data/lckTeams";
+import {
+  getLckTeamDisplayName,
+  lck2026Teams,
+  lckLeagueLogo,
+} from "../../src/data/lckTeams";
 import { offseasonFreeAgentSeeds } from "../../src/data/offseasonFreeAgents";
 import { samplePlayers } from "../../src/data/samplePlayers";
 import { createInitialCareer } from "../../src/domain/career/createInitialCareer";
@@ -106,6 +110,16 @@ describe("lck2026Players", () => {
       ["Kiwoom DRX", "C"],
       ["DN SOOPers", "C"],
     ]);
+  });
+
+  it("provides Korean display names without changing internal team names", () => {
+    expect(getLckTeamDisplayName("Gen.G")).toBe("젠지");
+    expect(getLckTeamDisplayName("DN SOOPers")).toBe("DN 수퍼스");
+    expect(getLckTeamDisplayName("dn-soopers")).toBe("DN 수퍼스");
+    expect(getLckTeamDisplayName("Unknown Team")).toBe("Unknown Team");
+    expect(lck2026Teams.find((team) => team.id === "dn-soopers")?.name).toBe(
+      "DN SOOPers",
+    );
   });
 
   it("attaches local logo assets to every 2026 LCK team", () => {

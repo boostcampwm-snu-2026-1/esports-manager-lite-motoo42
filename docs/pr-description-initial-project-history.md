@@ -90,7 +90,7 @@ The main scope includes season progression, tournament engines, MongoDB-backed c
 
 ### Documentation and Agent Handoff
 
-- Updated `CODEX_HANDOFF.md` as the main continuation document for future Codex/agent work.
+- Updated project planning docs as the continuation guide for future Codex/agent work.
 - Updated `docs/development-checklist.md` as the single official checklist.
 - Updated `IMPLEMENTATION_ORDER.md` as the current sprint guide.
 - Formalized the final-project priority goal: LCK 3-season operation.

@@ -16,11 +16,11 @@ The topic is already selected. This skill now focuses on scope control.
 ## Inputs
 
 1. Read `../README.md`.
-2. Read `../CODEX_HANDOFF.md`.
-3. Read `../docs/overview.md`.
-4. Read `../docs/mvp-scope.md`.
-5. Read `../docs/development-checklist.md`.
-6. Read `../docs/open-questions.md`.
+2. Read `../docs/development-checklist.md`.
+3. Read `../IMPLEMENTATION_ORDER.md`.
+4. Read `../docs/overview.md` when project scope context is needed.
+5. Read `../docs/mvp-scope.md` when MVP boundaries are involved.
+6. Read `../docs/open-questions.md` when unresolved product choices matter.
 
 ## Workflow
 

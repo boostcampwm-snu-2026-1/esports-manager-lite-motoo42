@@ -9,10 +9,9 @@
 작업 전 우선순위:
 
 1. `../README.md`
-2. `../CODEX_HANDOFF.md`
-3. `../docs/development-checklist.md`
-4. `../IMPLEMENTATION_ORDER.md`
-5. 작업과 관련된 `../docs/*.md`
+2. `../docs/development-checklist.md`
+3. `../IMPLEMENTATION_ORDER.md`
+4. 작업과 관련된 `../docs/*.md`
 
 ## Skills
 
