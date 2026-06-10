@@ -445,6 +445,7 @@ function ContractOfferModal({
     context,
     contractType,
     player: modalPlayer,
+    requestedRosterRole,
     salaryOffer,
   });
   const latestOffer = findLatestOffer(career, modalPlayer.id, context);
@@ -637,10 +638,15 @@ function ContractTab({
 
         return (
           <article className="offseason-player-row" key={player.id}>
+            <div className="offseason-player-portrait-cell">
+              <PlayerPortrait player={player} size="lg" />
+            </div>
             <div className="offseason-player-main">
               <strong>{player.name}</strong>
               <span>{getPlayerLabel(player)}</span>
               <EvaluationStars compact player={player} />
+            </div>
+            <div className="offseason-player-market-info">
               <small>
                 {latestOffer
                   ? `최근 재계약 제안 ${getOfferStatusLabel(
@@ -760,8 +766,18 @@ function ConfirmationPendingSection({
                   예산 여유 {formatSalaryAmount(remainingBudget)} · 포지션{" "}
                   {roleCount}/3
                 </small>
+                {!canConfirm && blockReason && (
+                  <small className="offseason-confirm-block-reason">
+                    확정 불가: {blockReason}
+                  </small>
+                )}
               </div>
               <div className="offseason-confirmation-actions">
+                {!canConfirm && blockReason && (
+                  <small className="offseason-confirm-tooltip-copy">
+                    {blockReason}
+                  </small>
+                )}
                 <Button
                   aria-disabled={!canConfirm}
                   className={
@@ -780,6 +796,7 @@ function ConfirmationPendingSection({
                     setNotice("");
                     onConfirmFreeAgentSigning(offer.id);
                   }}
+                  title={!canConfirm ? blockReason : undefined}
                   type="button"
                 >
                   영입 확정
@@ -964,10 +981,15 @@ function FreeAgentTab({
 
         return (
           <article className="offseason-player-row" key={player.id}>
+            <div className="offseason-player-portrait-cell">
+              <PlayerPortrait player={player} size="lg" />
+            </div>
             <div className="offseason-player-main">
               <strong>{player.name}</strong>
               <span>{getPlayerLabel(player)}</span>
               <EvaluationStars compact player={player} />
+            </div>
+            <div className="offseason-player-market-info">
               <small>
                 {latestOffer
                   ? `최근 FA 제안 ${getOfferStatusLabel(
@@ -981,7 +1003,7 @@ function FreeAgentTab({
                       demand,
                     )} · ${getMarketTeamLabel(player)} · ${getRosterTierLabel(
                       player,
-                    )}`}
+                      )}`}
               </small>
             </div>
             <div className="offseason-offer-controls">
@@ -1130,7 +1152,7 @@ function LogTab({ career }: { career: CareerSave }) {
           return (
             <article className="offseason-mini-player" key={offer.id}>
               <strong>
-                {offer.fromTeamName} · {offer.status}
+                {offer.fromTeamName} · {getOfferStatusLabel(offer.status)}
               </strong>
               <span>
                 {playerNames} · {formatSalaryAmount(offer.salaryOffer)} ·{" "}
@@ -1231,13 +1253,19 @@ function ClosedMarketFreeAgentPanel({ career }: { career: CareerSave }) {
         <div className="offseason-list offseason-closed-player-list">
           {filteredPlayers.slice(0, 16).map((player) => (
             <article className="offseason-player-row" key={player.id}>
+              <div className="offseason-player-portrait-cell">
+                <PlayerPortrait player={player} size="lg" />
+              </div>
               <div className="offseason-player-main">
                 <strong>{player.name}</strong>
                 <span>{getPlayerLabel(player)}</span>
                 <EvaluationStars compact player={player} />
+              </div>
+              <div className="offseason-player-market-info">
                 <small>
                   {getMarketTeamLabel(player)} · {getRosterTierLabel(player)}
                 </small>
+                <small>협상 가능 기간에 제안할 수 있습니다.</small>
               </div>
               <strong className="offseason-status-label">관찰 가능</strong>
             </article>

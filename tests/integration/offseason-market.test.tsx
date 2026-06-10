@@ -135,6 +135,9 @@ describe("OffseasonMarket", () => {
 
     rerender(<OffseasonMarket {...baseProps} subPage="free-agents" />);
     expect(screen.getByText("FA 명단")).toBeVisible();
+    fireEvent.change(screen.getByLabelText("닫힌 시장 선수 검색"), {
+      target: { value: "BeryL" },
+    });
     expect(screen.getByText("BeryL")).toBeVisible();
     expect(screen.queryByText("Chovy")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "FA 협상" })).not.toBeInTheDocument();
@@ -214,6 +217,9 @@ describe("OffseasonMarket", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "FA 시장" }));
+    fireEvent.change(screen.getByLabelText("시장 선수 검색"), {
+      target: { value: "BeryL" },
+    });
 
     expect(screen.getByText("BeryL")).toBeVisible();
     expect(screen.queryByText("Chovy")).not.toBeInTheDocument();
@@ -294,6 +300,9 @@ describe("OffseasonMarket", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "FA 시장" }));
+    fireEvent.change(screen.getByLabelText("시장 선수 검색"), {
+      target: { value: "BeryL" },
+    });
 
     expect(screen.getByText("BeryL")).toBeVisible();
     expect(
@@ -304,7 +313,7 @@ describe("OffseasonMarket", () => {
     expect(container.querySelector(".evaluation-star-empty")?.textContent).toBe(
       "☆",
     );
-    fireEvent.click(screen.getAllByRole("button", { name: "FA 협상" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "FA 협상" }));
     expect(screen.getByRole("dialog", { name: "FA 계약 협상" })).toBeVisible();
     expect(screen.getByLabelText("제안 역할")).toBeVisible();
     expect(screen.getByText("선수 측 요구액")).toBeVisible();

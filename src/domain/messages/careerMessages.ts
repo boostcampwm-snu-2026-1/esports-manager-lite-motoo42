@@ -399,13 +399,22 @@ function createTransferMessageFromLog({
   career: CareerSave;
   log: OffseasonLogEntry;
 }): MessageDraft {
+  const isImportantOffseasonNews =
+    log.isUserTeamRelated ||
+    log.type === "signing" ||
+    log.type === "ai-signing" ||
+    log.type === "renewal" ||
+    log.type === "release" ||
+    log.type === "rejection" ||
+    log.type === "blocked";
+
   return {
     dateKey: career.seasonState.currentDateKey,
     dateLabel: career.seasonState.currentDateLabel,
     category: "transfer",
-    priority: log.type === "blocked" ? "important" : "normal",
+    priority: isImportantOffseasonNews ? "important" : "normal",
     title: `스토브리그: ${log.message}`,
-    body: `${log.week}주차 ${log.day}일 기록입니다. 우리 팀과 관련된 이적시장 변동이 발생했습니다.`,
+    body: `${log.week}주차 ${log.day}일 기록입니다. 스토브리그 시장에서 확인할 만한 변동이 발생했습니다.`,
     createdTurn: career.seasonState.currentTurn,
     source: "offseason",
   };
@@ -424,7 +433,17 @@ export function createOffseasonLogMessages({
   const nextLogs = nextCareer.seasonState.offseason?.logEntries ?? [];
 
   return nextLogs
-    .filter((log) => log.isUserTeamRelated && !previousLogIds.has(log.id))
+    .filter(
+      (log) =>
+        !previousLogIds.has(log.id) &&
+        (log.isUserTeamRelated ||
+          log.type === "signing" ||
+          log.type === "ai-signing" ||
+          log.type === "renewal" ||
+          log.type === "release" ||
+          log.type === "rejection" ||
+          log.type === "blocked"),
+    )
     .map((log) => createTransferMessageFromLog({ career: nextCareer, log }));
 }
 

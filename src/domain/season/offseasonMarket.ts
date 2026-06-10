@@ -24,6 +24,7 @@ import {
   formatSeasonDateLabel,
 } from "./seasonScheduleDates";
 import { completeStoveLeague } from "./createInitialSeasonState";
+import { releaseAiMainRosterToMarket } from "./offseasonFreeAgentPool";
 import { startNextSeasonFromOffseason } from "./seasonEnd";
 
 export type OffseasonContractOfferInput = {
@@ -290,11 +291,64 @@ function getMoodMinimumMultiplier(moodScore: number) {
   return 1 + ((50 - moodScore) / 50) * 0.06;
 }
 
+function getRoleMoodModifier({
+  career,
+  player,
+  requestedRosterRole,
+  teamName,
+}: {
+  career: CareerSave;
+  player: Player;
+  requestedRosterRole?: OffseasonRequestedRosterRole;
+  teamName: string;
+}) {
+  if (!requestedRosterRole) {
+    return 0;
+  }
+
+  const currentRole =
+    teamName === career.userTeam.name
+      ? getRosterRoleForPlacement({
+          player,
+          team: career.userTeam,
+        })
+      : player.rosterTier === "main"
+        ? "starter"
+        : "academy";
+
+  if (currentRole === "starter" && requestedRosterRole === "academy") {
+    return -22;
+  }
+
+  if (currentRole === "starter" && requestedRosterRole === "sixth-man") {
+    return -12;
+  }
+
+  if (currentRole === "sixth-man" && requestedRosterRole === "academy") {
+    return -8;
+  }
+
+  if (currentRole === "academy" && requestedRosterRole === "starter") {
+    return 14;
+  }
+
+  if (currentRole === "academy" && requestedRosterRole === "sixth-man") {
+    return 8;
+  }
+
+  if (currentRole === "sixth-man" && requestedRosterRole === "starter") {
+    return 6;
+  }
+
+  return 0;
+}
+
 export function getOffseasonNegotiationSnapshot({
   career,
   context,
   contractType,
   player,
+  requestedRosterRole,
   salaryOffer,
   teamName = career.userTeam.name,
 }: {
@@ -302,6 +356,7 @@ export function getOffseasonNegotiationSnapshot({
   context: OffseasonNegotiationContext;
   contractType: ContractType;
   player: Player;
+  requestedRosterRole?: OffseasonRequestedRosterRole;
   salaryOffer: number;
   teamName?: string;
 }) {
@@ -329,6 +384,12 @@ export function getOffseasonNegotiationSnapshot({
           career,
           context,
           playerId: player.id,
+          teamName,
+        }) +
+        getRoleMoodModifier({
+          career,
+          player,
+          requestedRosterRole,
           teamName,
         }),
       0,
@@ -893,11 +954,15 @@ export function initializeOffseasonMarket(career: CareerSave): CareerSave {
   }
 
   const startedDateKey = addDaysToDateKey(offseason.startedDateKey, 1);
-  const lckPlayers = normalizeUserContractedPlayers(
+  const normalizedPlayers = normalizeUserContractedPlayers(
     career,
     mergeOffseasonFreeAgents(career.lckPlayers),
   );
-  const departures = applyOffseasonDepartures(career, lckPlayers);
+  const marketPool = releaseAiMainRosterToMarket(
+    normalizedPlayers,
+    career.userTeam.name,
+  );
+  const departures = applyOffseasonDepartures(career, marketPool.players);
   const departedIdSet = new Set([
     ...departures.retiredPlayerIds,
     ...departures.militaryServicePlayerIds,
@@ -907,7 +972,7 @@ export function initializeOffseasonMarket(career: CareerSave): CareerSave {
   );
   const freeAgentPlayerIds = getInitialFreeAgentIds(
     departures.lckPlayers,
-    offseason.freeAgentPlayerIds ?? [],
+    [...(offseason.freeAgentPlayerIds ?? []), ...marketPool.releasedPlayerIds],
   ).filter((playerId) => {
     const player = departures.lckPlayers.find(
       (candidate) => candidate.id === playerId,
@@ -1005,6 +1070,7 @@ export function submitOffseasonRenewalOffer(
     context: "renewal",
     contractType: offerInput.contractType,
     player,
+    requestedRosterRole: offerInput.requestedRosterRole,
     salaryOffer: offerInput.salaryOffer,
   });
   const pendingOffer = createOffer({
@@ -1194,7 +1260,9 @@ function getOfferScore({
     salaryRatio * 70 +
     getContractTypeScoreBonus(contractType) +
     getTeamAppeal(career, teamName) * 0.16 +
-    getTeamNeedScore({ career, player, teamName })
+    getTeamNeedScore({ career, player, teamName }) +
+    player.overall * 0.08 +
+    player.potential * 0.04
   );
 }
 
@@ -1274,6 +1342,50 @@ function createAiOffer({
   };
 }
 
+function resolveAiCompetitionForPlayer({
+  career,
+  context = "ai-depth",
+  player,
+}: {
+  career: CareerSave;
+  context?: OffseasonNegotiationContext;
+  player: Player;
+}) {
+  const evaluatedOffers = getAiCandidateTeams(career, player).map(({ team }) => {
+    const offer = createAiOffer({
+      career,
+      context,
+      player,
+      teamName: team.name,
+    });
+
+    return evaluateOffer({
+      career,
+      context,
+      offer,
+      player,
+    });
+  });
+  const winningOffer = evaluatedOffers
+    .filter((offer) => offer.isAcceptable)
+    .sort((left, right) => (right.score ?? 0) - (left.score ?? 0))[0];
+
+  return {
+    evaluatedOffers,
+    winningOffer,
+    rejectedOffers: evaluatedOffers
+      .filter((offer) => offer.id !== winningOffer?.id)
+      .map(
+        (offer): OffseasonOffer => ({
+          ...offer,
+          status: "rejected",
+          resolvedDay: getCurrentOffseasonDay(career),
+          rejectionReason: "minimum-salary-not-met",
+        }),
+      ),
+  };
+}
+
 function evaluateOffer({
   career,
   context,
@@ -1291,6 +1403,7 @@ function evaluateOffer({
     context,
     contractType,
     player,
+    requestedRosterRole: offer.requestedRosterRole,
     salaryOffer: offer.salaryOffer,
     teamName: offer.fromTeamName,
   });
@@ -1321,7 +1434,7 @@ function getPendingRenewalOffersToResolve(career: CareerSave) {
       offer.status === "pending" &&
       offer.fromTeamName === career.userTeam.name &&
       offer.negotiationContext === "renewal" &&
-      (offer.createdDay < currentDay || currentDay >= 7),
+      (offer.createdDay <= currentDay || currentDay >= 7),
   );
 }
 
@@ -1334,7 +1447,7 @@ function getPendingFreeAgentOffersToResolve(career: CareerSave) {
       offer.status === "pending" &&
       offer.fromTeamName === career.userTeam.name &&
       (offer.negotiationContext ?? "free-agent") === "free-agent" &&
-      offer.createdDay < currentDay,
+      offer.createdDay <= currentDay,
   );
 }
 
@@ -1719,20 +1832,14 @@ function resolveAiDepthSignings(
       continue;
     }
 
-    const offer = createAiOffer({
-      career: nextCareer,
-      context: "ai-depth",
-      player,
-      teamName: team.name,
-    });
-    const evaluatedOffer = evaluateOffer({
-      career: nextCareer,
-      context: "ai-depth",
-      offer,
-      player,
-    });
+    const { evaluatedOffers, rejectedOffers, winningOffer } =
+      resolveAiCompetitionForPlayer({
+        career: nextCareer,
+        context: "ai-depth",
+        player,
+      });
 
-    if (!evaluatedOffer.isAcceptable) {
+    if (!winningOffer) {
       continue;
     }
 
@@ -1743,16 +1850,17 @@ function resolveAiDepthSignings(
     }
 
     const acceptedAiOffer: OffseasonOffer = {
-      ...evaluatedOffer,
+      ...winningOffer,
       status: "accepted",
       resolvedDay: getCurrentOffseasonDay(nextCareer),
     };
+    const winningTeamName = acceptedAiOffer.fromTeamName;
     nextCareer = {
       ...nextCareer,
       lckPlayers: setPlayerCurrentTeam(
         nextCareer.lckPlayers,
         player.id,
-        team.name,
+        winningTeamName,
       ),
       seasonState: {
         ...nextCareer.seasonState,
@@ -1761,6 +1869,7 @@ function resolveAiDepthSignings(
           resolvedOffers: [
             ...(currentOffseason.resolvedOffers ?? []),
             acceptedAiOffer,
+            ...rejectedOffers,
           ],
           freeAgentPlayerIds: removeValue(
             currentOffseason.freeAgentPlayerIds ?? [],
@@ -1773,7 +1882,7 @@ function resolveAiDepthSignings(
     nextCareer = appendLog(
       nextCareer,
       "ai-signing",
-      `${team.name}이 ${targetRole.toUpperCase()} 보강을 위해 ${player.name}을 영입했습니다.`,
+      `${player.name} AI 영입 경쟁에서 ${winningTeamName}이 승리했습니다. 경쟁 ${evaluatedOffers.length}팀.`,
     );
     claimedPlayerIds.add(player.id);
     signingCount += 1;
@@ -2028,6 +2137,7 @@ export function submitFreeAgentOffer(
     context: "free-agent",
     contractType: offerInput.contractType,
     player,
+    requestedRosterRole: offerInput.requestedRosterRole,
     salaryOffer: offerInput.salaryOffer,
   });
   const pendingOffer = createOffer({

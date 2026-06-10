@@ -246,6 +246,41 @@ describe("offseason market", () => {
     expect(getPlayer(career, "fa-2026-beryl").currentTeam).toBeUndefined();
   });
 
+  it("opens the preseason FA pool by keeping only two AI main players per team while exempting the user team", () => {
+    const career = createInitialCareer("T1");
+    const marketIds = new Set(career.seasonState.offseason?.freeAgentPlayerIds ?? []);
+    const t1MainPlayers = career.lckPlayers.filter(
+      (player) => player.currentTeam === "T1" && player.rosterTier === "main",
+    );
+
+    expect(t1MainPlayers.length).toBeGreaterThan(2);
+    expect(t1MainPlayers.every((player) => !marketIds.has(player.id))).toBe(true);
+
+    lck2026Teams
+      .filter((team) => team.name !== "T1")
+      .forEach((team) => {
+        const protectedMainPlayers = career.lckPlayers.filter(
+          (player) =>
+            player.currentTeam === team.name &&
+            player.rosterTier === "main" &&
+            player.availableForRoster,
+        );
+
+        expect(protectedMainPlayers.length).toBeLessThanOrEqual(2);
+      });
+
+    const releasedAiMainPlayers = career.lckPlayers.filter(
+      (player) =>
+        player.currentTeam === undefined &&
+        player.rosterTier === "main" &&
+        player.region === "lck" &&
+        player.league === "LCK" &&
+        marketIds.has(player.id),
+    );
+
+    expect(releasedAiMainPlayers.length).toBeGreaterThan(10);
+  });
+
   it("enters the 2026 LCK Cup from the final preseason day without advancing the season number", () => {
     const career = createInitialCareer("T1");
     const renewedCareer: CareerSave = {
@@ -388,6 +423,33 @@ describe("offseason market", () => {
     );
   });
 
+  it("adjusts negotiation mood when a player is offered a lower or higher roster role", () => {
+    const career = startMarket();
+    const player = getPlayer(career, "lck-top-01");
+    const salaryOffer = getRenewalAcceptSalary(career, player.id, "one-year");
+    const starterSnapshot = getOffseasonNegotiationSnapshot({
+      career,
+      context: "renewal",
+      contractType: "one-year",
+      player,
+      requestedRosterRole: "starter",
+      salaryOffer,
+    });
+    const academySnapshot = getOffseasonNegotiationSnapshot({
+      career,
+      context: "renewal",
+      contractType: "one-year",
+      player,
+      requestedRosterRole: "academy",
+      salaryOffer,
+    });
+
+    expect(academySnapshot.moodScore).toBeLessThan(starterSnapshot.moodScore);
+    expect(academySnapshot.minAcceptableSalary).toBeGreaterThanOrEqual(
+      starterSnapshot.minAcceptableSalary,
+    );
+  });
+
   it("releases expired players into the free agent pool", () => {
     const career = startMarket();
     const released = releaseExpiredOffseasonPlayer(career, "lck-top-01");
@@ -452,6 +514,43 @@ describe("offseason market", () => {
       confirmed.lckPlayers.find((player) => player.id === "fa-2026-beryl")
         ?.currentTeam,
     ).toBe("T1");
+  });
+
+  it("resolves a submitted FA offer on the next progress click", () => {
+    const renewed = renewExpiringTop();
+    const weekTwoCareer: CareerSave = {
+      ...renewed,
+      userTeam: {
+        ...renewed.userTeam,
+        budget: 3000,
+      },
+      seasonState: {
+        ...renewed.seasonState,
+        offseason: {
+          ...renewed.seasonState.offseason!,
+          currentDay: 8,
+          currentWeek: 2,
+          marketStatus: "free-agency",
+        },
+      },
+    };
+    const offered = submitFreeAgentOffer(weekTwoCareer, {
+      playerId: "fa-2026-beryl",
+      contractType: "two-year",
+      salaryOffer:
+        getFreeAgentAcceptSalary(weekTwoCareer, "fa-2026-beryl", "two-year") *
+        3,
+    });
+    const progressed = progressOffseasonDay(offered);
+
+    expect(progressed.seasonState.offseason?.pendingOffers ?? []).toHaveLength(0);
+    expect(
+      progressed.seasonState.offseason?.resolvedOffers?.some(
+        (offer) =>
+          offer.playerIds.includes("fa-2026-beryl") &&
+          offer.status === "confirmation-pending",
+      ),
+    ).toBe(true);
   });
 
   it("can cancel a user-won FA offer before final registration", () => {
@@ -896,6 +995,59 @@ describe("offseason market", () => {
     expect(signedTop?.currentTeam).toBeTruthy();
     expect(signedTop?.currentTeam).not.toBe("T1");
     expect(progressed.lckPlayers.length).toBe(weekFourCareer.lckPlayers.length);
+  });
+
+  it("records AI-AI competition offers when AI teams fight over a FA", () => {
+    const renewed = renewExpiringTop();
+    const weekFourCareer: CareerSave = {
+      ...renewed,
+      lckPlayers: renewed.lckPlayers.map((player) => {
+        if (player.id === "lck-top-02") {
+          return {
+            ...player,
+            currentTeam: undefined,
+          };
+        }
+
+        if (
+          player.currentTeam !== "T1" &&
+          player.role === "top" &&
+          player.rosterTier === "main"
+        ) {
+          return {
+            ...player,
+            currentTeam: undefined,
+          };
+        }
+
+        return player;
+      }),
+      seasonState: {
+        ...renewed.seasonState,
+        offseason: {
+          ...renewed.seasonState.offseason!,
+          currentDay: 22,
+          currentWeek: 4,
+          marketStatus: "free-agency",
+          freeAgentPlayerIds: [
+            ...(renewed.seasonState.offseason?.freeAgentPlayerIds ?? []),
+            "lck-top-02",
+          ],
+        },
+      },
+    };
+    const progressed = progressOffseasonDay(weekFourCareer);
+    const offersForPlayer = progressed.seasonState.offseason?.resolvedOffers?.filter(
+      (offer) => offer.playerIds.includes("lck-top-02"),
+    ) ?? [];
+
+    expect(offersForPlayer.some((offer) => offer.status === "accepted")).toBe(true);
+    expect(offersForPlayer.some((offer) => offer.status === "rejected")).toBe(true);
+    expect(
+      progressed.seasonState.offseason?.logEntries?.some((log) =>
+        log.message.includes("AI 영입 경쟁"),
+      ),
+    ).toBe(true);
   });
 
   it("starts the next season from the final offseason day when roster is valid", () => {

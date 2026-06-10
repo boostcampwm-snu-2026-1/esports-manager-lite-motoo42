@@ -5380,8 +5380,8 @@ h1 {
 
 .offseason-player-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
+  grid-template-columns: 76px minmax(160px, 0.65fr) minmax(220px, 1fr) auto;
+  gap: 12px;
   align-items: center;
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 8px;
@@ -5389,10 +5389,53 @@ h1 {
   background: rgba(15, 23, 42, 0.45);
 }
 
+.offseason-player-portrait-cell {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  min-height: 86px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.32);
+}
+
+.offseason-player-portrait-cell .player-portrait {
+  width: 58px;
+  height: 74px;
+}
+
 .offseason-player-main {
   display: grid;
   gap: 4px;
   min-width: 0;
+}
+
+.offseason-player-main strong,
+.offseason-player-main span,
+.offseason-player-main small,
+.offseason-player-market-info small {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
+.offseason-player-main strong,
+.offseason-player-main span {
+  white-space: nowrap;
+}
+
+.offseason-player-market-info {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.offseason-player-market-info small {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .offseason-offer-controls {
@@ -5504,10 +5547,21 @@ h1 {
   min-width: 0;
 }
 
+.offseason-confirm-block-reason {
+  color: #fde68a !important;
+}
+
 .offseason-confirmation-actions {
   display: grid;
   gap: 8px;
   justify-items: stretch;
+}
+
+.offseason-confirm-tooltip-copy {
+  max-width: 180px;
+  color: #fde68a;
+  font-size: 0.72rem;
+  line-height: 1.35;
 }
 
 .offseason-confirm-button {
@@ -5606,8 +5660,8 @@ h1 {
 }
 
 .contract-offer-modal {
-  width: min(560px, calc(100vw - 32px));
-  max-height: min(86vh, 720px);
+  width: min(860px, calc(100vw - 32px));
+  max-height: min(88vh, 780px);
   overflow: auto;
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 8px;
@@ -5637,7 +5691,7 @@ h1 {
 
 .contract-offer-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-top: 16px;
 }
@@ -6384,6 +6438,11 @@ h1 {
   }
 
   .offseason-week-track {
+    grid-template-columns: 1fr;
+  }
+
+  .contract-offer-grid,
+  .contract-offer-summary {
     grid-template-columns: 1fr;
   }
 

@@ -119,8 +119,47 @@ describe("career messages", () => {
       expect.arrayContaining([
         expect.objectContaining({
           category: "transfer",
+          priority: "important",
           source: "offseason",
           title: expect.stringContaining("Faker"),
+        }),
+      ]),
+    );
+  });
+
+  it("copies general offseason signing news into important transfer messages", () => {
+    const previousCareer = createInitialCareer("T1");
+    const nextCareer = {
+      ...previousCareer,
+      seasonState: {
+        ...previousCareer.seasonState,
+        offseason: {
+          ...previousCareer.seasonState.offseason!,
+          logEntries: [
+            ...(previousCareer.seasonState.offseason?.logEntries ?? []),
+            {
+              id: "ai-transfer-log",
+              day: 9,
+              week: 2,
+              type: "ai-signing" as const,
+              message: "Gen.G가 FA 선수를 영입했습니다.",
+            },
+          ],
+        },
+      },
+    };
+    const careerWithMessages = appendOffseasonLogMessages(
+      previousCareer,
+      nextCareer,
+    );
+
+    expect(careerWithMessages.messages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: "transfer",
+          priority: "important",
+          source: "offseason",
+          title: expect.stringContaining("Gen.G"),
         }),
       ]),
     );

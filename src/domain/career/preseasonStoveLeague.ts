@@ -9,6 +9,7 @@ import type {
   Team,
 } from "../../types/game";
 import { createInitialSeasonState } from "../season/createInitialSeasonState";
+import { releaseAiMainRosterToMarket } from "../season/offseasonFreeAgentPool";
 import { formatSeasonDateLabel } from "../season/seasonScheduleDates";
 
 const preseasonStartDateKey = "2025-12-17";
@@ -147,7 +148,11 @@ function createPreseasonOffseasonState({
 export function createPreseasonStoveLeagueCareer(
   career: CareerSave,
 ): CareerSave {
-  const lckPlayers = mergePreseasonFreeAgents(career.lckPlayers);
+  const marketPool = releaseAiMainRosterToMarket(
+    mergePreseasonFreeAgents(career.lckPlayers),
+    career.userTeam.name,
+  );
+  const lckPlayers = marketPool.players;
   const userTeamProfile = getLckTeamProfile(career.userTeam.name);
   const sourceTeamName = getRosterSourceTeamName(career.userTeam.name);
   const selectedTeamPlayers = lckPlayers
