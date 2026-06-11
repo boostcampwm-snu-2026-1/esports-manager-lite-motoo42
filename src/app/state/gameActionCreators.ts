@@ -1,4 +1,5 @@
 import type { ContractTypeSelections } from "../../domain/roster";
+import type { CareerStartMode } from "../../domain/career/createInitialCareer";
 import type {
   CareerProgressResult,
 } from "../../domain/game-progress/progressCareer";
@@ -16,8 +17,8 @@ import type { AppRoute } from "../routes";
 import type { GameAction } from "./gameActions";
 
 export const gameActions = {
-  startCareer(teamName: string): GameAction {
-    return { type: "start-career", teamName };
+  startCareer(teamName: string, startMode?: CareerStartMode): GameAction {
+    return { type: "start-career", teamName, startMode };
   },
   loadCareer(career: CareerSave): GameAction {
     return { type: "load-career", career };

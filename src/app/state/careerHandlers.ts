@@ -14,14 +14,22 @@ export function handleCareerAction(
   action: CareerAction,
 ): GameState {
   if (action.type === "start-career") {
-    const career = createInitialCareerMessages(createInitialCareer(action.teamName));
+    const career = createInitialCareerMessages(
+      createInitialCareer(action.teamName, { startMode: action.startMode }),
+    );
 
     return {
       ...state,
       career,
-      route: "offseason",
+      route:
+        action.startMode === "real-roster-lck-cup"
+          ? "main-dashboard"
+          : "offseason",
       lastMatch: null,
-      selectedCompetitionId: null,
+      selectedCompetitionId:
+        action.startMode === "real-roster-lck-cup"
+          ? career.seasonState.currentCompetitionId
+          : null,
     };
   }
 

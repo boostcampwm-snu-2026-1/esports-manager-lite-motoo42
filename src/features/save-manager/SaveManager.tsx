@@ -64,6 +64,8 @@ export function SaveManager({
   const [deleteTargetSave, setDeleteTargetSave] = useState<CareerSaveDto | null>(
     null,
   );
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [bulkDeleteSelectedIds, setBulkDeleteSelectedIds] = useState<string[]>([]);
   const selectedSave = useMemo(
     () => saves.find((save) => save.id === selectedSaveId),
     [saves, selectedSaveId],
@@ -71,6 +73,11 @@ export function SaveManager({
   const canSave = Boolean(career) && !disabled && !isBusy;
   const canLoad = Boolean(selectedSaveId) && !disabled && !isBusy;
   const canDelete = Boolean(selectedSave) && !disabled && !isBusy;
+  const canOpenBulkDelete = saves.length > 0 && !disabled && !isBusy;
+  const bulkDeleteTargets = useMemo(
+    () => saves.filter((save) => bulkDeleteSelectedIds.includes(save.id)),
+    [bulkDeleteSelectedIds, saves],
+  );
   const isPanel = variant === "panel";
 
   useEffect(() => {
@@ -237,6 +244,61 @@ export function SaveManager({
     }
   }
 
+  function handleToggleBulkDeleteSave(saveId: string) {
+    setBulkDeleteSelectedIds((currentIds) =>
+      currentIds.includes(saveId)
+        ? currentIds.filter((id) => id !== saveId)
+        : [...currentIds, saveId],
+    );
+  }
+
+  function handleOpenBulkDelete() {
+    setBulkDeleteSelectedIds([]);
+    setIsBulkDeleteOpen(true);
+  }
+
+  function handleCloseBulkDelete() {
+    setIsBulkDeleteOpen(false);
+    setBulkDeleteSelectedIds([]);
+  }
+
+  async function handleBulkDeleteConfirmed() {
+    if (bulkDeleteTargets.length === 0) {
+      return;
+    }
+
+    setIsBusy(true);
+
+    let successCount = 0;
+    let failureCount = 0;
+    const targetIds = bulkDeleteTargets.map((save) => save.id);
+
+    try {
+      for (const saveId of targetIds) {
+        try {
+          await deleteCareerSave(saveId);
+          successCount += 1;
+        } catch {
+          failureCount += 1;
+        }
+      }
+
+      if (activeSaveId && targetIds.includes(activeSaveId)) {
+        onActiveSaveChange(null);
+      }
+
+      handleCloseBulkDelete();
+      await refreshSaves("");
+      setStatusMessage(
+        failureCount > 0
+          ? `일괄 삭제 완료: 성공 ${successCount}개, 실패 ${failureCount}개`
+          : `저장 슬롯 ${successCount}개 삭제됨`,
+      );
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
   return (
     <section className={`save-manager save-manager-${variant}`}>
       {isPanel && (
@@ -297,6 +359,14 @@ export function SaveManager({
         >
           삭제
         </button>
+        <button
+          className="save-manager-delete-button"
+          disabled={!canOpenBulkDelete}
+          onClick={handleOpenBulkDelete}
+          type="button"
+        >
+          일괄 삭제
+        </button>
       </div>
       <span className="save-manager-status">
         {isBusy
@@ -351,6 +421,76 @@ export function SaveManager({
                 type="button"
               >
                 삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isBulkDeleteOpen && (
+        <div
+          aria-label="저장 일괄 삭제"
+          aria-modal="true"
+          className="save-manager-confirm-backdrop"
+          role="dialog"
+        >
+          <div className="save-manager-confirm-card save-manager-bulk-delete-card">
+            <p className="eyebrow">Bulk Delete</p>
+            <h3>삭제할 저장 슬롯을 선택하세요</h3>
+            <p>
+              선택한 저장 슬롯을 한 번에 삭제합니다. 이 작업은 되돌릴 수
+              없습니다.
+            </p>
+            <div className="save-manager-bulk-toolbar">
+              <button
+                disabled={isBusy}
+                onClick={() => setBulkDeleteSelectedIds(saves.map((save) => save.id))}
+                type="button"
+              >
+                전체 선택
+              </button>
+              <button
+                disabled={isBusy || bulkDeleteSelectedIds.length === 0}
+                onClick={() => setBulkDeleteSelectedIds([])}
+                type="button"
+              >
+                선택 해제
+              </button>
+              <span>{bulkDeleteSelectedIds.length}개 선택</span>
+            </div>
+            <div className="save-manager-bulk-list">
+              {saves.map((save) => (
+                <label className="save-manager-bulk-item" key={save.id}>
+                  <input
+                    checked={bulkDeleteSelectedIds.includes(save.id)}
+                    disabled={isBusy}
+                    onChange={() => handleToggleBulkDeleteSave(save.id)}
+                    type="checkbox"
+                  />
+                  <span>
+                    <strong>{save.saveName}</strong>
+                    <small>
+                      {save.summary.currentDateLabel} ·{" "}
+                      {new Date(save.updatedAt).toLocaleString("ko-KR")}
+                    </small>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="save-manager-confirm-actions">
+              <button
+                disabled={isBusy}
+                onClick={handleCloseBulkDelete}
+                type="button"
+              >
+                취소
+              </button>
+              <button
+                className="save-manager-delete-confirm"
+                disabled={isBusy || bulkDeleteTargets.length === 0}
+                onClick={handleBulkDeleteConfirmed}
+                type="button"
+              >
+                선택 삭제
               </button>
             </div>
           </div>

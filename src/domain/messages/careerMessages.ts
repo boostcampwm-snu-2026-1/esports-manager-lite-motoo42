@@ -49,6 +49,7 @@ export function getCareerMessageDedupeKey(message: CareerMessage | MessageDraft)
       message.relatedCompetitionId ??
       "general",
     message.title,
+    message.body.slice(0, 120),
   ].join("::");
 }
 
@@ -178,19 +179,15 @@ function createMatchResultMessages({
 
   return latestUserRecords.map((record) => {
     const isWin = record.userResult === "win";
-    const title = isWin
-      ? `경기 승리: ${record.winnerTeamName}`
-      : `경기 패배: ${record.stageName}`;
-
     return {
       dateKey: nextCareer.seasonState.currentDateKey,
       dateLabel: nextCareer.seasonState.currentDateLabel,
       category: "match",
       priority: isWin ? "normal" : "important",
-      title,
+      title: "경기 결과 도착",
       body: `${record.stageName} 경기가 ${getMatchScore(
         record,
-      )} 스코어로 종료됐습니다. ${
+      )} 스코어로 종료됐습니다. 승리 팀은 ${record.winnerTeamName}입니다. ${
         isWin
           ? "선수단 분위기를 이어갈 수 있는 결과입니다."
           : "다음 경기 전 전략과 선수 상태를 다시 확인하는 것이 좋습니다."
@@ -223,8 +220,11 @@ function createScheduleMessages({
       dateLabel: nextCareer.seasonState.currentDateLabel,
       category: "schedule",
       priority: "important",
-      title: `오늘 경기: ${getOpponentName(previewUserMatch, userTeamId)}`,
-      body: `${previewUserMatch.stageName} ${previewUserMatch.format.toUpperCase()} 경기가 오늘 예정되어 있습니다. 상단 진행 버튼이 플레이 흐름으로 전환됩니다.`,
+      title: "다음 경기 일정 안내",
+      body: `${getOpponentName(
+        previewUserMatch,
+        userTeamId,
+      )} 상대 ${previewUserMatch.stageName} ${previewUserMatch.format.toUpperCase()} 경기가 오늘 예정되어 있습니다. 상단 진행 버튼이 플레이 흐름으로 전환됩니다.`,
       createdTurn: nextCareer.seasonState.currentTurn,
       source: "competition",
       relatedCompetitionId: previewUserMatch.competitionId,
@@ -250,8 +250,11 @@ function createScheduleMessages({
       dateLabel: nextCareer.seasonState.currentDateLabel,
       category: "schedule",
       priority: "normal",
-      title: `다가오는 일정: ${getOpponentName(nextMatch, userTeamId)}`,
-      body: `${nextMatch.stageName} ${nextMatch.format.toUpperCase()} 경기가 ${
+      title: "다음 경기 일정 안내",
+      body: `${getOpponentName(
+        nextMatch,
+        userTeamId,
+      )} 상대 ${nextMatch.stageName} ${nextMatch.format.toUpperCase()} 경기가 ${
         nextMatch.scheduledDate ?? `${nextMatch.week}주차`
       }에 예정되어 있습니다.`,
       createdTurn: nextCareer.seasonState.currentTurn,
@@ -284,7 +287,7 @@ function getStatusWarningDraft({
       dateLabel: nextCareer.seasonState.currentDateLabel,
       category: "training",
       priority: "urgent",
-      title: `컨디션 경고: ${player.name}`,
+      title: "훈련 상태 보고",
       body: `${player.name}의 컨디션이 ${player.status.condition}까지 내려갔습니다. 훈련 강도와 선발 기용을 점검하세요.`,
       createdTurn: nextCareer.seasonState.currentTurn,
       source: "club",
@@ -298,7 +301,7 @@ function getStatusWarningDraft({
       dateLabel: nextCareer.seasonState.currentDateLabel,
       category: "training",
       priority: "important",
-      title: `피로 누적: ${player.name}`,
+      title: "훈련 상태 보고",
       body: `${player.name}의 피로도가 ${player.status.fatigue}까지 상승했습니다. 가벼운 훈련이나 휴식을 고려할 수 있습니다.`,
       createdTurn: nextCareer.seasonState.currentTurn,
       source: "club",
@@ -316,7 +319,7 @@ function getStatusWarningDraft({
       dateLabel: nextCareer.seasonState.currentDateLabel,
       category: "training",
       priority: "important",
-      title: `폼 저하: ${player.name}`,
+      title: "훈련 상태 보고",
       body: `${player.name}의 최근 폼이 하락했습니다. 다음 경기 전 역할과 훈련 방향을 확인하세요.`,
       createdTurn: nextCareer.seasonState.currentTurn,
       source: "club",
@@ -413,8 +416,8 @@ function createTransferMessageFromLog({
     dateLabel: career.seasonState.currentDateLabel,
     category: "transfer",
     priority: isImportantOffseasonNews ? "important" : "normal",
-    title: `스토브리그: ${log.message}`,
-    body: `${log.week}주차 ${log.day}일 기록입니다. 스토브리그 시장에서 확인할 만한 변동이 발생했습니다.`,
+    title: "FA 협상 결과",
+    body: `${log.week}주차 ${log.day}일 기록입니다. ${log.message}`,
     createdTurn: career.seasonState.currentTurn,
     source: "offseason",
   };
@@ -461,14 +464,20 @@ export function appendOffseasonLogMessages(
 }
 
 export function createInitialCareerMessages(career: CareerSave): CareerSave {
+  const isCompetitionStart = career.seasonState.phase === "competition";
+
   return appendCareerMessages(career, [
     {
       dateKey: career.seasonState.currentDateKey,
       dateLabel: career.seasonState.currentDateLabel,
       category: "important",
       priority: "important",
-      title: "프리시즌 스토브리그 시작",
-      body: "1주차에는 기존 선수단의 재계약 또는 방출을 결정합니다. 2주차부터 FA 시장이 열립니다.",
+      title: isCompetitionStart
+        ? "LCK Cup 개막 준비 완료"
+        : "프리시즌 스토브리그 시작",
+      body: isCompetitionStart
+        ? "2026 실제 LCK 로스터를 기준으로 커리어를 시작했습니다. LCK Cup부터 바로 시즌을 진행할 수 있습니다."
+        : "1주차에는 기존 선수단의 재계약 또는 방출을 결정합니다. 2주차부터 FA 시장이 열립니다.",
       createdTurn: career.seasonState.currentTurn,
       source: "system",
     },

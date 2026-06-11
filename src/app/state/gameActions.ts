@@ -3,6 +3,7 @@ import type {
   CareerProgressResult,
 } from "../../domain/game-progress/progressCareer";
 import type { OffseasonContractOfferInput } from "../../domain/season";
+import type { CareerStartMode } from "../../domain/career/createInitialCareer";
 import type {
   AsianGamesPlayMode,
   CareerSave,
@@ -15,7 +16,7 @@ import type {
 import type { AppRoute } from "../routes";
 
 export type GameAction =
-  | { type: "start-career"; teamName: string }
+  | { type: "start-career"; teamName: string; startMode?: CareerStartMode }
   | { type: "load-career"; career: CareerSave }
   | { type: "go-to"; route: AppRoute }
   | {

@@ -24,6 +24,21 @@ describe("CareerSetup", () => {
     fireEvent.click(screen.getByRole("button", { name: /Gen\.G/ }));
     fireEvent.click(screen.getByRole("button", { name: "Start career" }));
 
-    expect(onStart).toHaveBeenCalledWith("Gen.G");
+    expect(onStart).toHaveBeenCalledWith("Gen.G", "preseason");
+  });
+
+  it("can start directly from the 2026 real roster LCK Cup entry", () => {
+    const onStart = vi.fn();
+
+    render(<CareerSetup onStart={onStart} />);
+
+    fireEvent.click(screen.getByLabelText(/2026 실제 LCK 로스터로 자동 시작/));
+    fireEvent.click(screen.getByRole("button", { name: /KT Rolster/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Start career" }));
+
+    expect(onStart).toHaveBeenCalledWith(
+      "KT Rolster",
+      "real-roster-lck-cup",
+    );
   });
 });

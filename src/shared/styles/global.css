@@ -428,6 +428,48 @@ select {
   color: #cbd5e1;
 }
 
+.career-team-start-copy {
+  display: grid;
+  gap: 8px;
+  min-width: min(460px, 100%);
+}
+
+.career-real-roster-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  max-width: 560px;
+  border: 1px solid #303a52;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #0d1424;
+  color: #f8fafc;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.career-real-roster-toggle input {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: #7c8cff;
+}
+
+.career-real-roster-toggle span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.career-real-roster-toggle small {
+  color: #9aa7bd;
+  font-size: 0.74rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
 .lck-team-info-page {
   padding-bottom: 32px;
 }
@@ -994,6 +1036,92 @@ select {
   border-color: rgba(248, 113, 113, 0.58);
   background: #7f1d1d;
   color: #ffffff;
+}
+
+.save-manager-bulk-delete-card {
+  width: min(680px, 100%);
+}
+
+.save-manager-bulk-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.save-manager-bulk-toolbar button {
+  min-height: 32px;
+  border: 1px solid #3b4761;
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: #141b2d;
+  color: #d7deeb;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.save-manager-bulk-toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.save-manager-bulk-toolbar span {
+  margin-left: auto;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.save-manager-bulk-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(420px, 52vh);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.save-manager-bulk-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #303a52;
+  border-radius: 8px;
+  padding: 10px;
+  background: #0d1424;
+  cursor: pointer;
+}
+
+.save-manager-bulk-item input {
+  width: 16px;
+  height: 16px;
+  accent-color: #ef4444;
+}
+
+.save-manager-bulk-item span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.save-manager-bulk-item strong,
+.save-manager-bulk-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.save-manager-bulk-item strong {
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.save-manager-bulk-item small {
+  color: #9aa7bd;
+  font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .save-manager-layout {

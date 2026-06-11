@@ -224,4 +224,28 @@ describe("lck2026Players", () => {
       "fa-2026-beryl",
     );
   });
+
+  it("can start directly from the selected team's real 2026 roster into LCK Cup", () => {
+    const career = createInitialCareer("KT Rolster", {
+      startMode: "real-roster-lck-cup",
+    });
+    const contractedIds = new Set(
+      career.userTeam.contracts.map((contract) => contract.playerId),
+    );
+    const ktPlayers = career.lckPlayers.filter(
+      (player) => player.currentTeam === "KT Rolster",
+    );
+
+    expect(career.userTeam.name).toBe("KT Rolster");
+    expect(career.seasonState.phase).toBe("competition");
+    expect(career.seasonState.currentCompetitionId).toBe("lck-cup");
+    expect(career.seasonState.offseason).toBeUndefined();
+    expect(career.userTeam.mainRosterPlayerIds.length).toBeGreaterThanOrEqual(5);
+    expect(career.userTeam.academyRosterPlayerIds.length).toBeGreaterThanOrEqual(5);
+    expect(Object.values(career.userTeam.roster).filter(Boolean)).toHaveLength(5);
+    expect(ktPlayers.every((player) => contractedIds.has(player.id))).toBe(true);
+    expect(
+      career.userTeam.contracts.every((contract) => contract.remainingYears > 0),
+    ).toBe(true);
+  });
 });

@@ -16,9 +16,15 @@ export function CareerSetupPage({ savePanel }: CareerSetupPageProps) {
   return (
     <CareerSetup
       savePanel={savePanel}
-      onStart={(teamName) => {
-        dispatch(gameActions.startCareer(teamName));
-        navigate(getPathForRoute("offseason"));
+      onStart={(teamName, startMode) => {
+        dispatch(gameActions.startCareer(teamName, startMode));
+        navigate(
+          getPathForRoute(
+            startMode === "real-roster-lck-cup"
+              ? "main-dashboard"
+              : "offseason",
+          ),
+        );
       }}
     />
   );

@@ -4,15 +4,17 @@ import { formatSalaryAmount } from "../../shared/format/money";
 import { Button } from "../../shared/ui/Button";
 import { Card } from "../../shared/ui/Card";
 import { TeamLogo } from "../../shared/ui/TeamLogo";
+import type { CareerStartMode } from "../../domain/career/createInitialCareer";
 
 type CareerSetupProps = {
   savePanel?: ReactNode;
-  onStart: (teamName: string) => void;
+  onStart: (teamName: string, startMode?: CareerStartMode) => void;
 };
 
 export function CareerSetup({ savePanel, onStart }: CareerSetupProps) {
   const defaultTeam = lck2026Teams.find((team) => team.shortName === "T1") ?? lck2026Teams[0];
   const [selectedTeamId, setSelectedTeamId] = useState(defaultTeam.id);
+  const [useRealRosterStart, setUseRealRosterStart] = useState(false);
   const selectedTeam =
     lck2026Teams.find((team) => team.id === selectedTeamId) ?? defaultTeam;
 
@@ -79,10 +81,34 @@ export function CareerSetup({ savePanel, onStart }: CareerSetupProps) {
           })}
         </div>
         <div className="career-team-start-row">
-          <p>
-            선택 팀: <strong>{getLckTeamDisplayName(selectedTeam)}</strong>
-          </p>
-          <Button onClick={() => onStart(selectedTeam.name)}>Start career</Button>
+          <div className="career-team-start-copy">
+            <p>
+              선택 팀: <strong>{getLckTeamDisplayName(selectedTeam)}</strong>
+            </p>
+            <label className="career-real-roster-toggle">
+              <input
+                checked={useRealRosterStart}
+                onChange={(event) => setUseRealRosterStart(event.target.checked)}
+                type="checkbox"
+              />
+              <span>
+                2026 실제 LCK 로스터로 자동 시작
+                <small>
+                  프리시즌 스토브리그를 건너뛰고 LCK Cup부터 바로 시작합니다.
+                </small>
+              </span>
+            </label>
+          </div>
+          <Button
+            onClick={() =>
+              onStart(
+                selectedTeam.name,
+                useRealRosterStart ? "real-roster-lck-cup" : "preseason",
+              )
+            }
+          >
+            Start career
+          </Button>
         </div>
       </Card>
       {savePanel}

@@ -85,7 +85,8 @@ describe("career messages", () => {
     expect(messages.some((message) => message.category === "schedule")).toBe(
       true,
     );
-    expect(messages[0].title).toContain("오늘 경기");
+    expect(messages[0].title).toBe("다음 경기 일정 안내");
+    expect(messages[0].body).toContain(findUserMatch(activeCareer).stageName);
   });
 
   it("copies user-team offseason logs into transfer messages", () => {
@@ -121,7 +122,8 @@ describe("career messages", () => {
           category: "transfer",
           priority: "important",
           source: "offseason",
-          title: expect.stringContaining("Faker"),
+          title: "FA 협상 결과",
+          body: expect.stringContaining("Faker"),
         }),
       ]),
     );
@@ -159,10 +161,42 @@ describe("career messages", () => {
           category: "transfer",
           priority: "important",
           source: "offseason",
-          title: expect.stringContaining("Gen.G"),
+          title: "FA 협상 결과",
+          body: expect.stringContaining("Gen.G"),
         }),
       ]),
     );
+  });
+
+  it("keeps short message titles and moves details into the body", () => {
+    const activeCareer = createCompetitionCareer();
+    const match = findUserMatch(activeCareer);
+    const previousCareer = {
+      ...activeCareer,
+      seasonState: {
+        ...activeCareer.seasonState,
+        nextMatchIds: [],
+      },
+    };
+    const nextCareer = {
+      ...activeCareer,
+      seasonState: {
+        ...activeCareer.seasonState,
+        nextMatchIds: [match.id],
+      },
+    };
+    const messages = createProgressMessages({
+      lastMatch: null,
+      nextCareer,
+      previousCareer,
+    });
+    const scheduleMessage = messages.find(
+      (message) => message.category === "schedule",
+    );
+
+    expect(scheduleMessage?.title).toBe("다음 경기 일정 안내");
+    expect(scheduleMessage?.title.length).toBeLessThanOrEqual(14);
+    expect(scheduleMessage?.body).toContain(match.stageName);
   });
 
   it("dedupes messages and keeps only the latest 120 entries", () => {
