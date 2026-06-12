@@ -1,6 +1,10 @@
 import { useGameDispatch, useGameSelector } from "../app/GameProvider";
 import type { AppRoute, OffseasonSubPage, RouteSubPage } from "../app/routes";
 import { gameActions } from "../app/state";
+import {
+  hasSeenCareerGuide,
+  OFFSEASON_RULES_GUIDE_ID,
+} from "../domain/career/careerGuides";
 import { OffseasonMarket } from "../features/offseason";
 import { CareerRequiredFallback } from "./CareerRequiredFallback";
 import type { CompetitionId } from "../types/game";
@@ -25,6 +29,9 @@ export function OffseasonPage({
   subPage,
 }: OffseasonPageProps) {
   const career = useGameSelector((state) => state.career);
+  const showFirstEntryGuides = useGameSelector(
+    (state) => state.appSettings.guides.showFirstEntryGuides,
+  );
   const dispatch = useGameDispatch();
 
   if (!career) {
@@ -52,6 +59,11 @@ export function OffseasonPage({
       }
       onSubPageChange={onSubPageChange}
       onViewRoster={() => onGoTo("roster-builder")}
+      showFirstEntryGuide={showFirstEntryGuides}
+      hasSeenRulesGuide={hasSeenCareerGuide(career, OFFSEASON_RULES_GUIDE_ID)}
+      onMarkRulesGuideSeen={() =>
+        dispatch(gameActions.markCareerGuideSeen(OFFSEASON_RULES_GUIDE_ID))
+      }
     />
   );
 }

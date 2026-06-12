@@ -7,6 +7,7 @@ import type { OffseasonContractOfferInput } from "../../domain/season";
 import type {
   AsianGamesPlayMode,
   CareerSave,
+  CareerGuideId,
   CompetitionId,
   Player,
   Role,
@@ -78,6 +79,12 @@ export const gameActions = {
   },
   startNextSeason(): GameAction {
     return { type: "start-next-season" };
+  },
+  setFirstEntryGuidesEnabled(enabled: boolean): GameAction {
+    return { type: "set-first-entry-guides-enabled", enabled };
+  },
+  markCareerGuideSeen(guideId: CareerGuideId): GameAction {
+    return { type: "mark-career-guide-seen", guideId };
   },
   markMessageRead(messageId: string): GameAction {
     return { type: "mark-message-read", messageId };

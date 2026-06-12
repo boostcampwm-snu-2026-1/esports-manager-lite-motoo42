@@ -6,6 +6,7 @@ import { handleMessageAction } from "./messageHandlers";
 import { handleRosterAction } from "./rosterHandlers";
 import { handleRouteAction } from "./routeHandlers";
 import { handleSeasonProgressAction } from "./seasonProgressHandlers";
+import { handleSettingsAction } from "./settingsHandlers";
 import { handleWeeklyPlanAction } from "./weeklyPlanHandlers";
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -36,6 +37,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "cancel-free-agent-signing":
     case "start-next-season":
       return handleOffseasonAction(state, action);
+    case "set-first-entry-guides-enabled":
+    case "mark-career-guide-seen":
+      return handleSettingsAction(state, action);
     case "mark-message-read":
     case "mark-all-messages-read":
       return handleMessageAction(state, action);

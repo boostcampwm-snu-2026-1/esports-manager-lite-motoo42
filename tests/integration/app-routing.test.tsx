@@ -63,6 +63,7 @@ describe("App routing", () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
     clearRouteDebugTrace();
+    window.localStorage.clear();
     window.history.pushState({}, "", "/");
     vi.stubGlobal(
       "fetch",
@@ -309,6 +310,16 @@ describe("App routing", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "설정" }),
     ).toBeVisible();
+    expect(screen.getByText("가이드 안내")).toBeVisible();
+    const guideToggle = screen.getByRole("checkbox", {
+      name: /스토브리그 최초 진입 안내 표시/,
+    });
+
+    expect(guideToggle).toBeChecked();
+    fireEvent.click(guideToggle);
+    expect(guideToggle).not.toBeChecked();
+    expect(screen.getByText("자동 저장 여부/주기")).toBeVisible();
+    expect(screen.getAllByText("후속 예정").length).toBeGreaterThan(0);
 
     for (const abbreviation of ["HB", "MS", "RS", "TR", "CP", "CA", "FA", "TM", "SV", "LG"]) {
       expect(sidebar.queryByText(abbreviation)).not.toBeInTheDocument();

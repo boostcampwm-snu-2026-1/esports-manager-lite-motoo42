@@ -189,6 +189,48 @@ describe("OffseasonMarket", () => {
     expect(screen.queryByText("Faker")).not.toBeInTheDocument();
   });
 
+  it("shows the offseason guide once and keeps a manual re-open entry", () => {
+    const career = createInitialCareer("T1");
+    const onMarkRulesGuideSeen = vi.fn();
+    const baseProps = {
+      career,
+      hasSeenRulesGuide: false,
+      onCancelFreeAgentSigning: vi.fn(),
+      onConfirmFreeAgentSigning: vi.fn(),
+      onMarkRulesGuideSeen,
+      onReleaseExpiredPlayer: vi.fn(),
+      onSubmitFreeAgentOffer: vi.fn(),
+      onSubmitRenewalOffer: vi.fn(),
+      onViewRoster: vi.fn(),
+      showFirstEntryGuide: true,
+    };
+    const { rerender } = render(<OffseasonMarket {...baseProps} />);
+
+    expect(
+      screen.getByRole("dialog", { name: "스토브리그 기본 룰" }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "확인" }));
+
+    expect(onMarkRulesGuideSeen).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <OffseasonMarket
+        {...baseProps}
+        hasSeenRulesGuide
+        onMarkRulesGuideSeen={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("dialog", { name: "스토브리그 기본 룰" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "스토브리그 룰 보기" }));
+    expect(
+      screen.getByRole("dialog", { name: "스토브리그 기본 룰" }),
+    ).toBeVisible();
+  });
+
   it("hides team-owned players from the active FA market even if stale ids remain", () => {
     const career = createActiveOffseasonCareer();
     const staleTeamOwnedPlayer = career.lckPlayers.find(

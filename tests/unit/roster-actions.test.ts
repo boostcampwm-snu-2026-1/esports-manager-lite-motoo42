@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { gameReducer } from "../../src/app/state/gameReducer";
 import { gameActions } from "../../src/app/state";
 import { createInitialCareer } from "../../src/domain/career/createInitialCareer";
+import { defaultAppSettings } from "../../src/domain/settings/appSettings";
 import type { CareerSave } from "../../src/types/game";
 
 function activateContracts(career: CareerSave): CareerSave {
@@ -23,6 +24,7 @@ function createState(career: CareerSave) {
     lastMatch: null,
     route: "roster-builder" as const,
     selectedCompetitionId: null,
+    appSettings: defaultAppSettings,
   };
 }
 

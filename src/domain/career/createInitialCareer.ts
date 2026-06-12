@@ -163,6 +163,9 @@ export function createInitialCareer(
       userTeamName,
     }),
     seasonHistory: [],
+    guideState: {
+      seenGuideIds: [],
+    },
   };
 
   if (options.startMode === "real-roster-lck-cup") {

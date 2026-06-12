@@ -7,8 +7,8 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
+  createInitialGameState,
   gameReducer,
-  initialGameState,
   type GameAction,
   type GameState,
 } from "./state";
@@ -20,7 +20,7 @@ type GameStore = {
 };
 
 function createGameStore(): GameStore {
-  let state = initialGameState;
+  let state = createInitialGameState();
   const listeners = new Set<() => void>();
 
   return {

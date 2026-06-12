@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import type { OffseasonSubPage } from "../../app/routes";
 import {
   getOffseasonMarketViewStatus,
@@ -12,6 +12,10 @@ import { ContractOfferModal } from "./ContractOfferModal";
 import { ContractTab } from "./ContractTab";
 import { FreeAgentTab } from "./FreeAgentTab";
 import { LogTab } from "./LogTab";
+import {
+  OffseasonGuideBanner,
+  OffseasonGuideModal,
+} from "./OffseasonGuideModal";
 import { RosterTab } from "./RosterTab";
 import {
   getOffseasonSubPageFromTab,
@@ -36,7 +40,17 @@ type OffseasonMarketProps = {
   onSubmitRenewalOffer: (offer: OffseasonContractOfferInput) => void;
   onSubPageChange?: (subPage: OffseasonSubPage) => void;
   onViewRoster: () => void;
+  showFirstEntryGuide?: boolean;
+  hasSeenRulesGuide?: boolean;
+  onMarkRulesGuideSeen?: () => void;
 };
+
+function isGuideEligible(career: CareerSave) {
+  return (
+    career.seasonState.phase === "offseason" &&
+    career.seasonState.offseason?.status === "active"
+  );
+}
 
 export function OffseasonMarket({
   career,
@@ -48,21 +62,41 @@ export function OffseasonMarket({
   onSubmitRenewalOffer,
   onSubPageChange,
   onViewRoster,
+  showFirstEntryGuide = false,
+  hasSeenRulesGuide = true,
+  onMarkRulesGuideSeen,
 }: OffseasonMarketProps) {
   const [fallbackActiveTab, setFallbackActiveTab] =
     useState<OffseasonTab>("contracts");
   const [negotiationTarget, setNegotiationTarget] =
     useState<NegotiationTarget | null>(null);
   const [detailPlayerId, setDetailPlayerId] = useState<string | null>(null);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const offseason = career.seasonState.offseason;
   const validationErrors = offseason?.validationErrors ?? [];
   const marketViewStatus = getOffseasonMarketViewStatus(career);
+  const shouldOpenFirstEntryGuide =
+    showFirstEntryGuide && !hasSeenRulesGuide && isGuideEligible(career);
   const activeTab = subPage
     ? getOffseasonTabFromSubPage(subPage)
     : fallbackActiveTab;
   const detailPlayer = detailPlayerId
     ? getPlayer(career.lckPlayers, detailPlayerId)
     : undefined;
+
+  useEffect(() => {
+    if (shouldOpenFirstEntryGuide) {
+      setIsGuideOpen(true);
+    }
+  }, [shouldOpenFirstEntryGuide]);
+
+  function handleCloseGuide() {
+    if (!hasSeenRulesGuide) {
+      onMarkRulesGuideSeen?.();
+    }
+
+    setIsGuideOpen(false);
+  }
 
   const activePanel = useMemo(() => {
     if (activeTab === "contracts") {
@@ -110,6 +144,7 @@ export function OffseasonMarket({
     <section className="stack offseason-page">
       <WeekTimeline career={career} />
       <OffseasonBudgetSummary career={career} />
+      <OffseasonGuideBanner onOpenGuide={() => setIsGuideOpen(true)} />
       {validationErrors.length > 0 && (
         <div className="offseason-validation-box">
           {validationErrors.map((error) => (
@@ -159,6 +194,7 @@ export function OffseasonMarket({
           titlePrefix="Stove League Profile"
         />
       )}
+      {isGuideOpen && <OffseasonGuideModal onClose={handleCloseGuide} />}
     </section>
   );
 }

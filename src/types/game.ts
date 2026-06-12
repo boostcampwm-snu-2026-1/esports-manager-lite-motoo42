@@ -715,6 +715,12 @@ export type SeasonState = {
   teamBalanceAdjustments?: TeamBalanceAdjustment[];
 };
 
+export type CareerGuideId = "offseason-rules";
+
+export type CareerGuideState = {
+  seenGuideIds: CareerGuideId[];
+};
+
 export type CareerSave = {
   currentSeason: number;
   maxSeason: 20;
@@ -725,4 +731,5 @@ export type CareerSave = {
   seasonState: SeasonState;
   seasonHistory: SeasonSummary[];
   messages?: CareerMessage[];
+  guideState?: CareerGuideState;
 };

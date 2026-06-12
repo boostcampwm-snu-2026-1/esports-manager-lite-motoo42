@@ -1,0 +1,150 @@
+export type AppSettings = {
+  schemaVersion: 1;
+  guides: {
+    showFirstEntryGuides: boolean;
+  };
+};
+
+export type AppSettingScope = "global" | "career";
+
+export type AppSettingStatus = "active" | "planned";
+
+export type AppSettingDefinition = {
+  id: string;
+  title: string;
+  description: string;
+  scope: AppSettingScope;
+  applyTiming: string;
+  status: AppSettingStatus;
+};
+
+const appSettingsStorageKey = "moba-esports-manager-lite:app-settings:v1";
+
+export const defaultAppSettings: AppSettings = {
+  schemaVersion: 1,
+  guides: {
+    showFirstEntryGuides: true,
+  },
+};
+
+export const appSettingDefinitions: AppSettingDefinition[] = [
+  {
+    id: "guides",
+    title: "튜토리얼/가이드 다시 보기",
+    description:
+      "스토브리그 최초 진입 안내를 전역 설정으로 제어하고, 읽음 상태는 커리어별로 저장합니다.",
+    scope: "global",
+    applyTiming: "즉시 적용",
+    status: "active",
+  },
+  {
+    id: "autosave",
+    title: "자동 저장 여부/주기",
+    description:
+      "현재 자동 저장은 기본값으로 동작하며, 주기와 비활성화 옵션은 후속 설정으로 분리합니다.",
+    scope: "global",
+    applyTiming: "다음 저장 체크부터 적용 예정",
+    status: "planned",
+  },
+  {
+    id: "screen-density",
+    title: "화면 밀도 또는 UI 축약",
+    description:
+      "정보량이 많은 관리 화면을 넓게/간결하게 바꾸는 표시 옵션입니다.",
+    scope: "global",
+    applyTiming: "화면 즉시 반영 예정",
+    status: "planned",
+  },
+  {
+    id: "match-presentation",
+    title: "경기 진행 속도/결과 표시",
+    description:
+      "경기 진행 연출과 결과 요약 방식을 커리어 플레이 취향에 맞춰 조정합니다.",
+    scope: "career",
+    applyTiming: "다음 경기부터 적용 예정",
+    status: "planned",
+  },
+  {
+    id: "message-frequency",
+    title: "메시지/뉴스 노출 빈도",
+    description:
+      "메시지함과 뉴스 생성 빈도를 커리어별 진행 템포에 맞춰 조정합니다.",
+    scope: "career",
+    applyTiming: "다음 턴부터 적용 예정",
+    status: "planned",
+  },
+  {
+    id: "accessibility",
+    title: "접근성 관련 표시 옵션",
+    description:
+      "색 대비, 숫자 보조 표시, 모션 축소 같은 읽기 지원 옵션을 전역으로 관리합니다.",
+    scope: "global",
+    applyTiming: "화면 즉시 반영 예정",
+    status: "planned",
+  },
+];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function getBrowserStorage(): Storage | null {
+  return typeof window === "undefined" ? null : window.localStorage;
+}
+
+export function normalizeAppSettings(value: unknown): AppSettings {
+  const source = isRecord(value) ? value : {};
+  const guides = isRecord(source.guides) ? source.guides : {};
+
+  return {
+    schemaVersion: 1,
+    guides: {
+      showFirstEntryGuides:
+        typeof guides.showFirstEntryGuides === "boolean"
+          ? guides.showFirstEntryGuides
+          : defaultAppSettings.guides.showFirstEntryGuides,
+    },
+  };
+}
+
+export function loadAppSettings(): AppSettings {
+  const storage = getBrowserStorage();
+
+  if (!storage) {
+    return defaultAppSettings;
+  }
+
+  try {
+    return normalizeAppSettings(
+      JSON.parse(storage.getItem(appSettingsStorageKey) ?? "null"),
+    );
+  } catch {
+    return defaultAppSettings;
+  }
+}
+
+export function saveAppSettings(settings: AppSettings): void {
+  const storage = getBrowserStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  storage.setItem(
+    appSettingsStorageKey,
+    JSON.stringify(normalizeAppSettings(settings)),
+  );
+}
+
+export function setFirstEntryGuidesEnabled(
+  settings: AppSettings,
+  enabled: boolean,
+): AppSettings {
+  return {
+    ...settings,
+    guides: {
+      ...settings.guides,
+      showFirstEntryGuides: enabled,
+    },
+  };
+}

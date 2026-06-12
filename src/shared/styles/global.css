@@ -5981,6 +5981,39 @@ h1 {
   margin-top: 10px;
 }
 
+.offseason-guide-banner {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.offseason-guide-banner > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.offseason-guide-banner span,
+.offseason-guide-note strong {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.offseason-guide-banner strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.offseason-guide-banner p,
+.offseason-guide-note p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .offseason-tab-list {
   display: flex;
   gap: 8px;
@@ -6386,6 +6419,59 @@ h1 {
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
   color: var(--text);
   padding: 18px;
+}
+
+.offseason-guide-modal {
+  position: relative;
+  display: grid;
+  gap: 18px;
+  width: min(860px, calc(100vw - 32px));
+  max-height: min(88vh, 780px);
+  overflow: auto;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  background: #0d1424;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+  color: var(--text);
+  padding: 22px;
+}
+
+.offseason-guide-modal h2 {
+  margin: 4px 0 8px;
+  font-size: 1.8rem;
+}
+
+.offseason-guide-modal p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.offseason-guide-points {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.offseason-guide-points article,
+.offseason-guide-note {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.52);
+  padding: 12px;
+}
+
+.offseason-guide-points span {
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.offseason-guide-points strong {
+  color: #ffffff;
 }
 
 .offseason-player-detail-modal {
@@ -7660,9 +7746,100 @@ h1 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.settings-section {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.settings-section-header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.settings-section-header > div,
+.settings-career-scope-note {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.settings-section-header span,
+.settings-career-scope-note span,
+.settings-card-content small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.settings-section-header strong,
+.settings-career-scope-note strong {
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.settings-option-badge {
+  border: 1px solid rgba(56, 189, 248, 0.34);
+  border-radius: 6px;
+  background: rgba(14, 116, 144, 0.16);
+  color: #bae6fd !important;
+  padding: 0.35rem 0.55rem;
+  white-space: nowrap;
+}
+
+.settings-toggle-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: flex-start;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.42);
+  padding: 0.85rem;
+}
+
+.settings-toggle-row input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.15rem;
+  accent-color: #38bdf8;
+}
+
+.settings-toggle-row span {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.settings-toggle-row strong {
+  color: var(--text);
+}
+
+.settings-toggle-row small,
+.settings-save-note,
+.settings-career-scope-note p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .settings-card-content {
   display: grid;
   gap: 0.45rem;
+}
+
+.settings-option-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.settings-option-meta span {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.48);
+  padding: 0.22rem 0.48rem;
 }
 
 .settings-card-content span {
@@ -7706,5 +7883,15 @@ h1 {
 
   .settings-hero {
     flex-direction: column;
+  }
+
+  .settings-section-header,
+  .offseason-guide-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .offseason-guide-points {
+    grid-template-columns: 1fr;
   }
 }

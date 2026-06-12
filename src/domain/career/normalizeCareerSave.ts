@@ -14,6 +14,7 @@ import type {
   Team,
   WeeklyPlan,
 } from "../../types/game";
+import { normalizeCareerGuideState } from "./careerGuides";
 import { createInitialCareer } from "./createInitialCareer";
 import { createPreseasonStoveLeagueCareer } from "./preseasonStoveLeague";
 
@@ -361,6 +362,7 @@ export function normalizeCareerSave(value: CareerSave): CareerSave {
     seasonState: normalizeSeasonState(value.seasonState, fallback.seasonState),
     seasonHistory,
     messages: normalizeMessages(value.messages),
+    guideState: normalizeCareerGuideState(value.guideState),
   };
 
   if (

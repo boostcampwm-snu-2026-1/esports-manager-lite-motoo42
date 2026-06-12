@@ -7,6 +7,7 @@ import type { CareerStartMode } from "../../domain/career/createInitialCareer";
 import type {
   AsianGamesPlayMode,
   CareerSave,
+  CareerGuideId,
   CompetitionId,
   Player,
   Role,
@@ -42,6 +43,8 @@ export type GameAction =
   | { type: "confirm-free-agent-signing"; offerId: string }
   | { type: "cancel-free-agent-signing"; offerId: string }
   | { type: "start-next-season" }
+  | { type: "set-first-entry-guides-enabled"; enabled: boolean }
+  | { type: "mark-career-guide-seen"; guideId: CareerGuideId }
   | { type: "mark-message-read"; messageId: string }
   | { type: "mark-all-messages-read" }
   | { type: "set-strategy"; strategy: StrategyId }

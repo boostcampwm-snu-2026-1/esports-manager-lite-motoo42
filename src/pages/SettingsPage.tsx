@@ -1,6 +1,24 @@
+import { useGameDispatch, useGameSelector } from "../app/GameProvider";
+import { gameActions } from "../app/state";
+import {
+  appSettingDefinitions,
+  type AppSettingDefinition,
+} from "../domain/settings/appSettings";
 import { Card } from "../shared/ui/Card";
 
+function getScopeLabel(scope: AppSettingDefinition["scope"]) {
+  return scope === "global" ? "전역 설정" : "커리어별 설정";
+}
+
+function getStatusLabel(status: AppSettingDefinition["status"]) {
+  return status === "active" ? "적용 중" : "후속 예정";
+}
+
 export function SettingsPage() {
+  const appSettings = useGameSelector((state) => state.appSettings);
+  const career = useGameSelector((state) => state.career);
+  const dispatch = useGameDispatch();
+
   return (
     <section className="stack settings-page">
       <Card>
@@ -9,56 +27,77 @@ export function SettingsPage() {
             <p className="eyebrow">Settings</p>
             <h1>설정</h1>
             <p>
-              베타 기간에는 플레이 흐름을 방해하지 않는 기본 안내와 향후
-              설정 확장 위치를 먼저 정리합니다.
+              베타 기간에는 바로 동작하는 핵심 옵션부터 전역 설정과 커리어별
+              설정을 분리해 정리합니다.
             </p>
           </div>
           <span className="settings-status-chip">Beta</span>
         </div>
       </Card>
 
+      <Card>
+        <div className="settings-section">
+          <div className="settings-section-header">
+            <div>
+              <span>Guide</span>
+              <strong>가이드 안내</strong>
+            </div>
+            <span className="settings-option-badge">전역 / 즉시 적용</span>
+          </div>
+          <label className="settings-toggle-row">
+            <input
+              checked={appSettings.guides.showFirstEntryGuides}
+              onChange={(event) =>
+                dispatch(
+                  gameActions.setFirstEntryGuidesEnabled(event.target.checked),
+                )
+              }
+              type="checkbox"
+            />
+            <span>
+              <strong>스토브리그 최초 진입 안내 표시</strong>
+              <small>
+                새 커리어나 아직 안내를 보지 않은 커리어에서 스토브리그 룰
+                모달을 자동으로 엽니다.
+              </small>
+            </span>
+          </label>
+          <p className="settings-save-note">
+            표시 여부는 브라우저 전역 설정으로 저장됩니다. 안내를 이미 봤는지
+            여부는 현재 커리어 저장 데이터에 기록됩니다.
+          </p>
+        </div>
+      </Card>
+
       <div className="settings-grid">
-        <Card>
-          <div className="settings-card-content">
-            <span>게임 설정</span>
-            <strong>기본 진행 옵션</strong>
-            <p>
-              자동 저장, 진행 버튼, 경기 표시 방식 같은 플레이 옵션을 이후
-              이 화면에서 관리합니다.
-            </p>
-          </div>
-        </Card>
-        <Card>
-          <div className="settings-card-content">
-            <span>저장 / 베타 안내</span>
-            <strong>저장 데이터는 데이터 저장 메뉴에서 관리</strong>
-            <p>
-              저장 슬롯 생성, 불러오기, 삭제는 별도 데이터 저장 화면에서
-              처리합니다.
-            </p>
-          </div>
-        </Card>
-        <Card>
-          <div className="settings-card-content">
-            <span>화면 지원 정책</span>
-            <strong>PC / 큰 가로 화면 권장</strong>
-            <p>
-              MOBA Esports Manager Lite는 PC, 노트북, 태블릿 가로 화면에
-              최적화되어 있습니다.
-            </p>
-          </div>
-        </Card>
-        <Card>
-          <div className="settings-card-content">
-            <span>후속 설정</span>
-            <strong>화면, 알림, 사운드</strong>
-            <p>
-              메시지 알림, 화면 밀도, 경기 연출 설정은 후속 작업에서 이곳에
-              추가합니다.
-            </p>
-          </div>
-        </Card>
+        {appSettingDefinitions.map((option) => (
+          <Card key={option.id}>
+            <div className="settings-card-content">
+              <div className="settings-option-meta">
+                <span>{getScopeLabel(option.scope)}</span>
+                <span>{getStatusLabel(option.status)}</span>
+              </div>
+              <strong>{option.title}</strong>
+              <p>{option.description}</p>
+              <small>{option.applyTiming}</small>
+            </div>
+          </Card>
+        ))}
       </div>
+
+      {career && (
+        <Card>
+          <div className="settings-section settings-career-scope-note">
+            <span>Career Scope</span>
+            <strong>{career.userTeam.name} 커리어에 저장되는 항목</strong>
+            <p>
+              가이드 읽음 상태, 경기 표시 취향, 메시지/뉴스 빈도처럼 플레이
+              흐름에 영향을 주는 값은 커리어 저장 데이터에 보관하는 방향으로
+              확장합니다.
+            </p>
+          </div>
+        </Card>
+      )}
     </section>
   );
 }

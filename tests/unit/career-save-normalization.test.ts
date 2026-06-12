@@ -73,6 +73,7 @@ describe("career save normalization", () => {
     expect(normalized.seasonState.offseason?.resolvedOffers).toEqual([]);
     expect(normalized.seasonState.offseason?.retiredPlayerIds).toEqual([]);
     expect(normalized.seasonState.offseason?.militaryServicePlayerIds).toEqual([]);
+    expect(normalized.guideState?.seenGuideIds).toEqual([]);
   });
 
   it("rehydrates current 2026 LCK main roster portraits for legacy saves", () => {
