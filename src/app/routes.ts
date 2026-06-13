@@ -30,7 +30,7 @@ export type InboxSubPage = "all" | "important" | "schedule" | "transfer";
 
 export type OffseasonSubPage = "overview" | "free-agents" | "schedule" | "log";
 
-export type TrainingSubPage = "plan" | "strategy" | "intensity";
+export type TrainingSubPage = "report" | "plan" | "strategy" | "scrim";
 
 export type RouteSubPage =
   | CompetitionSubPage
@@ -105,9 +105,10 @@ const offseasonSubPages = new Set<OffseasonSubPage>([
   "log",
 ]);
 const trainingSubPages = new Set<TrainingSubPage>([
+  "report",
   "plan",
   "strategy",
-  "intensity",
+  "scrim",
 ]);
 
 export type RouteMatch = {

@@ -1,6 +1,7 @@
 import { sampleOpponents } from "../../data/sampleOpponents";
 import { lck2026Players } from "../../data/lck2026Players";
 import { getLck2026PlayerPortrait } from "../../data/lck2026PlayerPortraits";
+import { normalizeScrimState } from "../scrim";
 import { ensurePlayerEvaluationStatus } from "../players";
 import type {
   CareerSave,
@@ -9,6 +10,7 @@ import type {
   OffseasonLogEntry,
   OffseasonOffer,
   Player,
+  ScrimState,
   SeasonOffseasonSummary,
   SeasonState,
   SeasonSummary,
@@ -304,6 +306,7 @@ function normalizeSeasonState(
   fallback: SeasonState,
 ): SeasonState {
   const offseason = value?.offseason;
+  const scrim = value?.scrim as ScrimState | undefined;
 
   return {
     ...fallback,
@@ -317,6 +320,7 @@ function normalizeSeasonState(
     matchRecords: value?.matchRecords ?? [],
     nextMatchIds: value?.nextMatchIds ?? [],
     lastMatchRecordIds: value?.lastMatchRecordIds ?? [],
+    scrim: normalizeScrimState(scrim),
     offseason: offseason
       ? {
           ...offseason,

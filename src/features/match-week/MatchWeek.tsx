@@ -1,109 +1,102 @@
 import { Button } from "../../shared/ui/Button";
-import { Card } from "../../shared/ui/Card";
-import type {
-  MatchResult,
-  StrategyId,
-  TrainingIntensity,
-  WeeklyPlan,
-} from "../../types/game";
+import type { CareerSave, StrategyId, WeeklyPlan } from "../../types/game";
 import type { TrainingSubPage } from "../../app/routes";
-import { MatchResultPanel } from "./MatchResultPanel";
+import type { ScrimRequestInput } from "../../domain/scrim";
+import { OpponentReportView } from "./OpponentReportView";
 import { StrategyPanel } from "./StrategyPanel";
-
-export type MatchWeekOpponentReport = {
-  opponentTeamName: string;
-  competitionName: string;
-  stageName: string;
-  formatLabel: string;
-  styleLabel: string;
-  strength: number;
-  outlookGrade?: string;
-  keyLaneLabel?: string;
-  statusSummary?: string;
-};
+import type { MatchWeekOpponentReport } from "./matchWeekTypes";
 
 type MatchWeekProps = {
   opponentReport: MatchWeekOpponentReport;
-  result: MatchResult | null;
   subPage?: TrainingSubPage | null;
+  career: CareerSave;
   weeklyPlan: WeeklyPlan;
   onStrategyChange: (strategy: StrategyId) => void;
-  onTrainingIntensityChange: (trainingIntensity: TrainingIntensity) => void;
+  onRequestScrim: (request: ScrimRequestInput) => void;
+  onRunTodayScrim: () => void;
   onViewCalendar: () => void;
 };
 
+function getMatchWeekSubPageTitle(subPage: TrainingSubPage | null | undefined) {
+  if (subPage === "report" || !subPage) {
+    return {
+      eyebrow: "상대 분석",
+      title: "상대 리포트",
+      description: "다음 일정 기준 상대와 우리 팀 상태를 확인합니다.",
+    };
+  }
+
+  if (subPage === "strategy") {
+    return {
+      eyebrow: "전략",
+      title: "전략",
+      description: "다음 경기에서 우선할 운영 방향을 고릅니다.",
+    };
+  }
+
+  if (subPage === "scrim") {
+    return {
+      eyebrow: "스크림",
+      title: "스크림",
+      description: "공식 경기 ELO를 바꾸지 않는 연습 경기를 요청하고 진행합니다.",
+    };
+  }
+
+  return {
+    eyebrow: "주간 계획",
+    title: "주간 계획",
+    description: "현재 전략과 이번 주 스크림 일정을 확인합니다.",
+  };
+}
+
 export function MatchWeek({
   opponentReport,
-  result,
   subPage,
+  career,
   weeklyPlan,
   onStrategyChange,
-  onTrainingIntensityChange,
+  onRequestScrim,
+  onRunTodayScrim,
   onViewCalendar,
 }: MatchWeekProps) {
+  const activeSubPage = subPage ?? "report";
+  const subPageTitle = getMatchWeekSubPageTitle(activeSubPage);
+
   return (
-    <section className="stack">
+    <section className="stack match-week-page">
       <header>
         <p className="eyebrow">Match week</p>
         <h1>다음 상대: {opponentReport.opponentTeamName}</h1>
         <p className="lede">
-          이번 주 전략과 훈련 강도는 상단 진행 버튼으로 처리되는 다음 경기부터 반영됩니다.
+          공식 경기 전 상대 분석, 전략 선택, 스크림 일정을 한 곳에서 조정합니다.
         </p>
       </header>
 
-      <div className="two-column">
-        <Card>
-          <h2>상대 리포트</h2>
-          <div className="match-week-report-grid">
-            <article>
-              <span>대회</span>
-              <strong>{opponentReport.competitionName}</strong>
-            </article>
-            <article>
-              <span>스테이지</span>
-              <strong>{opponentReport.stageName}</strong>
-            </article>
-            <article>
-              <span>Format</span>
-              <strong>{opponentReport.formatLabel}</strong>
-            </article>
-            <article>
-              <span>상대 스타일</span>
-              <strong>{opponentReport.styleLabel}</strong>
-            </article>
-            <article>
-              <span>상대 전력</span>
-              <strong>{opponentReport.strength}</strong>
-            </article>
-            {opponentReport.outlookGrade && (
-              <article>
-                <span>전망</span>
-                <strong>{opponentReport.outlookGrade}</strong>
-              </article>
-            )}
-            {opponentReport.keyLaneLabel && (
-              <article className="match-week-report-wide">
-                <span>핵심 라인</span>
-                <strong>{opponentReport.keyLaneLabel}</strong>
-              </article>
-            )}
-            {opponentReport.statusSummary && (
-              <article className="match-week-report-wide">
-                <span>우리 상태</span>
-                <strong>{opponentReport.statusSummary}</strong>
-              </article>
-            )}
+      <div className="match-week-layout">
+        <section className="card match-week-workspace-card">
+          <div className="match-week-subpage-heading">
+            <div>
+              <p className="eyebrow">{subPageTitle.eyebrow}</p>
+              <h2>{subPageTitle.title}</h2>
+            </div>
+            <span>{subPageTitle.description}</span>
           </div>
-          <StrategyPanel
-            subPage={subPage}
-            weeklyPlan={weeklyPlan}
-            onStrategyChange={onStrategyChange}
-            onTrainingIntensityChange={onTrainingIntensityChange}
-          />
-          <Button onClick={onViewCalendar}>시즌 일정 보기</Button>
-        </Card>
-
-        <MatchResultPanel result={result} onViewCalendar={onViewCalendar} />
+          {activeSubPage === "report" ? (
+            <OpponentReportView opponentReport={opponentReport} />
+          ) : (
+            <StrategyPanel
+              career={career}
+              subPage={activeSubPage}
+              weeklyPlan={weeklyPlan}
+              onStrategyChange={onStrategyChange}
+              onRequestScrim={onRequestScrim}
+              onRunTodayScrim={onRunTodayScrim}
+            />
+          )}
+          <div className="match-week-actions">
+            <Button onClick={onViewCalendar}>시즌 일정 보기</Button>
+          </div>
+        </section>
       </div>
     </section>
   );

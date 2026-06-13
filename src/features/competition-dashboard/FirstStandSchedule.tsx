@@ -13,6 +13,7 @@ import {
 import {
   formatFirstStandDateLabel,
   getFirstStandMatchStatusLabel,
+  getFirstStandStageLabel,
   isFirstStandUserMatch,
 } from "./firstStandShared";
 
@@ -35,10 +36,10 @@ export function FirstStandScheduleView({
     <section className="competition-panel first-stand-main-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Schedule</p>
-          <h2>Schedule / Results</h2>
+          <p className="eyebrow">일정</p>
+          <h2>일정 / 결과</h2>
         </div>
-        <span className="panel-note">Actual First Stand fixtures, scores, and user-team highlights</span>
+        <span className="panel-note">실제 일정, 스코어, 우리 팀 경기 강조</span>
       </div>
       <div className="first-stand-schedule-scroll">
         {groupedSchedule.length > 0
@@ -46,7 +47,7 @@ export function FirstStandScheduleView({
               <article className="first-stand-schedule-day" key={dateKey}>
                 <header>
                   <strong>{formatFirstStandDateLabel(dateKey)}</strong>
-                  <span>{matches.length} matches</span>
+                  <span>{matches.length}경기</span>
                 </header>
                 <div className="first-stand-schedule-day-list">
                   {matches.map((match) => {
@@ -63,7 +64,8 @@ export function FirstStandScheduleView({
                         <div>
                           <strong>{getMatchTitle(match)}</strong>
                           <span>
-                            {match.stageName} · {getFormatLabel(match)}
+                            {getFirstStandStageLabel(match.stageName)} ·{" "}
+                            {getFormatLabel(match)}
                           </span>
                         </div>
                         <b
@@ -86,11 +88,12 @@ export function FirstStandScheduleView({
                     {match.blueTeamName} vs {match.redTeamName}
                   </strong>
                   <span>
-                    {match.dateLabel} · {match.stageName} · Group {match.group}
+                    {match.dateLabel} · {getFirstStandStageLabel(match.stageName)} ·{" "}
+                    {match.group}조
                   </span>
                 </div>
                 <b className="schedule-status-badge schedule-status-scheduled">
-                  {match.formatLabel} · Scheduled
+                  {match.formatLabel} · 예정
                 </b>
               </article>
             ))}

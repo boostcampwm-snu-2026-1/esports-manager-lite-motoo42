@@ -76,21 +76,21 @@ function getLckRounds34ProjectedPathGroups(table: StandingEntry[]) {
   return [
     {
       id: "playoffs-round-2",
-      title: "Playoffs R2",
+      title: "플레이오프 R2",
       matches: [
         {
           id: "lck-r34-path-r2",
           stageName: "Playoffs Round 2",
-          title: "Round 2 직행",
+          title: "2라운드 직행",
           subtitle: "Legend 1-2위",
           slots: [
             createLckRounds34PathSlot({
-              detail: "Legend Group 1위",
+              detail: "Legend 그룹 1위",
               entry: legendStandings[0],
               label: "Legend 1위",
             }),
             createLckRounds34PathSlot({
-              detail: "Legend Group 2위",
+              detail: "Legend 그룹 2위",
               entry: legendStandings[1],
               label: "Legend 2위",
             }),
@@ -100,21 +100,21 @@ function getLckRounds34ProjectedPathGroups(table: StandingEntry[]) {
     },
     {
       id: "playoffs-round-1",
-      title: "Playoffs R1",
+      title: "플레이오프 R1",
       matches: [
         {
           id: "lck-r34-path-r1",
           stageName: "Playoffs Round 1",
-          title: "Round 1 직행",
+          title: "1라운드 직행",
           subtitle: "Legend 3-4위",
           slots: [
             createLckRounds34PathSlot({
-              detail: "Legend Group 3위",
+              detail: "Legend 그룹 3위",
               entry: legendStandings[2],
               label: "Legend 3위",
             }),
             createLckRounds34PathSlot({
-              detail: "Legend Group 4위",
+              detail: "Legend 그룹 4위",
               entry: legendStandings[3],
               label: "Legend 4위",
             }),
@@ -124,31 +124,31 @@ function getLckRounds34ProjectedPathGroups(table: StandingEntry[]) {
     },
     {
       id: "season-play-in",
-      title: "Season Play-In",
+      title: "시즌 플레이-인",
       matches: [
         {
           id: "lck-r34-path-play-in",
           stageName: "Season Play-In",
-          title: "Play-In 후보",
+          title: "플레이-인 후보",
           subtitle: "Legend 5위 + Rise 1-3위",
           slots: [
             createLckRounds34PathSlot({
-              detail: "Legend Group 5위",
+              detail: "Legend 그룹 5위",
               entry: legendStandings[4],
               label: "Legend 5위",
             }),
             createLckRounds34PathSlot({
-              detail: "Rise Group 1위",
+              detail: "Rise 그룹 1위",
               entry: riseStandings[0],
               label: "Rise 1위",
             }),
             createLckRounds34PathSlot({
-              detail: "Rise Group 2위",
+              detail: "Rise 그룹 2위",
               entry: riseStandings[1],
               label: "Rise 2위",
             }),
             createLckRounds34PathSlot({
-              detail: "Rise Group 3위",
+              detail: "Rise 그룹 3위",
               entry: riseStandings[2],
               label: "Rise 3위",
             }),
@@ -158,7 +158,7 @@ function getLckRounds34ProjectedPathGroups(table: StandingEntry[]) {
     },
     {
       id: "season-locked",
-      title: "Final Rank",
+      title: "최종 순위",
       matches: [
         {
           id: "lck-r34-path-out",
@@ -167,12 +167,12 @@ function getLckRounds34ProjectedPathGroups(table: StandingEntry[]) {
           subtitle: "Rise 4-5위",
           slots: [
             createLckRounds34PathSlot({
-              detail: "Rise Group 4위",
+              detail: "Rise 그룹 4위",
               entry: riseStandings[3],
               label: "Rise 4위",
             }),
             createLckRounds34PathSlot({
-              detail: "Rise Group 5위",
+              detail: "Rise 그룹 5위",
               entry: riseStandings[4],
               label: "Rise 5위",
             }),
@@ -222,7 +222,7 @@ function createLckRounds34MatchCard({
 
   return {
     id: scheduleId,
-    stageName: match?.stageName ?? "Pending",
+    stageName: match?.stageName ?? "대기 중",
     title,
     subtitle,
     slots: match
@@ -314,7 +314,7 @@ function getLckRounds34ActualPostseasonGroups({
   return [
     {
       id: "season-play-in",
-      title: "Season Play-In",
+      title: "시즌 플레이-인",
       matches: [
         createLckRounds34MatchCard({
           competition,
@@ -322,8 +322,8 @@ function getLckRounds34ActualPostseasonGroups({
           recordsByScheduleId,
           scheduleId: matchIds.playInFirstQualifier,
           slotLabels: ["Legend 5위", "Rise 1위"],
-          subtitle: "BO5 · 승자는 Playoffs 진출",
-          title: "Qualifier 1",
+          subtitle: "BO5 · 승자는 플레이오프 진출",
+          title: "진출전 1",
         }),
         createLckRounds34MatchCard({
           competition,
@@ -332,173 +332,173 @@ function getLckRounds34ActualPostseasonGroups({
           scheduleId: matchIds.playInElimination,
           slotLabels: ["Rise 2위", "Rise 3위"],
           subtitle: "BO5 · 승자는 최종 진출전",
-          title: "Elimination",
+          title: "탈락전",
         }),
         createLckRounds34MatchCard({
           competition,
           fallbackSlots: [
-            createWinnerSlot("Qualifier 1 패자"),
-            createWinnerSlot("Elimination 승자"),
+            createWinnerSlot("진출전 1 패자"),
+            createWinnerSlot("탈락전 승자"),
           ],
           recordsByScheduleId,
           scheduleId: matchIds.playInSecondQualifier,
-          slotLabels: ["Qualifier 1 패자", "Elimination 승자"],
-          subtitle: "BO5 · 승자는 Playoffs 마지막 자리",
-          title: "Qualifier 2",
+          slotLabels: ["진출전 1 패자", "탈락전 승자"],
+          subtitle: "BO5 · 승자는 플레이오프 마지막 자리",
+          title: "진출전 2",
         }),
       ] satisfies LckPlayoffMatch[],
     },
     {
       id: "playoffs-round-1",
-      title: "Playoffs R1",
+      title: "플레이오프 R1",
       matches: [
         createLckRounds34MatchCard({
           competition,
-          fallbackSlots: [seedSlots[2], createWinnerSlot("Play-In 2번")],
+          fallbackSlots: [seedSlots[2], createWinnerSlot("플레이-인 2번")],
           recordsByScheduleId,
           scheduleId: matchIds.playoffsRound1Legend3VsPlayIn2,
-          slotLabels: ["Legend 3위", "Play-In 2번"],
+          slotLabels: ["Legend 3위", "플레이-인 2번"],
           subtitle: "BO5 · 패자는 하위조",
-          title: "R1 Match A",
+          title: "1라운드 A",
         }),
         createLckRounds34MatchCard({
           competition,
-          fallbackSlots: [seedSlots[3], createWinnerSlot("Play-In 1번")],
+          fallbackSlots: [seedSlots[3], createWinnerSlot("플레이-인 1번")],
           recordsByScheduleId,
           scheduleId: matchIds.playoffsRound1Legend4VsPlayIn1,
-          slotLabels: ["Legend 4위", "Play-In 1번"],
+          slotLabels: ["Legend 4위", "플레이-인 1번"],
           subtitle: "BO5 · 패자는 하위조",
-          title: "R1 Match B",
+          title: "1라운드 B",
         }),
       ] satisfies LckPlayoffMatch[],
     },
     {
       id: "playoffs-round-2",
-      title: "Playoffs R2",
+      title: "플레이오프 R2",
       matches: [
         createLckRounds34MatchCard({
           competition,
-          fallbackSlots: [seedSlots[0], createWinnerSlot("R1 Match B 승자")],
+          fallbackSlots: [seedSlots[0], createWinnerSlot("1라운드 B 승자")],
           recordsByScheduleId,
           scheduleId: matchIds.playoffsRound2Legend1VsRound1B,
-          slotLabels: ["Legend 1위", "R1 Match B 승자"],
-          subtitle: "BO5 · 승자는 Playoffs R3",
-          title: "R2 Match A",
+          slotLabels: ["Legend 1위", "1라운드 B 승자"],
+          subtitle: "BO5 · 승자는 플레이오프 R3",
+          title: "2라운드 A",
         }),
         createLckRounds34MatchCard({
           competition,
-          fallbackSlots: [seedSlots[1], createWinnerSlot("R1 Match A 승자")],
+          fallbackSlots: [seedSlots[1], createWinnerSlot("1라운드 A 승자")],
           recordsByScheduleId,
           scheduleId: matchIds.playoffsRound2Legend2VsRound1A,
-          slotLabels: ["Legend 2위", "R1 Match A 승자"],
-          subtitle: "BO5 · 승자는 Playoffs R3",
-          title: "R2 Match B",
+          slotLabels: ["Legend 2위", "1라운드 A 승자"],
+          subtitle: "BO5 · 승자는 플레이오프 R3",
+          title: "2라운드 B",
         }),
       ] satisfies LckPlayoffMatch[],
     },
     {
       id: "lower-round-1",
-      title: "Lower R1",
+      title: "패자조 R1",
       matches: [
         createLckRounds34MatchCard({
           competition,
           fallbackSlots: [
-            createWinnerSlot("R2 Match A 패자"),
-            createWinnerSlot("R1 Match A 패자"),
+            createWinnerSlot("2라운드 A 패자"),
+            createWinnerSlot("1라운드 A 패자"),
           ],
           recordsByScheduleId,
           scheduleId: matchIds.lowerRound1A,
-          slotLabels: ["R2 Match A 패자", "R1 Match A 패자"],
+          slotLabels: ["2라운드 A 패자", "1라운드 A 패자"],
           subtitle: "BO5 · 패자는 탈락",
-          title: "Lower Match A",
+          title: "패자조 A",
         }),
         createLckRounds34MatchCard({
           competition,
           fallbackSlots: [
-            createWinnerSlot("R2 Match B 패자"),
-            createWinnerSlot("R1 Match B 패자"),
+            createWinnerSlot("2라운드 B 패자"),
+            createWinnerSlot("1라운드 B 패자"),
           ],
           recordsByScheduleId,
           scheduleId: matchIds.lowerRound1B,
-          slotLabels: ["R2 Match B 패자", "R1 Match B 패자"],
+          slotLabels: ["2라운드 B 패자", "1라운드 B 패자"],
           subtitle: "BO5 · 패자는 탈락",
-          title: "Lower Match B",
+          title: "패자조 B",
         }),
       ] satisfies LckPlayoffMatch[],
     },
     {
       id: "playoffs-round-3",
-      title: "Playoffs R3",
+      title: "플레이오프 R3",
       matches: [
         createLckRounds34MatchCard({
           competition,
           fallbackSlots: [
-            createWinnerSlot("R2 Match A 승자"),
-            createWinnerSlot("R2 Match B 승자"),
+            createWinnerSlot("2라운드 A 승자"),
+            createWinnerSlot("2라운드 B 승자"),
           ],
           recordsByScheduleId,
           scheduleId: matchIds.playoffsRound3,
-          slotLabels: ["R2 Match A 승자", "R2 Match B 승자"],
-          subtitle: "BO5 · 승자는 Grand Final",
-          title: "Upper Final",
+          slotLabels: ["2라운드 A 승자", "2라운드 B 승자"],
+          subtitle: "BO5 · 승자는 최종 결승",
+          title: "승자조 결승",
         }),
       ] satisfies LckPlayoffMatch[],
     },
     {
       id: "lower-round-2",
-      title: "Lower R2",
+      title: "패자조 R2",
       matches: [
         createLckRounds34MatchCard({
           competition,
           fallbackSlots: [
-            createWinnerSlot("Lower Match A 승자"),
-            createWinnerSlot("Lower Match B 승자"),
+            createWinnerSlot("패자조 A 승자"),
+            createWinnerSlot("패자조 B 승자"),
           ],
           recordsByScheduleId,
           scheduleId: matchIds.lowerRound2,
-          slotLabels: ["Lower Match A 승자", "Lower Match B 승자"],
+          slotLabels: ["패자조 A 승자", "패자조 B 승자"],
           subtitle: "BO5 · 패자는 최종 4위",
-          title: "Lower Semifinal",
+          title: "패자조 준결승",
         }),
       ] satisfies LckPlayoffMatch[],
     },
     {
       id: "finals",
-      title: "Finals",
+      title: "결승",
       matches: [
         createLckRounds34MatchCard({
           competition,
           fallbackSlots: [
-            createWinnerSlot("Upper Final 패자"),
-            createWinnerSlot("Lower Semifinal 승자"),
+            createWinnerSlot("승자조 결승 패자"),
+            createWinnerSlot("패자조 준결승 승자"),
           ],
           recordsByScheduleId,
           scheduleId: matchIds.lowerFinal,
-          slotLabels: ["Upper Final 패자", "Lower Semifinal 승자"],
+          slotLabels: ["승자조 결승 패자", "패자조 준결승 승자"],
           subtitle: "BO5 · 패자는 최종 3위",
-          title: "Lower Final",
+          title: "패자조 결승",
         }),
         createLckRounds34MatchCard({
           competition,
           fallbackSlots: [
-            createWinnerSlot("Upper Final 승자"),
-            createWinnerSlot("Lower Final 승자"),
+            createWinnerSlot("승자조 결승 승자"),
+            createWinnerSlot("패자조 결승 승자"),
           ],
           recordsByScheduleId,
           scheduleId: matchIds.grandFinal,
-          slotLabels: ["Upper Final 승자", "Lower Final 승자"],
+          slotLabels: ["승자조 결승 승자", "패자조 결승 승자"],
           subtitle: "BO5 · 우승 결정전",
-          title: "Grand Final",
+          title: "최종 결승",
         }),
       ] satisfies LckPlayoffMatch[],
     },
     {
       id: "worlds-path",
-      title: "Worlds Path",
+      title: "Worlds 경로",
       matches: [
         {
           id: "lck-r34-worlds-candidates",
-          stageName: "Worlds Qualification",
+          stageName: "Worlds 진출권",
           title: "최종 1-4위",
           subtitle:
             worldsQualification?.bonusLeagueLabels.includes("LCK")
@@ -553,21 +553,27 @@ export function LckRounds34PostseasonPathView({
     : hasPostseasonSchedule
       ? "실제 경기 진행 중 · 전 경기 BO5 Fearless"
       : "현 순위 기준 예상 슬롯";
+  const frameClassName = hasPostseasonSchedule
+    ? "lck-playoff-frame lck-postseason-frame"
+    : "lck-playoff-frame lck-postseason-projection-frame";
+  const boardClassName = hasPostseasonSchedule
+    ? "lck-postseason-board"
+    : "lck-postseason-projection-board";
 
   return (
     <section className="competition-panel lck-rounds-main-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Postseason Path</p>
-          <h2>{getLckRoundsFormatTitle(competition)} 후속 경로</h2>
+          <p className="eyebrow">포스트시즌</p>
+          <h2>{getLckRoundsFormatTitle(competition)} 포스트시즌</h2>
         </div>
         <span className="panel-note">{bracketStatus}</span>
       </div>
-      <div className="lck-playoff-frame">
-        <div className="lck-playoff-bracket">
+      <div className={frameClassName}>
+        <div className={boardClassName}>
           {pathGroups.map((round) => (
             <section
-              className={`lck-playoff-round ${
+              className={`lck-playoff-round lck-postseason-round lck-postseason-slot-${round.id} ${
                 round.matches.some(
                   (match) => match.stageName === currentPostseasonStageName,
                 )

@@ -44,6 +44,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "mark-all-messages-read":
       return handleMessageAction(state, action);
     case "set-asian-games-play-mode":
+    case "request-scrim":
+    case "run-today-scrim":
     case "simulate-next-match":
     case "progress-season":
     case "commit-progress-result":

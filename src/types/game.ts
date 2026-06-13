@@ -321,6 +321,45 @@ export type WeeklyPlan = {
   trainingIntensity: TrainingIntensity;
 };
 
+export type ScrimRequestStatus =
+  | "pending"
+  | "accepted"
+  | "rejected"
+  | "completed";
+
+export type ScrimDecisionReason =
+  | "accepted"
+  | "user-official-match"
+  | "opponent-official-match"
+  | "chance-roll";
+
+export type ScrimSchedule = {
+  id: string;
+  requestedDateKey: string;
+  requestedDateLabel: string;
+  scheduledDateKey: string;
+  scheduledDateLabel: string;
+  opponentTeamId: string;
+  opponentTeamName: string;
+  matchCount: number;
+  acceptanceChance: number;
+  status: ScrimRequestStatus;
+  decisionReason?: ScrimDecisionReason;
+  resolvedDateKey?: string;
+  resolvedDateLabel?: string;
+  userWins?: number;
+  opponentWins?: number;
+  formDelta?: number;
+  fatigueDelta?: number;
+  completedDateKey?: string;
+  resultSummary?: string;
+};
+
+export type ScrimState = {
+  requests: ScrimSchedule[];
+  lastResultId?: string;
+};
+
 export type MatchResult = {
   winner: "user" | "opponent";
   winProbability: number;
@@ -722,6 +761,7 @@ export type SeasonState = {
   asianGames?: AsianGamesState;
   worlds?: WorldsState;
   worldsQualification?: WorldsQualificationState;
+  scrim?: ScrimState;
   offseason?: OffseasonState;
   teamBalanceAdjustments?: TeamBalanceAdjustment[];
 };

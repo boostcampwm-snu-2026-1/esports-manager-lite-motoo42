@@ -144,7 +144,7 @@ describe("Inbox", () => {
     expect(getMainContent().getByText("프리시즌 스토브리그 시작")).toBeVisible();
 
     fireEvent.click(
-      getMainContent().getByRole("button", { name: "메시지함으로 이동" }),
+      getMainContent().getByRole("button", { name: "최근 메시지함 열기" }),
     );
     await waitFor(() => expect(window.location.pathname).toBe("/inbox"));
   });

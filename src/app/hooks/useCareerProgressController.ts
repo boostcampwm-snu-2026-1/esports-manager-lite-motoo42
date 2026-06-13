@@ -10,6 +10,7 @@ import {
   progressCareer,
   type CareerProgressResult,
 } from "../../domain/game-progress/progressCareer";
+import { resolvePendingScrimRequests } from "../../domain/scrim";
 import { isAsianGamesDecisionPending } from "../../domain/season";
 import type { ProgressOverlayState } from "../../shared/layout/AppShell";
 import type { CareerSave } from "../../types/game";
@@ -62,7 +63,11 @@ export function useCareerProgressController({
       return;
     }
 
-    pendingProgressResultRef.current = progressCareer(career);
+    const progressResult = progressCareer(career);
+    pendingProgressResultRef.current = {
+      ...progressResult,
+      career: resolvePendingScrimRequests(progressResult.career),
+    };
     setProgressOverlay(getProgressOverlayState(career));
 
     progressTimeoutRef.current = window.setTimeout(() => {

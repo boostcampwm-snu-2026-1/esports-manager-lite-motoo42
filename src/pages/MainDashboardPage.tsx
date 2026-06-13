@@ -30,6 +30,7 @@ export function MainDashboardPage({ onGoTo }: MainDashboardPageProps) {
       onViewCompetition={() => onGoTo("competition-dashboard")}
       onViewCalendar={() => onGoTo("season-calendar")}
       onViewInbox={() => onGoTo("inbox")}
+      onViewOpponentReport={() => onGoTo("match-week", { subPage: "report" })}
       onViewTeam={(teamId) => onGoTo("lck-team-info", { teamId })}
     />
   );

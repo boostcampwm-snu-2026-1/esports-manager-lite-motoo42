@@ -259,14 +259,21 @@ describe("App routing", () => {
 
     fireEvent.click(await screen.findByTestId("shell-menu-training"));
     await waitFor(() => expect(window.location.pathname).toBe("/match"));
+    expect(
+      screen.getByRole("heading", { level: 2, name: "상대 리포트" }),
+    ).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "최근 경기 기록" })).not.toBeInTheDocument();
 
     fireEvent.click(sidebar.getByRole("button", { name: "전략" }));
     await waitFor(() => expect(window.location.pathname).toBe("/match/strategy"));
-    expect(screen.getByRole("heading", { name: "전략" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "전략" })).toBeVisible();
+    expect(screen.queryByRole("heading", { level: 2, name: "상대 리포트" })).not.toBeInTheDocument();
 
-    fireEvent.click(sidebar.getByRole("button", { name: "훈련 강도" }));
-    await waitFor(() => expect(window.location.pathname).toBe("/match/intensity"));
-    expect(screen.getByRole("heading", { name: "훈련 강도" })).toBeVisible();
+    fireEvent.click(sidebar.getByRole("button", { name: "스크림" }));
+    await waitFor(() => expect(window.location.pathname).toBe("/match/scrim"));
+    expect(
+      screen.getByRole("heading", { level: 2, name: "스크림" }),
+    ).toBeVisible();
   });
 
   it("removes unnecessary submenus and opens the settings page", async () => {
@@ -360,6 +367,51 @@ describe("App routing", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("does not reopen a contextual guide after it has been confirmed once", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Start career" }));
+    await waitFor(() => expect(window.location.pathname).toBe("/offseason"));
+
+    expect(
+      screen.getByRole("dialog", { name: "스토브리그 기본 룰" }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "확인" }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "스토브리그 기본 룰" }),
+      ).not.toBeInTheDocument(),
+    );
+
+    fireEvent.click(await screen.findByTestId("shell-menu-home"));
+    await waitFor(() => expect(window.location.pathname).toBe("/hub"));
+    fireEvent.click(await screen.findByTestId("shell-menu-offseason"));
+    await waitFor(() => expect(window.location.pathname).toBe("/offseason"));
+    expect(
+      screen.queryByRole("dialog", { name: "스토브리그 기본 룰" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(await screen.findByTestId("shell-menu-roster"));
+    await waitFor(() => expect(window.location.pathname).toBe("/roster"));
+    expect(
+      screen.getByRole("dialog", { name: "로스터 관리 기본" }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "확인" }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "로스터 관리 기본" }),
+      ).not.toBeInTheDocument(),
+    );
+
+    fireEvent.click(await screen.findByTestId("shell-menu-home"));
+    await waitFor(() => expect(window.location.pathname).toBe("/hub"));
+    fireEvent.click(await screen.findByTestId("shell-menu-roster"));
+    await waitFor(() => expect(window.location.pathname).toBe("/roster"));
+    expect(
+      screen.queryByRole("dialog", { name: "로스터 관리 기본" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps dashboard internal navigation on the target URL without route bounce", async () => {
     const baseCareer = createInitialCareer("T1");
     const career = {
@@ -393,8 +445,11 @@ describe("App routing", () => {
     fireEvent.click(screen.getByRole("button", { name: "불러오기" }));
 
     await waitFor(() => expect(window.location.pathname).toBe("/hub"));
+    expect(
+      getMainContent().getByTestId("dashboard-starter-lineup"),
+    ).toBeVisible();
 
-    fireEvent.click(getMainContent().getByRole("button", { name: "로스터 관리" }));
+    fireEvent.click(getMainContent().getByRole("button", { name: "1군 로스터 보기" }));
     await waitFor(() => expect(window.location.pathname).toBe("/roster"));
     await waitFor(() => expect(window.location.pathname).not.toBe("/hub"));
 

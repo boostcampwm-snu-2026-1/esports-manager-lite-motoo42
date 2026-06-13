@@ -66,7 +66,6 @@ type MatchWeekPageProps = {
 
 export function MatchWeekPage({ onGoTo, subPage }: MatchWeekPageProps) {
   const career = useGameSelector((state) => state.career);
-  const lastMatch = useGameSelector((state) => state.lastMatch);
   const dispatch = useGameDispatch();
 
   if (!career) {
@@ -116,15 +115,14 @@ export function MatchWeekPage({ onGoTo, subPage }: MatchWeekPageProps) {
           : undefined,
         statusSummary: analysis?.statusSummary,
       }}
-      result={lastMatch}
+      career={career}
       weeklyPlan={career.weeklyPlan}
       subPage={subPage}
       onStrategyChange={(strategy) =>
         dispatch(gameActions.setStrategy(strategy))
       }
-      onTrainingIntensityChange={(trainingIntensity) =>
-        dispatch(gameActions.setTrainingIntensity(trainingIntensity))
-      }
+      onRequestScrim={(request) => dispatch(gameActions.requestScrim(request))}
+      onRunTodayScrim={() => dispatch(gameActions.runTodayScrim())}
       onViewCalendar={() => onGoTo("season-calendar")}
     />
   );

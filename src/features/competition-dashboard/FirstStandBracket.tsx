@@ -37,8 +37,8 @@ function FirstStandBracketTeam({
     return (
       <div className="first-stand-bracket-team first-stand-bracket-team-placeholder">
         <span>{label}</span>
-        <strong>Pending</strong>
-        <small>Waiting for previous stage</small>
+        <strong>대기 중</strong>
+        <small>이전 단계 결과 대기</small>
       </div>
     );
   }
@@ -69,7 +69,7 @@ function FirstStandBracketTeam({
       <strong>{teamName}</strong>
       <small>
         {record
-          ? `${teamScore}-${opponentScore}${record.winnerTeamId === teamId ? " Win" : ""}`
+          ? `${teamScore}-${opponentScore}${record.winnerTeamId === teamId ? " 승" : ""}`
           : `${formatFirstStandDateLabel(match.scheduledDate)} · ${getFormatLabel(match)}`}
       </small>
     </div>
@@ -99,7 +99,7 @@ function FirstStandBracketMatchCard({
     >
       <header>
         <strong>{title}</strong>
-        <span>{match ? getFirstStandMatchStatusLabel(match, record) : "Pending"}</span>
+        <span>{match ? getFirstStandMatchStatusLabel(match, record) : "대기 중"}</span>
       </header>
       <FirstStandBracketTeam
         label={placeholderLabels[0]}
@@ -140,18 +140,18 @@ export function FirstStandBracketView({
   const final = getFirstStandBracketMatch(competition, firstStandMatchIds.final);
   const finalists = getFirstStandFinalists(competition, records);
   const championName =
-    competition.winnerTeamName ?? finalists[0]?.teamName ?? "Champion TBD";
-  const runnerUpName = finalists[1]?.teamName ?? "Runner-up TBD";
-  const currentStageName = competition.completed ? "Completed" : competition.currentStageName;
+    competition.winnerTeamName ?? finalists[0]?.teamName ?? "우승팀 미정";
+  const runnerUpName = finalists[1]?.teamName ?? "준우승팀 미정";
+  const currentStageName = competition.completed ? "완료" : competition.currentStageName;
 
   return (
     <section className="competition-panel first-stand-main-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Tournament</p>
-          <h2>First Stand Tournament</h2>
+          <p className="eyebrow">토너먼트</p>
+          <h2>First Stand 토너먼트</h2>
         </div>
-        <span className="panel-note">Four teams advance: Group A/B top two, BO5 bracket</span>
+        <span className="panel-note">A/B조 상위 2팀이 BO5 토너먼트에 진출합니다</span>
       </div>
       <div className="first-stand-bracket-frame">
         <div className="first-stand-bracket">
@@ -162,22 +162,22 @@ export function FirstStandBracketView({
                 : ""
             }`}
           >
-            <h3>Semifinals</h3>
+            <h3>준결승</h3>
             <div className="first-stand-bracket-stack">
               <FirstStandBracketMatchCard
                 isCurrent={currentStageName === firstStandStageNames.semifinals}
                 match={semifinalA}
-                placeholderLabels={["Group A 1", "Group B 2"]}
+                placeholderLabels={["A조 1위", "B조 2위"]}
                 record={semifinalA ? recordsByScheduleId.get(semifinalA.id) : undefined}
-                title="Semifinal A"
+                title="준결승 A"
                 userTeamId={userTeamId}
               />
               <FirstStandBracketMatchCard
                 isCurrent={currentStageName === firstStandStageNames.semifinals}
                 match={semifinalB}
-                placeholderLabels={["Group B 1", "Group A 2"]}
+                placeholderLabels={["B조 1위", "A조 2위"]}
                 record={semifinalB ? recordsByScheduleId.get(semifinalB.id) : undefined}
-                title="Semifinal B"
+                title="준결승 B"
                 userTeamId={userTeamId}
               />
             </div>
@@ -189,14 +189,14 @@ export function FirstStandBracketView({
                 : ""
             }`}
           >
-            <h3>Final</h3>
+            <h3>결승</h3>
             <div className="first-stand-bracket-stack">
               <FirstStandBracketMatchCard
                 isCurrent={currentStageName === firstStandStageNames.final}
                 match={final}
-                placeholderLabels={["Semifinal A Winner", "Semifinal B Winner"]}
+                placeholderLabels={["준결승 A 승자", "준결승 B 승자"]}
                 record={final ? recordsByScheduleId.get(final.id) : undefined}
-                title="Final"
+                title="결승"
                 userTeamId={userTeamId}
               />
             </div>
@@ -206,14 +206,14 @@ export function FirstStandBracketView({
               competition.completed ? "first-stand-bracket-round-current" : ""
             }`}
           >
-            <h3>Champion</h3>
+            <h3>우승</h3>
             <article className="first-stand-bracket-champion">
-              <span>{competition.completed ? "Champion" : "Pending"}</span>
+              <span>{competition.completed ? "우승팀" : "대기 중"}</span>
               <strong>{championName}</strong>
               <small>
                 {competition.completed
-                  ? `Runner-up: ${runnerUpName}`
-                  : "Final result pending"}
+                  ? `준우승: ${runnerUpName}`
+                  : "결승 결과 대기"}
               </small>
             </article>
           </section>

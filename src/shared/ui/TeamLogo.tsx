@@ -64,7 +64,8 @@ export function TeamLogo({
   teamName,
   variant = "team",
 }: TeamLogoProps) {
-  const resolvedTeam = variant === "league" ? undefined : resolveTeam({ team, teamId, teamName });
+  const resolvedTeam =
+    variant === "league" ? undefined : resolveTeam({ team, teamId, teamName });
   const logoUrl =
     variant === "league" ? lckLeagueLogo.logoUrl : resolvedTeam?.logoUrl;
   const [failed, setFailed] = useState(false);
@@ -80,6 +81,7 @@ export function TeamLogo({
     `team-logo-${size}`,
     `team-logo-${variant}`,
     shouldShowImage ? "team-logo-image" : "team-logo-fallback",
+    resolvedTeam ? `team-logo-team-${resolvedTeam.id}` : "",
     className,
   ]
     .filter(Boolean)
@@ -90,7 +92,11 @@ export function TeamLogo({
   }, [logoUrl]);
 
   return (
-    <span className={classes} data-testid="team-logo">
+    <span
+      className={classes}
+      data-team-id={resolvedTeam?.id}
+      data-testid="team-logo"
+    >
       {shouldShowImage ? (
         <img
           alt={`${name} logo`}

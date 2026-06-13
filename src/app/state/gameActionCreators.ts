@@ -4,6 +4,7 @@ import type {
   CareerProgressResult,
 } from "../../domain/game-progress/progressCareer";
 import type { OffseasonContractOfferInput } from "../../domain/season";
+import type { ScrimRequestInput } from "../../domain/scrim";
 import type {
   AsianGamesPlayMode,
   CareerSave,
@@ -97,6 +98,12 @@ export const gameActions = {
   },
   setTrainingIntensity(trainingIntensity: TrainingIntensity): GameAction {
     return { type: "set-training-intensity", trainingIntensity };
+  },
+  requestScrim(request: ScrimRequestInput): GameAction {
+    return { type: "request-scrim", request };
+  },
+  runTodayScrim(): GameAction {
+    return { type: "run-today-scrim" };
   },
   setAsianGamesPlayMode(
     playMode: Exclude<AsianGamesPlayMode, "undecided">,

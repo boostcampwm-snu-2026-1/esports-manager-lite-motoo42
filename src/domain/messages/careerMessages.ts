@@ -292,7 +292,7 @@ function getStatusWarningDraft({
       category: "training",
       priority: "urgent",
       title: "훈련 상태 보고",
-      body: `${player.name}의 컨디션이 ${player.status.condition}까지 내려갔습니다. 훈련 강도와 선발 기용을 점검하세요.`,
+      body: `${player.name}의 컨디션이 ${player.status.condition}까지 내려갔습니다. 스크림 일정과 선발 기용을 점검하세요.`,
       createdTurn: nextCareer.seasonState.currentTurn,
       source: "club",
       relatedPlayerId: player.id,

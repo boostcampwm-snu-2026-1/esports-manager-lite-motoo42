@@ -2,6 +2,7 @@ import type { ContractTypeSelections } from "../../domain/roster";
 import type {
   CareerProgressResult,
 } from "../../domain/game-progress/progressCareer";
+import type { ScrimRequestInput } from "../../domain/scrim";
 import type { OffseasonContractOfferInput } from "../../domain/season";
 import type { CareerStartMode } from "../../domain/career/createInitialCareer";
 import type {
@@ -49,6 +50,8 @@ export type GameAction =
   | { type: "mark-all-messages-read" }
   | { type: "set-strategy"; strategy: StrategyId }
   | { type: "set-training-intensity"; trainingIntensity: TrainingIntensity }
+  | { type: "request-scrim"; request: ScrimRequestInput }
+  | { type: "run-today-scrim" }
   | {
       type: "set-asian-games-play-mode";
       playMode: Exclude<AsianGamesPlayMode, "undecided">;

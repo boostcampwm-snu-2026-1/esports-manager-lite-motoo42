@@ -64,27 +64,27 @@ const msiBo5MatchIds = new Set<string>([
 const msiPlayInRounds: MsiBracketRound[] = [
   {
     id: "play-in-semifinals",
-    title: "Semifinals",
+    title: "준결승",
     stageName: msiStageNames.playInSemifinals,
     matchIds: [msiMatchIds.playInSemifinal1, msiMatchIds.playInSemifinal2],
     placeholders: [
-      ["Play-In seed 1", "Play-In seed 4"],
-      ["Play-In seed 2", "Play-In seed 3"],
+      ["플레이-인 1시드", "플레이-인 4시드"],
+      ["플레이-인 2시드", "플레이-인 3시드"],
     ],
   },
   {
     id: "play-in-final",
-    title: "Final",
+    title: "결승",
     stageName: msiStageNames.playInFinal,
     matchIds: [msiMatchIds.playInFinal],
-    placeholders: [["Semifinal 1 Winner", "Semifinal 2 Winner"]],
+    placeholders: [["준결승 1 승자", "준결승 2 승자"]],
   },
 ];
 
 const msiUpperRounds: MsiBracketRound[] = [
   {
     id: "upper-round-1",
-    title: "Upper Round 1",
+    title: "승자조 1라운드",
     stageName: msiStageNames.upperRound1,
     matchIds: [
       msiMatchIds.upperRound1A,
@@ -93,74 +93,74 @@ const msiUpperRounds: MsiBracketRound[] = [
       msiMatchIds.upperRound1D,
     ],
     placeholders: [
-      ["Bracket seed", "Bracket seed"],
-      ["Bracket seed", "Bracket seed"],
-      ["Bracket seed", "Bracket seed"],
-      ["Bracket seed", "Play-In Winner"],
+      ["토너먼트 시드", "토너먼트 시드"],
+      ["토너먼트 시드", "토너먼트 시드"],
+      ["토너먼트 시드", "토너먼트 시드"],
+      ["토너먼트 시드", "플레이-인 승자"],
     ],
   },
   {
     id: "upper-round-2",
-    title: "Upper Round 2",
+    title: "승자조 2라운드",
     stageName: msiStageNames.upperRound2,
     matchIds: [msiMatchIds.upperRound2A, msiMatchIds.upperRound2B],
     placeholders: [
-      ["Upper R1 A Winner", "Upper R1 B Winner"],
-      ["Upper R1 C Winner", "Upper R1 D Winner"],
+      ["승자조 R1 A 승자", "승자조 R1 B 승자"],
+      ["승자조 R1 C 승자", "승자조 R1 D 승자"],
     ],
   },
   {
     id: "upper-final",
-    title: "Upper Final",
+    title: "승자조 결승",
     stageName: msiStageNames.upperFinal,
     matchIds: [msiMatchIds.upperFinal],
-    placeholders: [["Upper R2 A Winner", "Upper R2 B Winner"]],
+    placeholders: [["승자조 R2 A 승자", "승자조 R2 B 승자"]],
   },
 ];
 
 const msiLowerRounds: MsiBracketRound[] = [
   {
     id: "lower-round-1",
-    title: "Lower Round 1",
+    title: "패자조 1라운드",
     stageName: msiStageNames.lowerRound1,
     matchIds: [msiMatchIds.lowerRound1A, msiMatchIds.lowerRound1B],
     placeholders: [
-      ["Upper R1 A/C Loser", "Upper R1 A/C Loser"],
-      ["Upper R1 B/D Loser", "Upper R1 B/D Loser"],
+      ["승자조 R1 A/C 패자", "승자조 R1 A/C 패자"],
+      ["승자조 R1 B/D 패자", "승자조 R1 B/D 패자"],
     ],
   },
   {
     id: "lower-round-2",
-    title: "Lower Round 2",
+    title: "패자조 2라운드",
     stageName: msiStageNames.lowerRound2,
     matchIds: [msiMatchIds.lowerRound2A, msiMatchIds.lowerRound2B],
     placeholders: [
-      ["Upper R2 A Loser", "Lower R1 Winner"],
-      ["Upper R2 B Loser", "Lower R1 Winner"],
+      ["승자조 R2 A 패자", "패자조 R1 승자"],
+      ["승자조 R2 B 패자", "패자조 R1 승자"],
     ],
   },
   {
     id: "lower-round-3",
-    title: "Lower Round 3",
+    title: "패자조 3라운드",
     stageName: msiStageNames.lowerRound3,
     matchIds: [msiMatchIds.lowerRound3],
-    placeholders: [["Lower R2 A Winner", "Lower R2 B Winner"]],
+    placeholders: [["패자조 R2 A 승자", "패자조 R2 B 승자"]],
   },
   {
     id: "lower-final",
-    title: "Lower Final",
+    title: "패자조 결승",
     stageName: msiStageNames.lowerFinal,
     matchIds: [msiMatchIds.lowerFinal],
-    placeholders: [["Upper Final Loser", "Lower R3 Winner"]],
+    placeholders: [["승자조 결승 패자", "패자조 R3 승자"]],
   },
 ];
 
 const msiGrandFinalRound: MsiBracketRound = {
   id: "grand-finals",
-  title: "Grand Finals",
+  title: "최종 결승",
   stageName: msiStageNames.grandFinal,
   matchIds: [msiMatchIds.grandFinal],
-  placeholders: [["Upper Final Winner", "Lower Final Winner"]],
+  placeholders: [["승자조 결승 승자", "패자조 결승 승자"]],
 };
 
 function getMsiPlayInTeamIds(competition: CompetitionState) {
@@ -205,17 +205,38 @@ function getMsiEntrants(competition: CompetitionState): MsiEntrantView[] {
     }));
 }
 
+function getMsiEntryStageLabel(stage: MsiEntrantView["entryStage"]) {
+  return stage === "Bracket Stage" ? "토너먼트 직행" : "플레이-인";
+}
+
+function getMsiStageLabel(stageName: string) {
+  const labels: Record<string, string> = {
+    [msiStageNames.playInSemifinals]: "플레이-인 준결승",
+    [msiStageNames.playInFinal]: "플레이-인 결승",
+    [msiStageNames.upperRound1]: "승자조 1라운드",
+    [msiStageNames.upperRound2]: "승자조 2라운드",
+    [msiStageNames.upperFinal]: "승자조 결승",
+    [msiStageNames.lowerRound1]: "패자조 1라운드",
+    [msiStageNames.lowerRound2]: "패자조 2라운드",
+    [msiStageNames.lowerRound3]: "패자조 3라운드",
+    [msiStageNames.lowerFinal]: "패자조 결승",
+    [msiStageNames.grandFinal]: "최종 결승",
+  };
+
+  return labels[stageName] ?? stageName;
+}
+
 function getMsiMatchStatusLabel(
   match: MatchSchedule | undefined,
   record: MatchRecord | undefined,
   expectedFormatLabel: string,
 ) {
   if (!match) {
-    return `${expectedFormatLabel} · Pending`;
+    return `${expectedFormatLabel} · 대기`;
   }
 
   if (!record) {
-    return `${getFormatLabel(match)} · Scheduled`;
+    return `${getFormatLabel(match)} · 예정`;
   }
 
   return `${record.score.blueWins}-${record.score.redWins}`;
@@ -250,9 +271,9 @@ function MsiTabs({
   onTabChange: (tab: MsiDashboardTab) => void;
 }) {
   const tabs: Array<{ id: MsiDashboardTab; label: string }> = [
-    { id: "overview", label: "Overview" },
-    { id: "schedule", label: "Schedule" },
-    { id: "bracket", label: "Bracket" },
+    { id: "overview", label: "개요" },
+    { id: "schedule", label: "일정" },
+    { id: "bracket", label: "토너먼트" },
   ];
 
   return (
@@ -288,40 +309,40 @@ function MsiSummary({
   const playInEntrants = entrants.filter((entrant) => entrant.entryStage === "Play-In");
   const lckEntrants = entrants.filter((entrant) => entrant.leagueLabel === "LCK");
   const championLabel = competition.completed
-    ? competition.winnerTeamName ?? "Champion TBD"
+    ? competition.winnerTeamName ?? "우승팀 미정"
     : competition.currentStageName;
   const worldsQualification = career.seasonState.worldsQualification;
 
   return (
     <section className="competition-summary-grid competition-summary-grid-compact msi-summary-grid">
       <article className="competition-summary-card competition-summary-card-wide">
-        <p className="eyebrow">International</p>
+        <p className="eyebrow">국제대회</p>
         <h1>{competition.name}</h1>
         <span>{career.seasonState.currentDateLabel}</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Stage</p>
+        <p className="eyebrow">단계</p>
         <strong>{championLabel}</strong>
-        <span>{competition.completed ? "Tournament completed" : "MSI in progress"}</span>
+        <span>{competition.completed ? "토너먼트 완료" : "MSI 진행 중"}</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Entrants</p>
-        <strong>{entrants.length} teams</strong>
+        <p className="eyebrow">참가팀</p>
+        <strong>{entrants.length}팀</strong>
         <span>
-          {directEntrants.length} direct · {playInEntrants.length} play-in
+          직행 {directEntrants.length}팀 · 플레이-인 {playInEntrants.length}팀
         </span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">LCK Seeds</p>
+        <p className="eyebrow">LCK 시드</p>
         <strong>{lckEntrants.map((entrant) => entrant.teamName).join(" / ")}</strong>
         <span>
           {competition.qualifiedTeamNames[1]
-            ? `Runner-up: ${competition.qualifiedTeamNames[1]}`
-            : "LCK Rounds 1-2 finalists"}
+            ? `준우승: ${competition.qualifiedTeamNames[1]}`
+            : "LCK 1-2라운드 결승 진출팀"}
         </span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Worlds Bonus</p>
+        <p className="eyebrow">Worlds 보너스</p>
         <strong>{formatWorldsBonusLeagueLabel(worldsQualification)}</strong>
         <span>
           {worldsQualification
@@ -343,9 +364,9 @@ function MsiEntrantCard({ entrant }: { entrant: MsiEntrantView }) {
       <span>{entrant.seedLabel}</span>
       <strong>{entrant.teamName}</strong>
       <small>
-        {entrant.leagueLabel} · {entrant.entryStage}
+        {entrant.leagueLabel} · {getMsiEntryStageLabel(entrant.entryStage)}
       </small>
-      <em>Initial seed #{entrant.initialSeed}</em>
+      <em>초기 시드 #{entrant.initialSeed}</em>
     </article>
   );
 }
@@ -395,16 +416,16 @@ function MsiOverview({
     <section className="competition-panel msi-main-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Overview</p>
-          <h2>MSI 참가팀과 진출 경로</h2>
+          <p className="eyebrow">개요</p>
+          <h2>MSI 참가팀과 토너먼트 진출</h2>
         </div>
         <span className="panel-note">1시드 6팀과 First Stand 보너스 2시드 직행</span>
       </div>
       <div className="msi-overview-split">
         <article>
           <header>
-            <strong>Bracket Stage</strong>
-            <span>{directEntrants.length} teams</span>
+            <strong>토너먼트 직행</strong>
+            <span>{directEntrants.length}팀</span>
           </header>
           <div className="msi-entrant-grid">
             {directEntrants.map((entrant) => (
@@ -414,8 +435,8 @@ function MsiOverview({
         </article>
         <article>
           <header>
-            <strong>Play-In</strong>
-            <span>{playInEntrants.length} teams</span>
+            <strong>플레이-인</strong>
+            <span>{playInEntrants.length}팀</span>
           </header>
           <div className="msi-entrant-grid msi-entrant-grid-compact">
             {playInEntrants.map((entrant) => (
@@ -425,9 +446,9 @@ function MsiOverview({
         </article>
       </div>
       <div className="first-stand-format-strip msi-format-strip">
-        <span>Play-In · 4 teams · BO3/BO5</span>
-        <span>Upper/Lower Bracket · 8 teams</span>
-        <span>Upper Final / Lower Final / Grand Finals · BO5</span>
+        <span>플레이-인 · 4팀 · BO3/BO5</span>
+        <span>승자조/패자조 토너먼트 · 8팀</span>
+        <span>승자조 결승 / 패자조 결승 / 최종 결승 · BO5</span>
       </div>
       <p className="competition-overview-copy">
         MSI는 각 지역 상위권 팀이 모여 Worlds 전 국제 서열과 보너스 시드를
@@ -455,7 +476,7 @@ function MsiScheduleView({
     <section className="competition-panel msi-main-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Schedule</p>
+          <p className="eyebrow">일정</p>
           <h2>MSI 일정 / 결과</h2>
         </div>
         <span className="panel-note">BO5 경기와 우리 팀 경기 강조</span>
@@ -465,7 +486,7 @@ function MsiScheduleView({
           <article className="first-stand-schedule-day" key={dateKey}>
             <header>
               <strong>{getDateLabel(dateKey)}</strong>
-              <span>{matches.length} series</span>
+              <span>{matches.length}시리즈</span>
             </header>
             <div className="first-stand-schedule-day-list">
               {matches.map((match) => {
@@ -482,9 +503,9 @@ function MsiScheduleView({
                     key={match.id}
                   >
                     <div>
-                      <strong>{getMatchTitle(match)}</strong>
-                      <span>
-                        {match.stageName} · {getFormatLabel(match)}
+                    <strong>{getMatchTitle(match)}</strong>
+                    <span>
+                        {getMsiStageLabel(match.stageName)} · {getFormatLabel(match)}
                       </span>
                     </div>
                     <b
@@ -532,8 +553,8 @@ function MsiBracketTeam({
     return (
       <div className="msi-bracket-team msi-bracket-team-placeholder">
         <span>{label}</span>
-        <strong>Pending</strong>
-        <small>Waiting for previous match</small>
+        <strong>대기 중</strong>
+        <small>이전 경기 결과 대기</small>
       </div>
     );
   }
@@ -564,7 +585,7 @@ function MsiBracketTeam({
       <strong>{teamName}</strong>
       <small>
         {record
-          ? `${teamScore}-${opponentScore}${record.winnerTeamId === teamId ? " Win" : ""}`
+          ? `${teamScore}-${opponentScore}${record.winnerTeamId === teamId ? " 승" : ""}`
           : `${getMsiLeagueForTeam(teamId)} · ${getFormatLabel(match)}`}
       </small>
     </div>
@@ -647,7 +668,7 @@ function MsiBracketRoundView({
             competition={competition}
             key={matchId}
             matchId={matchId}
-            placeholderLabels={round.placeholders[index] ?? ["Pending", "Pending"]}
+            placeholderLabels={round.placeholders[index] ?? ["대기 중", "대기 중"]}
             recordsByScheduleId={recordsByScheduleId}
             title={`${round.title} ${round.matchIds.length > 1 ? index + 1 : ""}`.trim()}
             userTeamId={userTeamId}
@@ -703,17 +724,17 @@ function MsiBracketView({
   userTeamId: string | undefined;
 }) {
   const recordsByScheduleId = getRecordByScheduleId(records);
-  const championName = competition.winnerTeamName ?? "Champion TBD";
-  const runnerUpName = competition.qualifiedTeamNames[1] ?? "Runner-up TBD";
+  const championName = competition.winnerTeamName ?? "우승팀 미정";
+  const runnerUpName = competition.qualifiedTeamNames[1] ?? "준우승팀 미정";
 
   return (
     <section className="competition-panel msi-main-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Bracket</p>
-          <h2>MSI Bracket Stage</h2>
+          <p className="eyebrow">토너먼트</p>
+          <h2>MSI 토너먼트</h2>
         </div>
-        <span className="panel-note">Play-In winner joins the upper/lower bracket</span>
+        <span className="panel-note">플레이-인 승자가 승자조/패자조 토너먼트에 합류합니다</span>
       </div>
       <div className="msi-bracket-frame">
         <div className="msi-bracket-board">
@@ -722,7 +743,7 @@ function MsiBracketView({
             competition={competition}
             recordsByScheduleId={recordsByScheduleId}
             rounds={msiPlayInRounds}
-            title="Play-In"
+            title="플레이-인"
             userTeamId={userTeamId}
           />
           <MsiBracketSection
@@ -730,7 +751,7 @@ function MsiBracketView({
             competition={competition}
             recordsByScheduleId={recordsByScheduleId}
             rounds={msiUpperRounds}
-            title="Upper Bracket"
+            title="승자조"
             userTeamId={userTeamId}
           />
           <MsiBracketSection
@@ -738,7 +759,7 @@ function MsiBracketView({
             competition={competition}
             recordsByScheduleId={recordsByScheduleId}
             rounds={msiLowerRounds}
-            title="Lower Bracket"
+            title="패자조"
             userTeamId={userTeamId}
           />
           <MsiBracketSection
@@ -746,16 +767,16 @@ function MsiBracketView({
             competition={competition}
             recordsByScheduleId={recordsByScheduleId}
             rounds={[msiGrandFinalRound]}
-            title="Final"
+            title="결승"
             userTeamId={userTeamId}
           />
           <article className="msi-champion-card">
-            <span>{competition.completed ? "Champion" : "Pending"}</span>
+            <span>{competition.completed ? "우승팀" : "대기 중"}</span>
             <strong>{championName}</strong>
             <small>
               {competition.completed
-                ? `Runner-up: ${runnerUpName}`
-                : "Grand Finals result pending"}
+                ? `준우승: ${runnerUpName}`
+                : "최종 결승 결과 대기"}
             </small>
           </article>
         </div>

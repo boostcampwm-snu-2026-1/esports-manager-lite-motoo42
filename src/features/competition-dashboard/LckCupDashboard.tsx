@@ -21,11 +21,14 @@ import {
   getStatusText,
 } from "./competitionDashboardShared";
 
-type LckCupDashboardTab = "standings" | "schedule" | "tournament";function isLckCupDashboardTab(
+type LckCupDashboardTab = "standings" | "groups" | "schedule" | "tournament";
+
+function isLckCupDashboardTab(
   value: CompetitionSubPage | null | undefined,
 ): value is LckCupDashboardTab {
   return (
     value === "standings" ||
+    value === "groups" ||
     value === "schedule" ||
     value === "tournament"
   );
@@ -48,9 +51,9 @@ function LckCupSummary({
   const template = getCompetitionTemplate(competition.competitionId);
 
   return (
-    <section className="competition-summary-grid competition-summary-grid-compact">
+    <section className="competition-summary-grid competition-summary-grid-compact lck-cup-summary-grid">
       <article className="competition-summary-card competition-summary-card-wide">
-        <p className="eyebrow">Current Competition</p>
+        <p className="eyebrow">현재 대회</p>
         <h1>{competition.name}</h1>
         <span>{career.seasonState.currentDateLabel}</span>
         {onViewCalendar && (
@@ -64,12 +67,12 @@ function LckCupSummary({
         )}
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Stage</p>
+        <p className="eyebrow">단계</p>
         <strong>{getStatusText(competition)}</strong>
         <span>{competition.currentWeek}주차</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Next</p>
+        <p className="eyebrow">다음 일정</p>
         <strong>
           {nextMatches[0] ? `${nextMatches[0].week}주차` : "예정 경기 없음"}
         </strong>
@@ -80,7 +83,7 @@ function LckCupSummary({
         </span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Format</p>
+        <p className="eyebrow">포맷</p>
         <strong>{template?.entrantsSummary ?? "LCK 10개 팀"}</strong>
         <span>Baron / Elder 그룹 배틀과 토너먼트로 진행됩니다.</span>
       </article>
@@ -97,6 +100,7 @@ function LckCupTabs({
 }) {
   const tabs: Array<{ id: LckCupDashboardTab; label: string }> = [
     { id: "standings", label: "순위표" },
+    { id: "groups", label: "그룹 포인트" },
     { id: "schedule", label: "일정" },
     { id: "tournament", label: "토너먼트" },
   ];
@@ -174,7 +178,7 @@ function LckCupGroupPointsPanel({
     <section className="competition-panel lck-cup-group-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Groups</p>
+          <p className="eyebrow">그룹 포인트</p>
           <h2>Baron / Elder 그룹 포인트</h2>
         </div>
         <span className="panel-note">
@@ -194,7 +198,7 @@ function LckCupGroupPointsPanel({
             >
               <div className="competition-group-head">
                 <strong>{getLckCupGroupTitle(group)}</strong>
-                <span>{summary.groups[group].points} points</span>
+                <span>{summary.groups[group].points}Points</span>
               </div>
               <div className="competition-group-team-list lck-cup-group-team-list">
                 {groupTeams.map((entry) => (
@@ -214,11 +218,13 @@ function LckCupGroupPointsPanel({
 }
 
 function LckCupGroupStandingsCard({
+  groupPoints,
   group,
   onViewTeam,
   table,
   userTeamId,
 }: {
+  groupPoints: number;
   group: LckCupGroupName;
   onViewTeam?: (teamId: string) => void;
   table: StandingEntry[];
@@ -230,10 +236,10 @@ function LckCupGroupStandingsCard({
     <article className="competition-panel lck-cup-standings-card">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Standings</p>
+          <p className="eyebrow">순위표</p>
           <h2>{getLckCupGroupTitle(group)}</h2>
         </div>
-        <span className="panel-note">{groupRows.length}팀</span>
+        <span className="panel-note">{groupPoints}Points</span>
       </div>
       <div className="lck-cup-standings-table lck-cup-standings-header">
         <span>순위</span>
@@ -277,23 +283,21 @@ function LckCupStandingsView({
   table: StandingEntry[];
   userTeamId: string | undefined;
 }) {
+  const summary = getLckCupGroupPointSummary(competition, records);
+
   return (
     <div className="lck-cup-standings-view">
-      <LckCupGroupPointsPanel
-        competition={competition}
-        onViewTeam={onViewTeam}
-        records={records}
-        table={table}
-      />
       <div className="lck-cup-standings-grid">
         <LckCupGroupStandingsCard
           group="baron"
+          groupPoints={summary.groups.baron.points}
           onViewTeam={onViewTeam}
           table={table}
           userTeamId={userTeamId}
         />
         <LckCupGroupStandingsCard
           group="elder"
+          groupPoints={summary.groups.elder.points}
           onViewTeam={onViewTeam}
           table={table}
           userTeamId={userTeamId}
@@ -351,6 +355,14 @@ export function LckCupDashboard({
           records={records}
           table={table}
           userTeamId={userTeamId}
+        />
+      )}
+      {activeTab === "groups" && (
+        <LckCupGroupPointsPanel
+          competition={competition}
+          onViewTeam={onViewTeam}
+          records={records}
+          table={table}
         />
       )}
       {activeTab === "schedule" && (

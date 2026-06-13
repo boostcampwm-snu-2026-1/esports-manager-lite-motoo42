@@ -4,15 +4,12 @@ import {
   getStrategyLabel,
   getTrainingIntensityLabel,
 } from "../../domain/weekly-plan";
-import { PlayerPortrait } from "../../shared/ui/PlayerPortrait";
-import { EvaluationStars } from "../../shared/ui/EvaluationStars";
 import { TeamLogo } from "../../shared/ui/TeamLogo";
 import { analyzeOpponent, type OpponentAnalysis } from "../../domain/opponent-analysis";
 import { createLckOpponentFromSchedule } from "../../domain/opponents";
 import { careerMessageCategoryLabels } from "../../domain/messages";
+import { StarterLineupPanel } from "./StarterLineupPanel";
 import {
-  getLckCupGroupBattleTable,
-  getLckCupGroupPointSummary,
   getNextScheduledMatches,
   getPreviewMatches,
   getReviewRecords,
@@ -20,13 +17,9 @@ import {
 import type {
   CareerSave,
   CompetitionState,
-  LckCupGroupName,
   MatchRecord,
   MatchSchedule,
   CareerMessage,
-  Player,
-  Role,
-  StandingEntry,
 } from "../../types/game";
 
 type MainDashboardProps = {
@@ -35,6 +28,7 @@ type MainDashboardProps = {
   onViewCompetition: () => void;
   onViewCalendar: () => void;
   onViewInbox: () => void;
+  onViewOpponentReport: () => void;
   onViewTeam?: (teamId: string) => void;
 };
 
@@ -56,22 +50,6 @@ function getActiveCompetitionName(career: CareerSave) {
   }
 
   return currentCompetition?.name ?? "No active competition";
-}
-
-const starterSlots: Array<{ role: Role; label: string }> = [
-  { role: "top", label: "TOP" },
-  { role: "jungle", label: "JGL" },
-  { role: "mid", label: "MID" },
-  { role: "bot", label: "BOT" },
-  { role: "support", label: "SUP" },
-];
-
-function getStarter(career: CareerSave, role: Role): Player | undefined {
-  const playerId = career.userTeam.roster[role];
-
-  return playerId
-    ? career.lckPlayers.find((player) => player.id === playerId)
-    : undefined;
 }
 
 function getUserTeamId(career: CareerSave) {
@@ -130,10 +108,6 @@ function getLckOpponentFromMatch(
   return opponentId ? findLckTeamSeed(opponentId) : null;
 }
 
-function getGroupLabel(group: LckCupGroupName) {
-  return group === "baron" ? "Baron" : "Elder";
-}
-
 function getMatchAnalysis(
   career: CareerSave,
   match: MatchSchedule | undefined,
@@ -189,16 +163,6 @@ function getRecordScore(record: MatchRecord) {
 
 function isUserMatch(match: MatchSchedule, userTeamId: string | undefined) {
   return match.blueTeamId === userTeamId || match.redTeamId === userTeamId;
-}
-
-function getStandingRecord(entry: StandingEntry) {
-  return `${entry.wins}-${entry.losses}`;
-}
-
-function getSetDiff(entry: StandingEntry) {
-  const diff = entry.setWins - entry.setLosses;
-
-  return `${diff > 0 ? "+" : ""}${diff}`;
 }
 
 function WeeklyPreviewList({
@@ -297,96 +261,6 @@ function WeeklyReviewList({
   );
 }
 
-function GroupPointPanel({
-  competition,
-  records,
-}: {
-  competition: CompetitionState | undefined;
-  records: MatchRecord[];
-}) {
-  if (!competition || competition.competitionId !== "lck-cup") {
-    return null;
-  }
-
-  const summary = getLckCupGroupPointSummary(competition, records);
-
-  return (
-    <div className="mini-panel">
-      <p className="eyebrow">Group points</p>
-      <div className="group-score-grid">
-        {(["baron", "elder"] as LckCupGroupName[]).map((group) => (
-          <div
-            className={`group-score-card ${
-              summary.winnerGroup === group ? "group-score-card-leading" : ""
-            }`}
-            key={group}
-          >
-            <span>{getGroupLabel(group)}</span>
-            <strong>{summary.groups[group].points} pts</strong>
-            <small>Set diff {summary.groups[group].setDiff}</small>
-          </div>
-        ))}
-      </div>
-      <span>
-        현재 기준 승자 그룹은 {getGroupLabel(summary.winnerGroup)}입니다.
-      </span>
-    </div>
-  );
-}
-
-function MiniStandingsPanel({
-  competition,
-  records,
-  userTeamId,
-}: {
-  competition: CompetitionState | undefined;
-  records: MatchRecord[];
-  userTeamId: string | undefined;
-}) {
-  if (!competition || competition.competitionId !== "lck-cup") {
-    return null;
-  }
-
-  const table = getLckCupGroupBattleTable(competition, records).slice(0, 5);
-
-  return (
-    <div className="mini-panel">
-      <p className="eyebrow">LCK Cup table</p>
-      <div className="standings-mini-table">
-        {table.map((entry, index) => (
-          <div
-            className={`standings-mini-row ${
-              entry.teamId === userTeamId ? "standings-mini-row-user" : ""
-            }`}
-            key={entry.teamId}
-          >
-            <span>{index + 1}</span>
-            <strong>{entry.teamName}</strong>
-            <span>{getStandingRecord(entry)}</span>
-            <span>{getSetDiff(entry)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function StyleChipList({ styles }: { styles: OpponentAnalysis["favorableStyles"] }) {
-  if (styles.length === 0) {
-    return <span className="style-chip style-chip-muted">없음</span>;
-  }
-
-  return (
-    <>
-      {styles.map((style) => (
-        <span className="style-chip" key={style}>
-          {getStrategyLabel(style)}
-        </span>
-      ))}
-    </>
-  );
-}
-
 function getStyleMatchupLabel(score: number) {
   if (score > 0) {
     return "우호";
@@ -399,17 +273,39 @@ function getStyleMatchupLabel(score: number) {
   return "중립";
 }
 
+function MatchMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="match-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
 function OpponentAnalysisPanel({
   analysis,
+  onViewOpponentReport,
 }: {
   analysis: OpponentAnalysis | null;
+  onViewOpponentReport: () => void;
 }) {
   if (!analysis) {
     return null;
   }
 
   return (
-    <div className="mini-panel opponent-analysis-panel">
+    <button
+      aria-label="전략/훈련 상대 리포트 열기"
+      className="mini-panel opponent-analysis-panel"
+      onClick={onViewOpponentReport}
+      type="button"
+    >
       <div className="analysis-title-row">
         <div>
           <p className="eyebrow">Opponent analysis</p>
@@ -417,54 +313,44 @@ function OpponentAnalysisPanel({
         </div>
         <span className="outlook-badge">{analysis.outlookGrade}</span>
       </div>
-      <div className="analysis-data-grid">
-        <div>
-          <span>상대 스타일</span>
-          <strong>{analysis.opponentStyleLabel}</strong>
-        </div>
-        <div>
-          <span>현재 상성</span>
-          <strong>{getStyleMatchupLabel(analysis.styleMatchupScore)}</strong>
-        </div>
-        <div>
-          <span>핵심 라인</span>
-          <strong>
-            {analysis.keyLane.roleLabel} · {analysis.keyLane.playerName}
-          </strong>
-        </div>
-        <div>
-          <span>우리 상태</span>
-          <strong>{analysis.statusSummary}</strong>
-        </div>
+      <div className="opponent-summary-strip">
+        <span>{analysis.opponentStyleLabel}</span>
+        <span>{getStyleMatchupLabel(analysis.styleMatchupScore)}</span>
+        <span>
+          {analysis.keyLane.roleLabel} · {analysis.keyLane.playerName}
+        </span>
       </div>
-      <div className="style-matchup-list">
-        <span>유리한 스타일</span>
-        <div>
-          <StyleChipList styles={analysis.favorableStyles} />
-        </div>
-      </div>
-      <div className="style-matchup-list">
-        <span>불리한 스타일</span>
-        <div>
-          <StyleChipList styles={analysis.unfavorableStyles} />
-        </div>
-      </div>
-    </div>
+    </button>
   );
 }
 
-function getRecentMessages(messages: CareerMessage[] | undefined) {
-  return [...(messages ?? [])]
-    .sort((left, right) => {
-      const turnDiff = right.createdTurn - left.createdTurn;
+function compareMessagesByCreatedTurn(
+  left: CareerMessage,
+  right: CareerMessage,
+) {
+  const turnDiff = right.createdTurn - left.createdTurn;
 
-      if (turnDiff !== 0) {
-        return turnDiff;
-      }
+  if (turnDiff !== 0) {
+    return turnDiff;
+  }
 
-      return right.id.localeCompare(left.id);
-    })
-    .slice(0, 4);
+  return right.id.localeCompare(left.id);
+}
+
+function isPriorityUnreadMessage(message: CareerMessage) {
+  return !message.read && message.priority !== "normal";
+}
+
+function getDashboardMessage(messages: CareerMessage[] | undefined) {
+  const sortedMessages = [...(messages ?? [])].sort(
+    compareMessagesByCreatedTurn,
+  );
+
+  return (
+    sortedMessages.find(isPriorityUnreadMessage) ??
+    sortedMessages.find((message) => !message.read) ??
+    sortedMessages[0]
+  );
 }
 
 function RecentMessagesPanel({
@@ -474,39 +360,39 @@ function RecentMessagesPanel({
   messages: CareerMessage[] | undefined;
   onViewInbox: () => void;
 }) {
-  const recentMessages = getRecentMessages(messages);
+  const dashboardMessage = getDashboardMessage(messages);
   const unreadCount = (messages ?? []).filter((message) => !message.read).length;
 
   return (
-    <div className="mini-panel dashboard-message-panel" id="recent-messages" tabIndex={-1}>
+    <button
+      aria-label="최근 메시지함 열기"
+      className="mini-panel dashboard-message-panel"
+      id="recent-messages"
+      onClick={onViewInbox}
+      type="button"
+    >
       <div className="section-label-row">
         <span>최근 메시지</span>
         <strong>{unreadCount} unread</strong>
       </div>
-      {recentMessages.length === 0 ? (
+      {!dashboardMessage ? (
         <span>아직 도착한 메시지가 없습니다.</span>
       ) : (
         <div className="dashboard-message-list">
-          {recentMessages.map((message) => (
-            <article
-              className={`dashboard-message-item ${
-                message.read ? "" : "dashboard-message-item-unread"
-              }`}
-              key={message.id}
-            >
-              <strong>{message.title}</strong>
-              <span>
-                {careerMessageCategoryLabels[message.category]} ·{" "}
-                {message.dateLabel}
-              </span>
-            </article>
-          ))}
+          <article
+            className={`dashboard-message-item ${
+              dashboardMessage.read ? "" : "dashboard-message-item-unread"
+            }`}
+          >
+            <strong>{dashboardMessage.title}</strong>
+            <span>
+              {careerMessageCategoryLabels[dashboardMessage.category]} ·{" "}
+              {dashboardMessage.dateLabel}
+            </span>
+          </article>
         </div>
       )}
-      <Button variant="ghost" onClick={onViewInbox}>
-        메시지함으로 이동
-      </Button>
-    </div>
+    </button>
   );
 }
 
@@ -516,16 +402,10 @@ export function MainDashboard({
   onViewCompetition,
   onViewCalendar,
   onViewInbox,
+  onViewOpponentReport,
   onViewTeam,
 }: MainDashboardProps) {
-  const selectedRosterSize =
-    career.userTeam.mainRosterPlayerIds.length +
-    career.userTeam.academyRosterPlayerIds.length;
   const activeCompetitionName = getActiveCompetitionName(career);
-  const phaseLabel =
-    career.seasonState.phase === "stove-league"
-      ? "Stove League"
-      : career.seasonState.phase;
   const currentCompetition = getCurrentCompetition(career);
   const scheduleById = getScheduleById(currentCompetition);
   const previewMatches = getPreviewMatches(career.seasonState);
@@ -555,48 +435,24 @@ export function MainDashboard({
 
   return (
     <section className="main-hub" id="dashboard" tabIndex={-1}>
-      <section className="hub-panel starter-panel">
-        <div className="panel-title-row">
-          <div>
-            <p className="eyebrow">Current roster</p>
-            <h2>선발 5인</h2>
-          </div>
-          <div className="panel-meta">
-            <span>{selectedRosterSize} signed</span>
-            <span>{career.userTeam.contracts.length} contracts</span>
-          </div>
-        </div>
-
-        <div className="starter-grid">
-          {starterSlots.map((slot) => {
-            const player = getStarter(career, slot.role);
-
-            return (
-              <article className="starter-card" key={slot.role}>
-                <strong className="starter-role">{slot.label}</strong>
-                <PlayerPortrait
-                  className="starter-photo"
-                  player={player}
-                  size="lg"
-                />
-                <div className="starter-name">{player?.name ?? "Open"}</div>
-                {player && <EvaluationStars compact player={player} />}
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
       <section className="hub-panel match-hub-panel" id="schedule" tabIndex={-1}>
-        <div className="panel-title-row">
+        <div className="panel-title-row match-hub-title-row">
           <div>
             <p className="eyebrow">Match hub</p>
             <h2>{matchHubTitle}</h2>
           </div>
-          <div className="panel-meta">
-            <span>{activeCompetitionName}</span>
-            <span>{phaseLabel}</span>
-            <span>{career.seasonState.currentDateLabel}</span>
+          <div className="match-hub-header-tools">
+            <div className="dashboard-actions dashboard-actions-inline">
+              <Button onClick={onViewRoster}>
+                1군 로스터 보기
+              </Button>
+              <Button variant="ghost" onClick={onViewCompetition}>
+                대회 현황
+              </Button>
+              <Button variant="ghost" onClick={onViewCalendar}>
+                시즌 일정
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -618,8 +474,7 @@ export function MainDashboard({
                     : primaryReviewRecord.userResult === "loss"
                       ? "오늘 유저 팀 경기는 패배로 마무리했습니다."
                       : "오늘 리그 경기가 처리되었습니다."}{" "}
-                  밴픽 점수와 경기 로그는 이후 상세 리뷰 화면으로 확장할 수
-                  있습니다.
+                  다음 진행을 누르면 날짜가 이어집니다.
                 </p>
                 <div className="match-data-row">
                   <span>결과</span>
@@ -631,13 +486,27 @@ export function MainDashboard({
                         : "중립 경기"}
                   </strong>
                 </div>
-                <div className="match-data-row">
-                  <span>Draft power</span>
-                  <strong>
-                    {primaryReviewRecord.draft
-                      ? primaryReviewRecord.draft.netDraftPower
-                      : "N/A"}
-                  </strong>
+                <div className="match-metric-strip">
+                  <MatchMetric
+                    label="Draft power"
+                    value={
+                      primaryReviewRecord.draft
+                        ? primaryReviewRecord.draft.netDraftPower
+                        : "N/A"
+                    }
+                  />
+                  <MatchMetric
+                    label="Plan"
+                    value={`${getStrategyLabel(
+                      career.weeklyPlan.strategy,
+                    )} / ${getTrainingIntensityLabel(
+                      career.weeklyPlan.trainingIntensity,
+                    )}`}
+                  />
+                  <MatchMetric
+                    label="Record"
+                    value={`${career.userTeam.wins}W ${career.userTeam.losses}L`}
+                  />
                 </div>
                 <WeeklyReviewList
                   records={reviewRecords}
@@ -658,30 +527,40 @@ export function MainDashboard({
                   </button>
                 )}
                 <p>
-                  {activeCompetitionName} {primaryPreviewMatch.week}주차 경기일입니다. 상단의
-                  플레이 버튼을 누르면 오늘 {previewMatches.length}시리즈가
-                  BO 단위로 진행되고, 결과 리뷰로 전환됩니다.
+                  {activeCompetitionName} {primaryPreviewMatch.week}주차 경기일입니다.
+                  플레이 후 오늘 {previewMatches.length}시리즈 결과 리뷰로 전환됩니다.
                 </p>
-                <div className="match-data-row">
-                  <span>Format</span>
-                  <strong>{getFormatLabel(primaryPreviewMatch)}</strong>
+                <div className="match-metric-strip">
+                  <MatchMetric
+                    label="Format"
+                    value={getFormatLabel(primaryPreviewMatch)}
+                  />
+                  <MatchMetric
+                    label="Stage"
+                    value={primaryPreviewMatch.stageName}
+                  />
+                  {matchAnalysis && (
+                    <>
+                      <MatchMetric label="전망" value={matchAnalysis.outlookGrade} />
+                      <MatchMetric
+                        label="상대 스타일"
+                        value={matchAnalysis.opponentStyleLabel}
+                      />
+                    </>
+                  )}
+                  <MatchMetric
+                    label="Plan"
+                    value={`${getStrategyLabel(
+                      career.weeklyPlan.strategy,
+                    )} / ${getTrainingIntensityLabel(
+                      career.weeklyPlan.trainingIntensity,
+                    )}`}
+                  />
+                  <MatchMetric
+                    label="Record"
+                    value={`${career.userTeam.wins}W ${career.userTeam.losses}L`}
+                  />
                 </div>
-                <div className="match-data-row">
-                  <span>Stage</span>
-                  <strong>{primaryPreviewMatch.stageName}</strong>
-                </div>
-                {matchAnalysis && (
-                  <>
-                    <div className="match-data-row">
-                      <span>전망 등급</span>
-                      <strong>{matchAnalysis.outlookGrade}</strong>
-                    </div>
-                    <div className="match-data-row">
-                      <span>상대 스타일</span>
-                      <strong>{matchAnalysis.opponentStyleLabel}</strong>
-                    </div>
-                  </>
-                )}
                 <WeeklyPreviewList
                   matches={previewMatches}
                   title="오늘 일정"
@@ -703,29 +582,39 @@ export function MainDashboard({
                 )}
                 <p>
                   다음 우리 팀 예정 경기는 {activeCompetitionName}{" "}
-                  {primaryNextMatch.week}주차입니다. 진행 버튼은 하루씩 날짜를
-                  넘기고, 우리 팀 경기일에는 플레이 버튼으로 바뀝니다.
+                  {primaryNextMatch.week}주차입니다. 진행하면 하루씩 날짜가 흐릅니다.
                 </p>
-                <div className="match-data-row">
-                  <span>Format</span>
-                  <strong>{getFormatLabel(primaryNextMatch)}</strong>
+                <div className="match-metric-strip">
+                  <MatchMetric
+                    label="Format"
+                    value={getFormatLabel(primaryNextMatch)}
+                  />
+                  <MatchMetric
+                    label="Stage"
+                    value={primaryNextMatch.stageName}
+                  />
+                  {matchAnalysis && (
+                    <>
+                      <MatchMetric label="전망" value={matchAnalysis.outlookGrade} />
+                      <MatchMetric
+                        label="상대 스타일"
+                        value={matchAnalysis.opponentStyleLabel}
+                      />
+                    </>
+                  )}
+                  <MatchMetric
+                    label="Plan"
+                    value={`${getStrategyLabel(
+                      career.weeklyPlan.strategy,
+                    )} / ${getTrainingIntensityLabel(
+                      career.weeklyPlan.trainingIntensity,
+                    )}`}
+                  />
+                  <MatchMetric
+                    label="Record"
+                    value={`${career.userTeam.wins}W ${career.userTeam.losses}L`}
+                  />
                 </div>
-                <div className="match-data-row">
-                  <span>Stage</span>
-                  <strong>{primaryNextMatch.stageName}</strong>
-                </div>
-                {matchAnalysis && (
-                  <>
-                    <div className="match-data-row">
-                      <span>전망 등급</span>
-                      <strong>{matchAnalysis.outlookGrade}</strong>
-                    </div>
-                    <div className="match-data-row">
-                      <span>상대 스타일</span>
-                      <strong>{matchAnalysis.opponentStyleLabel}</strong>
-                    </div>
-                  </>
-                )}
                 <WeeklyPreviewList
                   matches={nextScheduledMatches}
                   title="다음 경기일 일정"
@@ -741,23 +630,15 @@ export function MainDashboard({
                 </p>
               </>
             )}
-            <div className="match-data-row">
-              <span>Plan</span>
-              <strong>
-                {getStrategyLabel(career.weeklyPlan.strategy)} /{" "}
-                {getTrainingIntensityLabel(career.weeklyPlan.trainingIntensity)}
-              </strong>
-            </div>
-            <div className="match-data-row">
-              <span>Record</span>
-              <strong>
-                {career.userTeam.wins}W {career.userTeam.losses}L
-              </strong>
-            </div>
           </div>
 
+          <StarterLineupPanel career={career} />
+
           <div className="match-side-stack">
-            <OpponentAnalysisPanel analysis={isReview ? null : matchAnalysis} />
+            <OpponentAnalysisPanel
+              analysis={isReview ? null : matchAnalysis}
+              onViewOpponentReport={onViewOpponentReport}
+            />
             <RecentMessagesPanel
               messages={career.messages}
               onViewInbox={onViewInbox}
@@ -787,32 +668,12 @@ export function MainDashboard({
               <span>
                 {primaryReviewRecord
                   ? primaryReviewRecord.log[1]
-                  : "LCK Cup 그룹 배틀은 5주, 이후 플레이-인과 플레이오프로 이어집니다."}
+                  : "대회 세부 현황은 대회 현황 화면에서 확인합니다."}
               </span>
             </div>
-            <GroupPointPanel
-              competition={currentCompetition}
-              records={career.seasonState.matchRecords}
-            />
-            <MiniStandingsPanel
-              competition={currentCompetition}
-              records={career.seasonState.matchRecords}
-              userTeamId={userTeamId}
-            />
           </div>
         </div>
 
-        <div className="dashboard-actions">
-          <Button variant="ghost" onClick={onViewRoster}>
-            로스터 관리
-          </Button>
-          <Button variant="ghost" onClick={onViewCompetition}>
-            대회 현황
-          </Button>
-          <Button variant="ghost" onClick={onViewCalendar}>
-            시즌 일정
-          </Button>
-        </div>
       </section>
     </section>
   );

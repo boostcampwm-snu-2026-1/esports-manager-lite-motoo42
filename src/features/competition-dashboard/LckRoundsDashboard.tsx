@@ -152,6 +152,16 @@ function getLckRoundsSeedSlots(
   });
 }
 
+function getLckRoundsStageLabel(stageName: string) {
+  const labels: Record<string, string> = {
+    [lckRounds12PlayoffStageNames.round1]: "플레이오프 1라운드",
+    [lckRounds12PlayoffStageNames.semifinals]: "준결승",
+    [lckRounds12PlayoffStageNames.final]: "결승",
+  };
+
+  return labels[stageName] ?? stageName;
+}
+
 function getLckRoundsPlayoffMatches({
   competition,
   records,
@@ -185,12 +195,12 @@ function getLckRoundsPlayoffMatches({
   return [
     {
       id: "round-1",
-      title: "Round 1",
+      title: "1라운드",
       matches: [
         {
           id: "r1-a",
           stageName: lckRounds12PlayoffStageNames.round1,
-          title: "R1 Match A",
+          title: "1라운드 A",
           subtitle: "BO5 · 3위 vs 6위",
           slots: round1Seed36
             ? [
@@ -212,7 +222,7 @@ function getLckRoundsPlayoffMatches({
         {
           id: "r1-b",
           stageName: lckRounds12PlayoffStageNames.round1,
-          title: "R1 Match B",
+          title: "1라운드 B",
           subtitle: "BO5 · 4위 vs 5위",
           slots: round1Seed45
             ? [
@@ -235,12 +245,12 @@ function getLckRoundsPlayoffMatches({
     },
     {
       id: "semifinals",
-      title: "Semifinals",
+      title: "준결승",
       matches: [
         {
           id: "sf-a",
           stageName: lckRounds12PlayoffStageNames.semifinals,
-          title: "Semifinal A",
+          title: "준결승 A",
           subtitle: "BO5 · 1위 vs 4/5 승자",
           slots: semifinalSeed1
             ? [
@@ -251,18 +261,18 @@ function getLckRoundsPlayoffMatches({
                   side: "blue",
                 }),
                 createSlotFromMatchSide({
-                  label: "R1 Match B 승자",
+                  label: "1라운드 B 승자",
                   match: semifinalSeed1,
                   record: recordsByScheduleId.get(semifinalSeed1.id),
                   side: "red",
                 }),
               ]
-            : [seedSlots[0], createWinnerSlot("R1 Match B 승자")],
+            : [seedSlots[0], createWinnerSlot("1라운드 B 승자")],
         },
         {
           id: "sf-b",
           stageName: lckRounds12PlayoffStageNames.semifinals,
-          title: "Semifinal B",
+          title: "준결승 B",
           subtitle: "BO5 · 2위 vs 3/6 승자",
           slots: semifinalSeed2
             ? [
@@ -273,43 +283,43 @@ function getLckRoundsPlayoffMatches({
                   side: "blue",
                 }),
                 createSlotFromMatchSide({
-                  label: "R1 Match A 승자",
+                  label: "1라운드 A 승자",
                   match: semifinalSeed2,
                   record: recordsByScheduleId.get(semifinalSeed2.id),
                   side: "red",
                 }),
               ]
-            : [seedSlots[1], createWinnerSlot("R1 Match A 승자")],
+            : [seedSlots[1], createWinnerSlot("1라운드 A 승자")],
         },
       ] satisfies LckPlayoffMatch[],
     },
     {
       id: "final",
-      title: "Final",
+      title: "결승",
       matches: [
         {
           id: "final-a",
           stageName: lckRounds12PlayoffStageNames.final,
-          title: "Final",
+          title: "결승",
           subtitle: "BO5 · 우승 결정전",
           slots: final
             ? [
                 createSlotFromMatchSide({
-                  label: "Semifinal A 승자",
+                  label: "준결승 A 승자",
                   match: final,
                   record: recordsByScheduleId.get(final.id),
                   side: "blue",
                 }),
                 createSlotFromMatchSide({
-                  label: "Semifinal B 승자",
+                  label: "준결승 B 승자",
                   match: final,
                   record: recordsByScheduleId.get(final.id),
                   side: "red",
                 }),
               ]
             : [
-                createWinnerSlot("Semifinal A 승자"),
-                createWinnerSlot("Semifinal B 승자"),
+                createWinnerSlot("준결승 A 승자"),
+                createWinnerSlot("준결승 B 승자"),
               ],
         },
       ] satisfies LckPlayoffMatch[],
@@ -329,17 +339,17 @@ function LckRoundsSummary({
   return (
     <section className="competition-summary-grid competition-summary-grid-compact">
       <article className="competition-summary-card competition-summary-card-wide">
-        <p className="eyebrow">Competition</p>
+        <p className="eyebrow">대회</p>
         <h1>{competition.name}</h1>
         <span>{career.seasonState.currentDateLabel}</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Stage</p>
+        <p className="eyebrow">단계</p>
         <strong>{getStatusText(competition)}</strong>
         <span>{competition.currentWeek}주차</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Format</p>
+        <p className="eyebrow">포맷</p>
         <button
           className="format-summary-button"
           onClick={() => setShowFormatRules(true)}
@@ -389,7 +399,7 @@ function LckRoundsFormatModal({
         >
           x
         </button>
-        <p className="eyebrow">Competition Regulations</p>
+        <p className="eyebrow">대회 규정</p>
         <h2 id="lck-rounds-format-title">
           {getLckRoundsFormatTitle(competition)}
         </h2>
@@ -399,8 +409,8 @@ function LckRoundsFormatModal({
               <article>
                 <strong>제1조 그룹 분리</strong>
                 <p>
-                  Rounds 1-2 최종 순위 기준 상위 5팀은 Legend Group, 하위 5팀은
-                  Rise Group으로 편성한다.
+                  Rounds 1-2 최종 순위 기준 상위 5팀은 Legend 그룹, 하위 5팀은
+                  Rise 그룹으로 편성한다.
                 </p>
               </article>
               <article>
@@ -421,9 +431,9 @@ function LckRoundsFormatModal({
               <article>
                 <strong>제4조 후속 경로</strong>
                 <p>
-                  Legend 1-2위는 Playoffs Round 2, Legend 3-4위는 Playoffs
-                  Round 1로 직행한다. Legend 5위와 Rise 1-3위는 Season
-                  Play-In을 치르며, 모든 포스트시즌 경기는 BO5 Fearless로
+                  Legend 1-2위는 플레이오프 2라운드, Legend 3-4위는 플레이오프
+                  1라운드로 직행한다. Legend 5위와 Rise 1-3위는 시즌
+                  플레이-인을 치르며, 모든 포스트시즌 경기는 BO5 Fearless로
                   기록한다.
                 </p>
               </article>
@@ -483,7 +493,7 @@ function LckRoundsTabs({
   onTabChange: (tab: LckRoundsDashboardTab) => void;
 }) {
   const tournamentLabel = isLateLckRoundsCompetition(competition)
-    ? "진출 경로"
+    ? "포스트시즌"
     : "토너먼트";
 
   return (
@@ -571,7 +581,7 @@ function LckRoundsSidePanel({
               {getUserResultLabel(recentUserRecord)} ·{" "}
               {recentUserRecord.score.blueWins}-{recentUserRecord.score.redWins}
             </span>
-            <small>Winner: {recentUserRecord.winnerTeamName}</small>
+            <small>승자: {recentUserRecord.winnerTeamName}</small>
           </>
         ) : (
           <>
@@ -618,7 +628,7 @@ function LckRoundsStandingsTable({
     <section className="competition-panel lck-rounds-main-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Standings</p>
+          <p className="eyebrow">순위표</p>
           <h2>{getLckRoundsFormatTitle(competition)} 순위표</h2>
         </div>
         <span className="panel-note">
@@ -678,7 +688,7 @@ function LckRoundsStandingsTable({
       </div>
       <p className="standings-footnote">
         {isLateRounds
-          ? "Legend 1-2위는 Playoffs Round 2, Legend 3-4위는 Round 1, Legend 5위와 Rise 1-3위는 Season Play-In에 진출합니다. 최종 1~4위는 Worlds 후보로 저장됩니다."
+          ? "Legend 1-2위는 플레이오프 2라운드, Legend 3-4위는 플레이오프 1라운드, Legend 5위와 Rise 1-3위는 시즌 플레이-인에 진출합니다. 최종 1~4위는 Worlds 후보로 저장됩니다."
           : "상위 6팀이 포스트시즌에 진출합니다. PO 배지는 진출이 산술적으로 확정된 팀에만 표시됩니다."}
       </p>
     </section>
@@ -701,7 +711,7 @@ function LckRoundsScheduleView({
     <section className="competition-panel lck-rounds-main-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Schedule</p>
+          <p className="eyebrow">일정</p>
           <h2>일정 / 결과</h2>
         </div>
         <span className="panel-note">날짜별 시리즈 · 우리 팀 경기 강조</span>
@@ -711,7 +721,7 @@ function LckRoundsScheduleView({
           <article className="lck-schedule-day" key={dateKey}>
             <header>
               <strong>{getDateLabel(dateKey)}</strong>
-              <span>{matches.length} series</span>
+              <span>{matches.length}시리즈</span>
             </header>
             <div className="lck-schedule-day-list">
               {matches.map((match) => {
@@ -729,7 +739,8 @@ function LckRoundsScheduleView({
                     <div>
                       <strong>{getMatchTitle(match)}</strong>
                       <span>
-                        {match.stageName} · {getFormatLabel(match)}
+                        {getLckRoundsStageLabel(match.stageName)} ·{" "}
+                        {getFormatLabel(match)}
                       </span>
                     </div>
                     <b
@@ -786,7 +797,7 @@ function LckRoundsTournamentView({
     <section className="competition-panel lck-rounds-main-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Tournament</p>
+          <p className="eyebrow">토너먼트</p>
           <h2>LCK Rounds 1-2 포스트시즌</h2>
         </div>
         <span className="panel-note">{bracketStatus}</span>
@@ -818,7 +829,7 @@ function LckRoundsTournamentView({
             </section>
           ))}
           <section className="lck-playoff-round lck-playoff-champion-round">
-            <h3>Champion</h3>
+            <h3>우승</h3>
             <article className="lck-playoff-champion-card">
               <span>우승팀</span>
               <strong>{competition.winnerTeamName ?? "우승팀 미정"}</strong>

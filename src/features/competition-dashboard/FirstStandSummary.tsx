@@ -15,28 +15,28 @@ export function FirstStandSummary({
   return (
     <section className="competition-summary-grid competition-summary-grid-compact">
       <article className="competition-summary-card competition-summary-card-wide">
-        <p className="eyebrow">International</p>
+        <p className="eyebrow">국제대회</p>
         <h1>{competition.name}</h1>
         <span>{career.seasonState.currentDateLabel}</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Entrants</p>
-        <strong>{entrants.length} teams</strong>
+        <p className="eyebrow">참가팀</p>
+        <strong>{entrants.length}팀</strong>
         <span>LCK 2 · LPL 2 · LEC/LCS/LCP/CBLOL 1</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">LCK Seeds</p>
+        <p className="eyebrow">LCK 시드</p>
         <strong>{lckEntrants.map((entrant) => entrant.name).join(" / ")}</strong>
-        <span>{lckEntrants[0]?.sourceDetail ?? "Waiting for LCK Cup result"}</span>
+        <span>{lckEntrants[0]?.sourceDetail ?? "LCK Cup 결과 대기"}</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Status</p>
+        <p className="eyebrow">상태</p>
         <strong>
           {competition.completed
-            ? competition.winnerTeamName ?? "Completed"
+            ? competition.winnerTeamName ?? "완료"
             : competition.currentStageName}
         </strong>
-        <span>Top two per group advance</span>
+        <span>각 조 상위 2팀 진출</span>
       </article>
     </section>
   );

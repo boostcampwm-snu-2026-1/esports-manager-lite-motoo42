@@ -116,8 +116,10 @@ export function OffseasonMarket({
 
   return (
     <section className="stack offseason-page">
-      <WeekTimeline career={career} />
-      <OffseasonBudgetSummary career={career} />
+      <div className="offseason-overview-grid">
+        <WeekTimeline career={career} />
+        <OffseasonBudgetSummary career={career} />
+      </div>
       <CareerGuideEntry
         guideId={OFFSEASON_RULES_GUIDE_ID}
         hasSeenGuide={hasSeenRulesGuide}

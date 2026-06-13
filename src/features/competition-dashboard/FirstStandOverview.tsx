@@ -10,7 +10,7 @@ function FirstStandEntrantCard({ entrant }: { entrant: FirstStandEntrant }) {
       <span>{entrant.seedLabel}</span>
       <strong>{entrant.name}</strong>
       <small>
-        {entrant.leagueLabel} · Group {entrant.group}
+        {entrant.leagueLabel} · {entrant.group}조
       </small>
       <em>{entrant.sourceDetail}</em>
     </article>
@@ -26,10 +26,10 @@ export function FirstStandOverview({
     <section className="competition-panel first-stand-main-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Overview</p>
-          <h2>Entrants</h2>
+          <p className="eyebrow">개요</p>
+          <h2>참가팀</h2>
         </div>
-        <span className="panel-note">LCK and LPL seeds are split across groups</span>
+        <span className="panel-note">LCK와 LPL 시드는 두 조에 나뉘어 배치됩니다</span>
       </div>
       <div className="first-stand-entrant-grid">
         {entrants.map((entrant) => (
@@ -37,9 +37,9 @@ export function FirstStandOverview({
         ))}
       </div>
       <div className="first-stand-format-strip">
-        <span>Group Stage · 2 groups of 4 · BO1</span>
-        <span>Semifinals · BO5</span>
-        <span>Final · BO5</span>
+        <span>조별리그 · 4팀 2개 조 · BO1</span>
+        <span>준결승 · BO5</span>
+        <span>결승 · BO5</span>
       </div>
       <p className="competition-overview-copy">
         First Stand는 LCK Cup 이후 열리는 첫 국제전입니다. LCK/LPL 대표와

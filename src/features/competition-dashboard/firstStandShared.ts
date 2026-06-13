@@ -1,8 +1,9 @@
+import { firstStandStageNames } from "../../domain/season";
 import type { MatchRecord, MatchSchedule, StandingEntry } from "../../types/game";
 
 export function formatFirstStandDateLabel(dateKey: string | undefined) {
   if (!dateKey) {
-    return "Date TBD";
+    return "날짜 미정";
   }
 
   const [year, month, day] = dateKey.split("-");
@@ -14,6 +15,19 @@ export function getFirstStandSetDiffLabel(entry: StandingEntry) {
   const diff = entry.setWins - entry.setLosses;
 
   return `${diff > 0 ? "+" : ""}${diff}`;
+}
+
+export function getFirstStandStageLabel(stageName: string) {
+  const labels: Record<string, string> = {
+    [firstStandStageNames.groupA]: "A조",
+    [firstStandStageNames.groupB]: "B조",
+    [firstStandStageNames.semifinals]: "준결승",
+    [firstStandStageNames.final]: "결승",
+    "Group Stage": "조별리그",
+    Completed: "완료",
+  };
+
+  return labels[stageName] ?? stageName;
 }
 
 export function isFirstStandUserMatch(
@@ -28,7 +42,7 @@ export function getFirstStandMatchStatusLabel(
   record: MatchRecord | undefined,
 ) {
   if (!record) {
-    return `${match.format.toUpperCase()} · Scheduled`;
+    return `${match.format.toUpperCase()} · 예정`;
   }
 
   return `${record.score.blueWins}-${record.score.redWins}`;

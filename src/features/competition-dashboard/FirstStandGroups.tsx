@@ -30,13 +30,13 @@ function FirstStandLiveGroupTable({
   return (
     <article className="first-stand-group-card">
       <header>
-        <p className="eyebrow">Group {group}</p>
-        <strong>Standings</strong>
+        <p className="eyebrow">{group}조</p>
+        <strong>순위표</strong>
       </header>
       <div className="first-stand-group-table first-stand-group-table-header">
-        <span>Rank</span>
-        <span>Team</span>
-        <span>Played</span>
+        <span>순위</span>
+        <span>팀</span>
+        <span>경기</span>
         <span>W</span>
         <span>L</span>
         <span>Set +/-</span>
@@ -75,10 +75,10 @@ export function FirstStandGroupsView({
     <section className="competition-panel first-stand-main-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Group Stage</p>
-          <h2>Group Standings</h2>
+          <p className="eyebrow">조별리그</p>
+          <h2>조별 순위</h2>
         </div>
-        <span className="panel-note">Top two teams per group advance to the BO5 bracket</span>
+        <span className="panel-note">각 조 상위 2팀이 BO5 토너먼트에 진출합니다</span>
       </div>
       <div className="first-stand-groups-grid">
         <FirstStandLiveGroupTable

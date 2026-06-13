@@ -57,7 +57,7 @@ function getWorldsSourceLabel(source: WorldsEntrant["source"]) {
   }
 
   if (source === "lcq-placeholder") {
-    return "LCQ placeholder";
+    return "LCQ 슬롯";
   }
 
   return "지역 기본 시드";
@@ -65,8 +65,32 @@ function getWorldsSourceLabel(source: WorldsEntrant["source"]) {
 
 function getWorldsStageLabel(entrant: WorldsEntrant) {
   return getWorldsEntryStage(entrant) === "direct"
-    ? "Group Stage 직행"
-    : "Play-In";
+    ? "그룹 스테이지 직행"
+    : "플레이-인";
+}
+
+function getWorldsDashboardStageLabel(stageName: string) {
+  const labels: Record<string, string> = {
+    [worldsStageNames.playInGroupA]: "플레이-인 A조",
+    [worldsStageNames.playInGroupB]: "플레이-인 B조",
+    [worldsStageNames.groupStageA]: "그룹 스테이지 A조",
+    [worldsStageNames.groupStageB]: "그룹 스테이지 B조",
+    [worldsStageNames.groupStageC]: "그룹 스테이지 C조",
+    [worldsStageNames.groupStageD]: "그룹 스테이지 D조",
+    [worldsStageNames.quarterfinals]: "8강",
+    [worldsStageNames.semifinals]: "4강",
+    [worldsStageNames.final]: "결승",
+  };
+
+  return labels[stageName] ?? stageName;
+}
+
+function getWorldsDashboardGroupTitle(groupId: WorldsGroupId) {
+  const groupLabel = getWorldsGroupTitle(groupId);
+
+  return groupLabel
+    .replace("Play-In Group", "플레이-인")
+    .replace("Group", "그룹 스테이지");
 }
 
 function WorldsTabs({
@@ -77,10 +101,10 @@ function WorldsTabs({
   onTabChange: (tab: WorldsDashboardTab) => void;
 }) {
   const tabs: Array<{ id: WorldsDashboardTab; label: string }> = [
-    { id: "overview", label: "Overview" },
-    { id: "schedule", label: "Schedule" },
-    { id: "groups", label: "Groups" },
-    { id: "bracket", label: "Bracket" },
+    { id: "overview", label: "개요" },
+    { id: "schedule", label: "일정" },
+    { id: "groups", label: "조별 순위" },
+    { id: "bracket", label: "토너먼트" },
   ];
 
   return (
@@ -118,39 +142,39 @@ function WorldsSummary({
   const statusLabel = competition.completed
     ? competition.winnerTeamName
       ? `${competition.winnerTeamName} 우승`
-      : "Completed"
+      : "완료"
     : worldsState?.status === "play-in"
-      ? "Play-In 진행"
+      ? "플레이-인 진행"
       : worldsState?.status === "group-stage"
-        ? "Group Stage 진행"
+        ? "그룹 스테이지 진행"
         : worldsState?.status === "knockout"
-          ? "Knockout 진행"
+          ? "토너먼트 진행"
           : competition.currentStageName;
 
   return (
     <section className="competition-summary-grid competition-summary-grid-compact">
       <article className="competition-summary-card competition-summary-card-wide">
-        <p className="eyebrow">International</p>
+        <p className="eyebrow">국제대회</p>
         <h1>{competition.name}</h1>
         <span>{career.seasonState.currentDateLabel}</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Status</p>
+        <p className="eyebrow">상태</p>
         <strong>{statusLabel}</strong>
-        <span>Play-In · Group Stage · Knockout</span>
+        <span>플레이-인 · 그룹 스테이지 · 토너먼트</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Entrants</p>
-        <strong>{entrantCount || 20} teams</strong>
-        <span>12팀 직행 · 8팀 Play-In</span>
+        <p className="eyebrow">참가팀</p>
+        <strong>{entrantCount || 20}팀</strong>
+        <span>12팀 직행 · 8팀 플레이-인</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">MSI Bonus</p>
+        <p className="eyebrow">MSI 보너스</p>
         <strong>{bonusLabel}</strong>
         <span>상위 2개 리그에 보너스 시드</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">LCK Seeds</p>
+        <p className="eyebrow">LCK 시드</p>
         <strong>
           {lckQualifiedSeeds.length
             ? lckQualifiedSeeds.map((seed) => seed.teamName).join(" / ")
@@ -207,22 +231,22 @@ function WorldsOverview({
     <section className="competition-panel worlds-pool-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Overview</p>
+          <p className="eyebrow">개요</p>
           <h2>Worlds 참가 풀</h2>
         </div>
         <span className="panel-note">
-          LCK/LPL/LCS/LEC 1-3시드 직행 · 나머지 8팀 Play-In
+          LCK/LPL/LCS/LEC 1-3시드 직행 · 나머지 8팀 플레이-인
         </span>
       </div>
       <p className="competition-overview-copy">
         Worlds는 시즌 최종 국제전입니다. 20팀 참가 풀은 지역 시드, MSI 보너스
-        시드, LCQ 슬롯으로 구성되며 Play-In, Group Stage, Knockout을 거쳐 최종
-        우승팀을 저장합니다.
+        시드, LCQ 슬롯으로 구성되며 플레이-인, 그룹 스테이지, 토너먼트를 거쳐
+        최종 우승팀을 저장합니다.
       </p>
       <div className="worlds-overview-split">
         <article>
           <header>
-            <strong>Group Stage 직행</strong>
+            <strong>그룹 스테이지 직행</strong>
             <span>{directEntrants.length}/12</span>
           </header>
           <div className="worlds-entrant-grid worlds-entrant-grid-compact">
@@ -237,7 +261,7 @@ function WorldsOverview({
         </article>
         <article>
           <header>
-            <strong>Play-In</strong>
+            <strong>플레이-인</strong>
             <span>{playInEntrants.length}/8</span>
           </header>
           <div className="worlds-entrant-grid worlds-entrant-grid-compact">
@@ -272,7 +296,7 @@ function WorldsOverview({
       )}
       {competition.completed && competition.winnerTeamName && (
         <div className="worlds-champion-strip">
-          <span>Worlds Champion</span>
+          <span>Worlds 우승팀</span>
           <strong>{competition.winnerTeamName}</strong>
         </div>
       )}
@@ -296,10 +320,10 @@ function WorldsScheduleView({
     <section className="competition-panel worlds-schedule-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Schedule</p>
+          <p className="eyebrow">일정</p>
           <h2>Worlds 일정 / 결과</h2>
         </div>
-        <span className="panel-note">Play-In/Group BO1 · Knockout BO5</span>
+        <span className="panel-note">플레이-인/그룹 BO1 · 토너먼트 BO5</span>
       </div>
       <div className="worlds-schedule-list">
         {groups.map((group) => (
@@ -320,7 +344,8 @@ function WorldsScheduleView({
                   <div>
                     <strong>{getMatchTitle(match)}</strong>
                     <span>
-                      {match.stageName} · {getFormatLabel(match)}
+                      {getWorldsDashboardStageLabel(match.stageName)} ·{" "}
+                      {getFormatLabel(match)}
                     </span>
                   </div>
                   <span className={getScheduleStatusClass({ match, record, userTeamId })}>
@@ -333,7 +358,7 @@ function WorldsScheduleView({
         ))}
         {groups.length === 0 && (
           <div className="competition-empty-state">
-            Worlds가 활성화되면 Play-In 일정부터 표시됩니다.
+            Worlds가 활성화되면 플레이-인 일정부터 표시됩니다.
           </div>
         )}
       </div>
@@ -364,7 +389,7 @@ function WorldsGroupTable({
   return (
     <article className="worlds-group-card">
       <header>
-        <strong>{getWorldsGroupTitle(groupId)}</strong>
+        <strong>{getWorldsDashboardGroupTitle(groupId)}</strong>
         <span>상위 2팀 진출</span>
       </header>
       <div className="worlds-group-table worlds-group-header">
@@ -424,14 +449,14 @@ function WorldsGroupsView({
     <section className="competition-panel worlds-groups-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Groups</p>
+          <p className="eyebrow">조별 순위</p>
           <h2>Worlds 조별 순위</h2>
         </div>
         <span className="panel-note">승수 · 세트 득실 · 세트 승수 · 초기 시드</span>
       </div>
       <div className="worlds-groups-section">
         <header>
-          <strong>Play-In</strong>
+          <strong>플레이-인</strong>
           <span>4팀 2개 조 · 싱글 라운드 로빈</span>
         </header>
         <div className="worlds-groups-grid">
@@ -449,7 +474,7 @@ function WorldsGroupsView({
       </div>
       <div className="worlds-groups-section">
         <header>
-          <strong>Group Stage</strong>
+          <strong>그룹 스테이지</strong>
           <span>4팀 4개 조 · 더블 라운드 로빈</span>
         </header>
         <div className="worlds-groups-grid worlds-groups-grid-four">
@@ -510,7 +535,7 @@ function WorldsBracketMatchCard({
   return (
     <article className="worlds-bracket-match">
       <header>
-        <strong>{match.stageName}</strong>
+        <strong>{getWorldsDashboardStageLabel(match.stageName)}</strong>
         <span>
           {getDateLabel(match.scheduledDate)} · {getFormatLabel(match)}
         </span>
@@ -575,64 +600,65 @@ function WorldsBracketView({
     <section className="competition-panel worlds-bracket-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Bracket</p>
-          <h2>Worlds Knockout</h2>
+          <p className="eyebrow">토너먼트</p>
+          <h2>Worlds 토너먼트</h2>
         </div>
         <span className="panel-note">8강 · 4강 · 결승 전 경기 BO5</span>
       </div>
       <div className="worlds-bracket-frame">
-        <div className="worlds-bracket-round">
-          <h3>{worldsStageNames.quarterfinals}</h3>
-          <div className="worlds-bracket-stack">
-            {quarterfinals.map((item) => (
+        <div className="worlds-bracket-board">
+          <h3 className="worlds-bracket-heading worlds-heading-qf">
+            {getWorldsDashboardStageLabel(worldsStageNames.quarterfinals)}
+          </h3>
+          <h3 className="worlds-bracket-heading worlds-heading-sf">
+            {getWorldsDashboardStageLabel(worldsStageNames.semifinals)}
+          </h3>
+          <h3 className="worlds-bracket-heading worlds-heading-final">
+            {getWorldsDashboardStageLabel(worldsStageNames.final)}
+          </h3>
+          <h3 className="worlds-bracket-heading worlds-heading-champion">우승</h3>
+          {quarterfinals.map((item, index) => (
+            <div className={`worlds-bracket-slot worlds-slot-qf-${index + 1}`} key={item.id}>
               <WorldsBracketMatchCard
-                key={item.id}
                 match={scheduleById.get(item.id)}
                 placeholder={item.label}
                 record={recordsByScheduleId.get(item.id)}
                 userTeamId={userTeamId}
               />
-            ))}
-          </div>
-        </div>
-        <div className="worlds-bracket-round">
-          <h3>{worldsStageNames.semifinals}</h3>
-          <div className="worlds-bracket-stack worlds-bracket-stack-centered">
-            {semifinals.map((item) => (
+            </div>
+          ))}
+          {semifinals.map((item, index) => (
+            <div className={`worlds-bracket-slot worlds-slot-sf-${index + 1}`} key={item.id}>
               <WorldsBracketMatchCard
-                key={item.id}
                 match={scheduleById.get(item.id)}
                 placeholder={item.label}
                 record={recordsByScheduleId.get(item.id)}
                 userTeamId={userTeamId}
               />
-            ))}
-          </div>
-        </div>
-        <div className="worlds-bracket-round">
-          <h3>{worldsStageNames.final}</h3>
-          <div className="worlds-bracket-stack worlds-bracket-stack-final">
+            </div>
+          ))}
+          <div className="worlds-bracket-slot worlds-slot-final">
             <WorldsBracketMatchCard
               match={scheduleById.get(worldsMatchIds.final)}
-              placeholder="Semifinal 승자"
+              placeholder="4강 승자"
               record={recordsByScheduleId.get(worldsMatchIds.final)}
               userTeamId={userTeamId}
             />
           </div>
+          <article className="worlds-champion-card worlds-slot-champion">
+            <span>Worlds 우승팀</span>
+            <strong>
+              {worldsState?.championTeamName ??
+                competition.winnerTeamName ??
+                "우승팀 미정"}
+            </strong>
+            <small>
+              준우승:{" "}
+              {worldsState?.runnerUpTeamName ??
+                (competition.completed ? "기록 없음" : "미정")}
+            </small>
+          </article>
         </div>
-        <article className="worlds-champion-card">
-          <span>Worlds Champion</span>
-          <strong>
-            {worldsState?.championTeamName ??
-              competition.winnerTeamName ??
-              "우승팀 미정"}
-          </strong>
-          <small>
-            Runner-up:{" "}
-            {worldsState?.runnerUpTeamName ??
-              (competition.completed ? "기록 없음" : "미정")}
-          </small>
-        </article>
       </div>
     </section>
   );

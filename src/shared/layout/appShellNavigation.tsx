@@ -188,7 +188,7 @@ export const shellMenuGroups: ShellMenuGroup[] = [
         label: "전략 / 훈련",
         icon: "training",
         route: "match-week",
-        subItems: ["주간 계획", "전략", "훈련 강도"],
+        subItems: ["상대 리포트", "주간 계획", "전략", "스크림"],
       },
     ],
   },

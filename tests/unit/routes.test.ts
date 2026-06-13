@@ -132,13 +132,17 @@ describe("app routes", () => {
       route: "match-week",
       trainingSubPage: null,
     });
+    expect(getRouteMatchFromPath("/match/report")).toEqual({
+      route: "match-week",
+      trainingSubPage: "report",
+    });
     expect(getRouteMatchFromPath("/match/strategy")).toEqual({
       route: "match-week",
       trainingSubPage: "strategy",
     });
-    expect(getRouteMatchFromPath("/match/intensity")).toEqual({
+    expect(getRouteMatchFromPath("/match/scrim")).toEqual({
       route: "match-week",
-      trainingSubPage: "intensity",
+      trainingSubPage: "scrim",
     });
     expect(getRouteMatchFromPath("/match/unknown")).toEqual({
       route: "match-week",
@@ -147,8 +151,11 @@ describe("app routes", () => {
     expect(getPathForRoute("match-week", null, "strategy")).toBe(
       "/match/strategy",
     );
-    expect(getPathForRoute("match-week", null, "intensity")).toBe(
-      "/match/intensity",
+    expect(getPathForRoute("match-week", null, "report")).toBe(
+      "/match/report",
+    );
+    expect(getPathForRoute("match-week", null, "scrim")).toBe(
+      "/match/scrim",
     );
   });
 

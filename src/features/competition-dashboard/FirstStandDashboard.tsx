@@ -36,10 +36,10 @@ function FirstStandTabs({
   onTabChange: (tab: FirstStandDashboardTab) => void;
 }) {
   const tabs: Array<{ id: FirstStandDashboardTab; label: string }> = [
-    { id: "overview", label: "Overview" },
-    { id: "groups", label: "Groups" },
-    { id: "schedule", label: "Schedule" },
-    { id: "tournament", label: "Tournament" },
+    { id: "overview", label: "개요" },
+    { id: "groups", label: "조별 순위" },
+    { id: "schedule", label: "일정" },
+    { id: "tournament", label: "토너먼트" },
   ];
 
   return (

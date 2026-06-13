@@ -1,8 +1,5 @@
 import { useEffect, useRef, type PropsWithChildren } from "react";
-import {
-  getStrategyLabel,
-  getTrainingIntensityLabel,
-} from "../../domain/weekly-plan";
+import { getStrategyLabel } from "../../domain/weekly-plan";
 import { isImportantCareerMessage } from "../../domain/messages";
 import { findLckTeamSeed, getLckTeamDisplayName } from "../../data/lckTeams";
 import { getSeasonProgressActionLabel } from "../../domain/season";
@@ -129,11 +126,17 @@ function getRosterSubMenuItems(): ShellSubMenuItem[] {
 function getTrainingSubMenuItems(): ShellSubMenuItem[] {
   return [
     {
+      id: "report",
+      label: "상대 리포트",
+      route: "match-week",
+      subPage: "report",
+      isDefault: true,
+    },
+    {
       id: "plan",
       label: "주간 계획",
       route: "match-week",
       subPage: "plan",
-      isDefault: true,
     },
     {
       id: "strategy",
@@ -142,10 +145,10 @@ function getTrainingSubMenuItems(): ShellSubMenuItem[] {
       subPage: "strategy",
     },
     {
-      id: "intensity",
-      label: "훈련 강도",
+      id: "scrim",
+      label: "스크림",
       route: "match-week",
-      subPage: "intensity",
+      subPage: "scrim",
     },
   ];
 }
@@ -358,24 +361,6 @@ export function AppShell({
       }
     }
 
-    if (route === "match-week" && trainingSubPage) {
-      const targetSelector =
-        trainingSubPage === "strategy"
-          ? "#strategy"
-          : trainingSubPage === "intensity"
-            ? "#training-intensity"
-            : "#weekly-plan";
-      const targetElement = mainElement.querySelector(targetSelector);
-
-      if (targetElement instanceof HTMLElement) {
-        if (typeof targetElement.scrollIntoView === "function") {
-          targetElement.scrollIntoView({ block: "start" });
-        }
-
-        return;
-      }
-    }
-
     if (typeof mainElement.scrollTo === "function") {
       mainElement.scrollTo({ top: 0, left: 0 });
       return;
@@ -556,8 +541,7 @@ export function AppShell({
             <span>{activeCompetitionName}</span>
             {career && (
               <span>
-                {getStrategyLabel(career.weeklyPlan.strategy)} /{" "}
-                {getTrainingIntensityLabel(career.weeklyPlan.trainingIntensity)}
+                {getStrategyLabel(career.weeklyPlan.strategy)} / 스크림 준비
               </span>
             )}
           </div>

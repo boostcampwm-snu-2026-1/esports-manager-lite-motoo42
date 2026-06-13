@@ -244,17 +244,27 @@ select {
 
 .team-logo img {
   display: block;
-  width: 82%;
-  height: 82%;
+  width: var(--team-logo-image-width, 94%);
+  max-width: var(--team-logo-image-max-width, 94%);
+  height: auto;
+  max-height: var(--team-logo-image-max-height, 76%);
   object-fit: contain;
+  object-position: center;
+  transform: translate(
+    var(--team-logo-image-x, 0),
+    var(--team-logo-image-y, 0)
+  );
 }
 
 .team-logo-league img {
   width: 76%;
-  height: 76%;
+  max-width: 76%;
+  max-height: 76%;
 }
 
 .club-mark .team-logo {
+  display: grid;
+  place-items: center;
   width: 100%;
   height: 100%;
   border: 0;
@@ -476,13 +486,14 @@ select {
 
 .lck-team-info-grid {
   align-items: stretch;
-  grid-template-columns: repeat(5, minmax(150px, 1fr));
-  width: min(1040px, 100%);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: min(1420px, 100%);
   margin: 0 auto;
 }
 
 .lck-team-info-card {
-  min-height: 152px;
+  min-height: 224px;
+  padding: 18px;
 }
 
 .lck-team-detail-header {
@@ -1767,59 +1778,29 @@ h1 {
   font-size: 0.8rem;
 }
 
-.starter-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  border: 1px solid #35405a;
+.match-hub-title-row {
+  align-items: start;
 }
 
-.starter-card {
+.match-hub-header-tools {
   display: grid;
-  grid-template-rows: auto 150px auto auto;
-  gap: 10px;
-  min-height: 276px;
-  padding: 12px;
-  border-right: 1px solid #35405a;
-  background: #111827;
+  gap: 8px;
+  justify-items: end;
 }
 
-.starter-card:last-child {
-  border-right: 0;
+.dashboard-actions-inline {
+  justify-content: flex-end;
 }
 
-.starter-role {
-  display: grid;
+.dashboard-actions-inline .button {
   min-height: 34px;
-  place-items: center;
-  border-bottom: 1px solid #303a52;
-  color: #f3f6fb;
-  font-size: 1.2rem;
-  letter-spacing: 0.12em;
-}
-
-.starter-photo {
-  width: 100%;
-  height: 150px;
-  min-height: 150px;
-  border-radius: 4px;
-  font-size: 1.65rem;
-}
-
-.starter-name {
-  display: grid;
-  min-height: 42px;
-  place-items: center;
-  border: 1px solid #303a52;
-  border-radius: 4px;
-  background: #0d1424;
-  color: #ffffff;
-  font-weight: 800;
+  padding: 6px 11px;
 }
 
 .match-hub-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
 }
 
 .match-primary-card,
@@ -1848,6 +1829,121 @@ h1 {
 .match-data-row span,
 .mini-panel span {
   color: #9aa7bd;
+}
+
+.match-metric-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 8px;
+}
+
+.match-metric {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  border: 1px solid #253048;
+  border-radius: 6px;
+  padding: 8px 9px;
+  background: #0d1424;
+}
+
+.match-metric span {
+  overflow: hidden;
+  color: #9aa7bd;
+  font-size: 0.74rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.match-metric strong {
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.starter-lineup-panel {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #303a52;
+  border-radius: 6px;
+  padding: 12px;
+  background:
+    linear-gradient(145deg, rgb(96 165 250 / 8%), transparent 45%),
+    #111827;
+}
+
+.starter-lineup-header {
+  padding-bottom: 2px;
+}
+
+.starter-lineup-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.starter-lineup-card {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  border: 1px solid #253048;
+  border-radius: 6px;
+  padding: 9px;
+  background: #0d1424;
+}
+
+.starter-lineup-role {
+  display: inline-grid;
+  width: fit-content;
+  min-height: 22px;
+  place-items: center;
+  border: 1px solid #303a52;
+  border-radius: 999px;
+  padding: 2px 7px;
+  background: #11182a;
+  color: #cfd7e6 !important;
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.starter-lineup-portrait {
+  width: 100%;
+  height: 112px;
+  min-height: 112px;
+}
+
+.starter-lineup-portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+
+.starter-lineup-name {
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.92rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.starter-lineup-empty {
+  color: #9aa7bd;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.starter-lineup-card .evaluation-stars {
+  min-width: 0;
+}
+
+.starter-lineup-card .evaluation-stars-label {
+  display: none;
 }
 
 .opponent-analysis-panel {
@@ -1881,70 +1977,38 @@ h1 {
   white-space: nowrap;
 }
 
-.analysis-data-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.analysis-data-grid > div {
-  display: grid;
-  gap: 4px;
-  border: 1px solid #253048;
-  border-radius: 6px;
-  padding: 8px;
-  background: #0d1424;
-}
-
-.analysis-data-grid span,
-.style-matchup-list > span {
-  color: #9aa7bd;
-  font-size: 0.76rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.analysis-data-grid strong {
-  overflow: hidden;
-  color: #ffffff;
-  font-size: 0.88rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.style-matchup-list {
-  display: grid;
-  gap: 6px;
-}
-
-.style-matchup-list div {
+.opponent-summary-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
 }
 
-.style-chip {
+.opponent-summary-strip span {
   border: 1px solid #303a52;
   border-radius: 999px;
-  padding: 4px 8px;
+  padding: 3px 7px;
   background: #0d1424;
   color: #cfd7e6;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 800;
-}
-
-.style-chip-muted {
-  color: #64748b;
 }
 
 .match-side-stack {
   display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
+  align-items: start;
+}
+
+.match-week-primary-stack {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
 }
 
 .match-week-report-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 8px;
   margin-bottom: 18px;
 }
@@ -1975,7 +2039,37 @@ h1 {
 }
 
 .match-week-report-wide {
-  grid-column: 1 / -1;
+  grid-column: span 2;
+}
+
+.match-week-subpage-heading {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.match-week-subpage-heading h2 {
+  margin: 0;
+}
+
+.match-week-subpage-heading span {
+  max-width: 320px;
+  color: #9aa7bd;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.match-week-workspace-card {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.match-week-actions {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .weekly-match-list {
@@ -1983,6 +2077,16 @@ h1 {
   gap: 8px;
   border-top: 1px solid #253048;
   padding-top: 10px;
+}
+
+.main-hub .weekly-match-list {
+  grid-template-columns: repeat(2, minmax(220px, 300px));
+  align-items: start;
+  justify-content: start;
+}
+
+.main-hub .weekly-match-list .section-label-row {
+  grid-column: 1 / -1;
 }
 
 .section-label-row {
@@ -2009,6 +2113,12 @@ h1 {
   border-radius: 6px;
   padding: 9px 10px;
   background: #0d1424;
+}
+
+.main-hub .weekly-match-row {
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  max-width: 300px;
 }
 
 .weekly-match-row-user {
@@ -2042,6 +2152,12 @@ h1 {
   color: #cfd7e6;
   font-size: 0.82rem;
   white-space: nowrap;
+}
+
+.main-hub .match-row-meta {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  white-space: normal;
 }
 
 .result-badge {
@@ -2078,74 +2194,6 @@ h1 {
   color: #cbd5e1;
 }
 
-.group-score-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.group-score-card {
-  display: grid;
-  gap: 4px;
-  border: 1px solid #253048;
-  border-radius: 6px;
-  padding: 10px;
-  background: #0d1424;
-}
-
-.group-score-card-leading {
-  border-color: #f43f9d;
-  background: #211736;
-}
-
-.group-score-card span,
-.group-score-card small {
-  color: #9aa7bd;
-}
-
-.group-score-card strong {
-  color: #ffffff;
-  font-size: 1.25rem;
-}
-
-.standings-mini-table {
-  display: grid;
-  gap: 6px;
-}
-
-.standings-mini-row {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) 44px 44px;
-  gap: 8px;
-  align-items: center;
-  border-bottom: 1px solid #253048;
-  padding: 6px 0;
-  font-size: 0.82rem;
-}
-
-.standings-mini-row:last-child {
-  border-bottom: 0;
-}
-
-.standings-mini-row strong {
-  overflow: hidden;
-  color: #d7deeb;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.standings-mini-row span {
-  color: #9aa7bd;
-}
-
-.standings-mini-row-user strong {
-  color: #ffffff;
-}
-
-.standings-mini-row-user {
-  color: #ffffff;
-}
-
 .competition-dashboard {
   display: grid;
   gap: 16px;
@@ -2160,6 +2208,11 @@ h1 {
 
 .competition-summary-grid-compact {
   grid-template-columns: 1.15fr 0.85fr 0.85fr;
+}
+
+.lck-cup-summary-grid {
+  grid-template-columns: minmax(220px, 1.1fr) repeat(3, minmax(140px, 0.72fr));
+  gap: 8px;
 }
 
 .competition-summary-card-wide {
@@ -2198,6 +2251,44 @@ h1 {
 
 .competition-calendar-link {
   margin-top: 4px;
+}
+
+.lck-cup-summary-grid .competition-summary-card {
+  gap: 6px;
+  min-height: 0;
+  padding: 9px 11px;
+}
+
+.lck-cup-summary-grid .competition-summary-card-wide {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.lck-cup-summary-grid .competition-summary-card-wide .eyebrow,
+.lck-cup-summary-grid .competition-summary-card-wide h1,
+.lck-cup-summary-grid .competition-summary-card-wide span {
+  grid-column: 1;
+}
+
+.lck-cup-summary-grid .competition-summary-card h1 {
+  font-size: 1.24rem;
+}
+
+.lck-cup-summary-grid .competition-summary-card strong {
+  font-size: 0.96rem;
+}
+
+.lck-cup-summary-grid .competition-summary-card span {
+  line-height: 1.35;
+}
+
+.lck-cup-summary-grid .competition-calendar-link {
+  grid-row: 1 / 4;
+  grid-column: 2;
+  align-self: center;
+  min-height: 32px;
+  margin-top: 0;
+  padding: 5px 10px;
 }
 
 .competition-format-list {
@@ -2659,13 +2750,12 @@ h1 {
 }
 
 .lck-playoff-frame {
-  aspect-ratio: 16 / 9;
-  min-height: 420px;
-  max-height: min(640px, calc(100dvh - 300px));
+  min-height: 0;
+  max-height: none;
   overflow: auto;
   border: 1px solid #253048;
   border-radius: 8px;
-  padding: 16px;
+  padding: 12px;
   background:
     linear-gradient(90deg, rgb(255 255 255 / 3%) 1px, transparent 1px),
     linear-gradient(180deg, rgb(255 255 255 / 3%) 1px, transparent 1px),
@@ -2676,29 +2766,29 @@ h1 {
 
 .lck-playoff-bracket {
   display: grid;
-  grid-auto-columns: minmax(220px, 1fr);
+  grid-auto-columns: minmax(175px, 1fr);
   grid-auto-flow: column;
-  grid-template-columns: repeat(4, minmax(220px, 1fr));
-  gap: 28px;
-  min-width: 980px;
-  width: max-content;
-  height: 100%;
+  grid-template-columns: repeat(4, minmax(175px, 1fr));
+  gap: 18px;
+  min-width: 760px;
+  width: 100%;
   align-items: start;
 }
 
 .lck-playoff-round {
   position: relative;
   display: grid;
-  gap: 14px;
+  grid-template-rows: auto auto;
+  gap: 10px;
   align-content: start;
-  min-height: 100%;
+  min-height: 0;
 }
 
 .lck-playoff-round:not(:last-child)::after {
   position: absolute;
   top: 50%;
-  right: -28px;
-  width: 28px;
+  right: -18px;
+  width: 18px;
   height: 2px;
   background: #475569;
   content: "";
@@ -2726,15 +2816,17 @@ h1 {
 
 .lck-playoff-match-stack {
   display: grid;
-  gap: 18px;
+  gap: 12px;
+  align-content: center;
+  min-height: 0;
 }
 
 .lck-playoff-match {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   border: 1px solid #303a52;
   border-radius: 8px;
-  padding: 11px;
+  padding: 9px;
   background: #111827;
   box-shadow: 0 14px 28px rgb(0 0 0 / 18%);
 }
@@ -2775,7 +2867,7 @@ h1 {
   overflow: hidden;
   border: 1px solid #253048;
   border-radius: 6px;
-  padding: 8px;
+  padding: 7px;
   background: #0d1424;
 }
 
@@ -2830,11 +2922,102 @@ h1 {
 .lck-playoff-champion-card {
   display: grid;
   gap: 8px;
+  align-self: center;
+  min-height: 96px;
   border: 1px solid #f59e0b;
   border-radius: 8px;
-  padding: 14px;
+  padding: 12px;
   background: #21170a;
   box-shadow: 0 18px 34px rgb(0 0 0 / 24%);
+}
+
+.lck-playoff-champion-round {
+  align-self: center;
+}
+
+.lck-postseason-frame {
+  padding: 10px;
+}
+
+.lck-postseason-board,
+.lck-postseason-projection-board {
+  display: grid;
+  gap: 14px;
+  align-items: center;
+}
+
+.lck-postseason-board {
+  grid-template-columns:
+    minmax(150px, 1.05fr)
+    minmax(150px, 1fr)
+    minmax(150px, 1fr)
+    minmax(150px, 1fr)
+    minmax(150px, 1fr)
+    minmax(150px, 1fr)
+    minmax(150px, 0.95fr);
+  grid-template-rows: repeat(6, minmax(70px, auto));
+  min-width: 1140px;
+}
+
+.lck-postseason-projection-board {
+  grid-template-columns: repeat(4, minmax(170px, 1fr));
+  min-width: 760px;
+}
+
+.lck-postseason-round {
+  min-height: 0;
+}
+
+.lck-postseason-round::after {
+  display: none;
+}
+
+.lck-postseason-slot-season-play-in {
+  grid-column: 1;
+  grid-row: 1 / span 6;
+}
+
+.lck-postseason-slot-playoffs-round-1 {
+  grid-column: 2;
+  grid-row: 2 / span 4;
+}
+
+.lck-postseason-slot-playoffs-round-2 {
+  grid-column: 3;
+  grid-row: 2 / span 4;
+}
+
+.lck-postseason-slot-playoffs-round-3 {
+  grid-column: 4;
+  grid-row: 1 / span 3;
+}
+
+.lck-postseason-slot-lower-round-1 {
+  grid-column: 4;
+  grid-row: 4 / span 3;
+}
+
+.lck-postseason-slot-lower-round-2 {
+  grid-column: 5;
+  grid-row: 4 / span 2;
+}
+
+.lck-postseason-slot-finals {
+  grid-column: 6;
+  grid-row: 1 / span 6;
+}
+
+.lck-postseason-slot-worlds-path {
+  grid-column: 7;
+  grid-row: 2 / span 4;
+}
+
+.lck-postseason-projection-board .lck-postseason-slot-playoffs-round-2,
+.lck-postseason-projection-board .lck-postseason-slot-playoffs-round-1,
+.lck-postseason-projection-board .lck-postseason-slot-season-play-in,
+.lck-postseason-projection-board .lck-postseason-slot-season-locked {
+  grid-column: auto;
+  grid-row: auto;
 }
 
 .lck-playoff-champion-card span {
@@ -2956,11 +3139,11 @@ h1 {
 }
 
 .asian-games-bracket-frame {
-  min-height: 420px;
+  min-height: 0;
   overflow: auto;
   border: 1px solid #253048;
   border-radius: 8px;
-  padding: 16px;
+  padding: 12px;
   background:
     linear-gradient(90deg, rgb(255 255 255 / 3%) 1px, transparent 1px),
     linear-gradient(180deg, rgb(255 255 255 / 3%) 1px, transparent 1px),
@@ -2971,10 +3154,10 @@ h1 {
 
 .asian-games-bracket-board {
   display: grid;
-  grid-template-columns: 260px 260px 260px 220px;
-  grid-template-rows: 34px repeat(8, 78px);
-  gap: 24px;
-  min-width: 1120px;
+  grid-template-columns: 210px 210px 210px 180px;
+  grid-template-rows: 32px repeat(8, 62px);
+  gap: 14px;
+  min-width: 852px;
   align-items: stretch;
 }
 
@@ -3061,11 +3244,11 @@ h1 {
 
 .asian-games-slot-sf-a::after,
 .asian-games-slot-sf-b::after {
-  height: 204px;
+  height: 152px;
 }
 
 .asian-games-slot-final::after {
-  height: 408px;
+  height: 304px;
 }
 
 .asian-games-slot-qf-a {
@@ -3112,7 +3295,7 @@ h1 {
   display: grid;
   grid-column: 4;
   grid-row: 3 / span 5;
-  gap: 12px;
+  gap: 8px;
   align-self: stretch;
   align-content: center;
 }
@@ -3122,11 +3305,11 @@ h1 {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 9px;
+  gap: 7px;
   min-width: 0;
   border: 1px solid #303a52;
   border-radius: 8px;
-  padding: 11px;
+  padding: 9px;
   background: #111827;
   box-shadow: 0 14px 28px rgb(0 0 0 / 18%);
 }
@@ -3156,14 +3339,14 @@ h1 {
 
 .asian-games-bracket-slots {
   display: grid;
-  gap: 7px;
+  gap: 5px;
 }
 
 .asian-games-team-slot {
   overflow: hidden;
   border: 1px solid #253048;
   border-radius: 6px;
-  padding: 7px 8px;
+  padding: 6px 7px;
   background: #0d1424;
   color: #d7deeb;
   text-overflow: ellipsis;
@@ -3479,9 +3662,10 @@ h1 {
 
 .first-stand-bracket {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 0.9fr;
-  gap: 18px;
-  min-width: 780px;
+  grid-template-columns: 1.15fr 0.95fr 0.8fr;
+  gap: 16px;
+  min-width: 700px;
+  align-items: center;
 }
 
 .first-stand-bracket-round {
@@ -3511,7 +3695,7 @@ h1 {
   display: grid;
   gap: 12px;
   align-content: center;
-  min-height: 270px;
+  min-height: 0;
 }
 
 .first-stand-bracket-match {
@@ -3601,6 +3785,8 @@ h1 {
 .first-stand-bracket-champion {
   display: grid;
   gap: 6px;
+  align-self: center;
+  min-height: 96px;
   border-color: #f59e0b;
   border-radius: 7px;
   padding: 12px;
@@ -4181,40 +4367,101 @@ h1 {
 }
 
 .worlds-bracket-frame {
-  display: grid;
-  grid-template-columns: minmax(190px, 2fr) minmax(170px, 1.6fr) minmax(160px, 1.35fr) minmax(150px, 1.2fr);
-  gap: 10px;
   min-width: 0;
   overflow: auto;
   padding-bottom: 3px;
 }
 
-.worlds-bracket-round {
+.worlds-bracket-board {
   display: grid;
-  grid-template-rows: auto 1fr;
-  gap: 8px;
-  min-width: 0;
+  grid-template-columns:
+    minmax(210px, 1.1fr)
+    minmax(200px, 1fr)
+    minmax(190px, 0.92fr)
+    minmax(170px, 0.78fr);
+  grid-template-rows: 30px repeat(8, minmax(42px, auto));
+  gap: 10px 12px;
+  min-width: 850px;
+  align-items: center;
 }
 
-.worlds-bracket-round h3 {
+.worlds-bracket-heading {
+  display: grid;
+  min-height: 30px;
   margin: 0;
+  place-items: center;
+  border: 1px solid #273451;
+  border-radius: 999px;
+  background: #111827;
   color: #67e8f9;
   font-size: 0.78rem;
   text-transform: uppercase;
 }
 
-.worlds-bracket-stack {
+.worlds-heading-qf {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.worlds-heading-sf {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.worlds-heading-final {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.worlds-heading-champion {
+  grid-column: 4;
+  grid-row: 1;
+}
+
+.worlds-bracket-slot {
   display: grid;
-  gap: 10px;
-  align-content: start;
+  min-width: 0;
+  align-self: center;
 }
 
-.worlds-bracket-stack-centered {
-  padding-top: 52px;
+.worlds-slot-qf-1 {
+  grid-column: 1;
+  grid-row: 2 / span 2;
 }
 
-.worlds-bracket-stack-final {
-  padding-top: 118px;
+.worlds-slot-qf-2 {
+  grid-column: 1;
+  grid-row: 4 / span 2;
+}
+
+.worlds-slot-qf-3 {
+  grid-column: 1;
+  grid-row: 6 / span 2;
+}
+
+.worlds-slot-qf-4 {
+  grid-column: 1;
+  grid-row: 8 / span 2;
+}
+
+.worlds-slot-sf-1 {
+  grid-column: 2;
+  grid-row: 3 / span 2;
+}
+
+.worlds-slot-sf-2 {
+  grid-column: 2;
+  grid-row: 7 / span 2;
+}
+
+.worlds-slot-final {
+  grid-column: 3;
+  grid-row: 5 / span 2;
+}
+
+.worlds-slot-champion {
+  grid-column: 4;
+  grid-row: 5 / span 2;
 }
 
 .worlds-bracket-match {
@@ -4283,8 +4530,8 @@ h1 {
   align-content: center;
   gap: 8px;
   min-width: 0;
-  min-height: 168px;
-  padding: 14px;
+  min-height: 96px;
+  padding: 12px;
   border-color: rgba(250, 204, 21, 0.58);
   background:
     linear-gradient(135deg, rgba(250, 204, 21, 0.16), rgba(13, 20, 36, 0.96)),
@@ -4335,6 +4582,7 @@ h1 {
   grid-auto-columns: minmax(112px, 1fr);
   grid-auto-flow: column;
   gap: 8px;
+  align-items: stretch;
   min-height: 0;
 }
 
@@ -4365,7 +4613,7 @@ h1 {
 .msi-bracket-match-stack {
   display: grid;
   gap: 8px;
-  align-content: start;
+  align-content: center;
   min-height: 0;
 }
 
@@ -4727,13 +4975,12 @@ h1 {
 }
 
 .competition-bracket-frame {
-  aspect-ratio: 16 / 9;
-  min-height: 420px;
-  max-height: min(680px, calc(100dvh - 170px));
+  min-height: 0;
+  max-height: none;
   overflow: auto;
   border: 1px solid #253048;
   border-radius: 8px;
-  padding: 14px;
+  padding: 12px;
   background:
     linear-gradient(90deg, rgb(255 255 255 / 3%) 1px, transparent 1px),
     linear-gradient(180deg, rgb(255 255 255 / 3%) 1px, transparent 1px),
@@ -4744,26 +4991,25 @@ h1 {
 
 .competition-bracket {
   display: grid;
-  grid-template-columns: repeat(5, minmax(160px, 1fr));
-  gap: 26px;
-  min-width: 960px;
-  height: 100%;
-  align-items: center;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 16px;
+  min-width: 780px;
+  align-items: start;
 }
 
 .bracket-round {
   position: relative;
   display: grid;
-  gap: 12px;
-  align-content: center;
-  min-height: 100%;
+  gap: 10px;
+  align-content: start;
+  min-height: 0;
 }
 
 .bracket-round:not(:last-child)::after {
   position: absolute;
   top: 50%;
-  right: -26px;
-  width: 26px;
+  right: -16px;
+  width: 16px;
   height: 2px;
   background: #475569;
   content: "";
@@ -4783,7 +5029,7 @@ h1 {
 
 .bracket-match-stack {
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 
 .bracket-match {
@@ -4791,13 +5037,13 @@ h1 {
   gap: 6px;
   border: 1px solid #303a52;
   border-radius: 8px;
-  padding: 10px;
+  padding: 9px;
   background: #111827;
   box-shadow: 0 14px 28px rgb(0 0 0 / 18%);
 }
 
 .bracket-match-empty {
-  min-height: 104px;
+  min-height: 84px;
   align-content: center;
   border-style: dashed;
   color: #9aa7bd;
@@ -5575,7 +5821,8 @@ h1 {
 }
 
 .strategy-plan-summary,
-.strategy-subsection {
+.strategy-subsection,
+.strategy-page-context {
   display: grid;
   gap: 10px;
   border: 1px solid #2a3245;
@@ -5591,14 +5838,27 @@ h1 {
 }
 
 .strategy-plan-summary h3,
-.strategy-subsection h3 {
+.strategy-subsection h3,
+.strategy-page-context h3 {
   margin: 0;
 }
 
-.strategy-plan-summary p {
+.strategy-plan-summary p,
+.strategy-page-context p {
   margin: 0;
   color: #b8c4d8;
   line-height: 1.45;
+}
+
+.strategy-page-context span {
+  width: fit-content;
+  border: 1px solid #303a52;
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #111827;
+  color: #dbeafe;
+  font-size: 0.78rem;
+  font-weight: 850;
 }
 
 .strategy-plan-summary dl {
@@ -5632,12 +5892,12 @@ h1 {
 
 .option-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
 }
 
 .option-grid-compact {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .option-card {
@@ -5669,6 +5929,209 @@ h1 {
   border-color: #9f5cff;
   background: #211736;
   box-shadow: inset 0 0 0 1px #9f5cff;
+}
+
+.option-card:disabled,
+.scrim-date-option:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.scrim-view {
+  gap: 12px;
+}
+
+.scrim-progress-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border-color: #38bdf8;
+  background: linear-gradient(135deg, #0d1b2d 0%, #10233a 100%);
+}
+
+.scrim-progress-card .button {
+  min-width: 128px;
+  background: #0ea5e9;
+  box-shadow: 0 0 0 1px rgb(125 211 252 / 30%);
+}
+
+.scrim-result-card {
+  border-color: #34d399;
+  background: #0d1f1b;
+}
+
+.scrim-result-card p {
+  margin: 0;
+  color: #c7f9de;
+  line-height: 1.45;
+}
+
+.scrim-section-heading {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.scrim-section-heading span {
+  border: 1px solid #303a52;
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #111827;
+  color: #dbeafe;
+  font-size: 0.78rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.scrim-picker {
+  position: relative;
+  display: grid;
+  gap: 8px;
+}
+
+.scrim-date-field {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  border: 1px solid #303a52;
+  border-radius: 8px;
+  padding: 10px;
+  background: #111827;
+  color: inherit;
+  text-align: left;
+}
+
+.scrim-date-field span {
+  color: #93c5fd;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.scrim-date-field strong {
+  font-size: 0.95rem;
+}
+
+.scrim-date-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+}
+
+.scrim-date-option {
+  display: grid;
+  gap: 3px;
+  min-height: 74px;
+  border: 1px solid #303a52;
+  border-radius: 8px;
+  padding: 9px;
+  background: #0f1626;
+  color: inherit;
+  text-align: left;
+}
+
+.scrim-date-option-active {
+  border-color: #60a5fa;
+  background: #17213a;
+}
+
+.scrim-date-option span,
+.scrim-date-option small {
+  color: #9aa7bd;
+  line-height: 1.35;
+}
+
+.scrim-opponent-grid .option-card:disabled {
+  background: #0e1421;
+}
+
+.scrim-match-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scrim-match-counts button {
+  border: 1px solid #303a52;
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: #111827;
+  color: #d7e0ef;
+  font-weight: 800;
+}
+
+.scrim-match-counts .scrim-count-active {
+  border-color: #9f5cff;
+  background: #211736;
+  color: #f4edff;
+}
+
+.scrim-request-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.scrim-request-footer p,
+.scrim-request-footer ul {
+  margin: 0;
+}
+
+.scrim-request-footer ul {
+  grid-column: 1 / -1;
+  color: #fca5a5;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.scrim-schedule-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.scrim-schedule-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid #303a52;
+  border-radius: 8px;
+  padding: 10px;
+  background: #111827;
+}
+
+.scrim-schedule-item div {
+  display: grid;
+  gap: 3px;
+}
+
+.scrim-schedule-item span {
+  color: #9aa7bd;
+  font-size: 0.82rem;
+}
+
+.scrim-schedule-item b {
+  border-radius: 999px;
+  padding: 5px 8px;
+  background: #1f2937;
+  color: #dbeafe;
+  font-size: 0.74rem;
+}
+
+.scrim-schedule-item-accepted b {
+  background: #064e3b;
+  color: #bbf7d0;
+}
+
+.scrim-schedule-item-pending b {
+  background: #3b2f11;
+  color: #fde68a;
+}
+
+.scrim-schedule-item-rejected,
+.scrim-schedule-item-completed {
+  opacity: 0.74;
 }
 
 .signed-player-row {
@@ -7196,8 +7659,12 @@ h1 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .worlds-bracket-frame {
-    grid-template-columns: repeat(4, minmax(170px, 1fr));
+  .worlds-bracket-board {
+    grid-template-columns:
+      minmax(190px, 1.1fr)
+      minmax(180px, 1fr)
+      minmax(170px, 0.92fr)
+      minmax(150px, 0.78fr);
   }
 }
 
@@ -7273,8 +7740,9 @@ h1 {
   .season-summary-metrics,
   .season-competition-result,
   .season-renewal-row,
-  .starter-grid,
   .match-hub-grid,
+  .match-side-stack,
+  .match-metric-strip,
   .season-calendar-header,
   .season-calendar-grid-layout,
   .season-roadmap-summary-grid,
@@ -7315,7 +7783,6 @@ h1 {
   .msi-entrant-grid-compact,
   .worlds-entrant-grid,
   .weekly-match-row,
-  .group-score-grid,
   .draft-score-row,
   .draft-row,
   .option-grid,
@@ -7323,17 +7790,21 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .worlds-bracket-frame {
+  .worlds-bracket-board {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    min-width: 0;
   }
 
   .contract-offer-summary {
     grid-template-columns: 1fr;
   }
 
-  .worlds-bracket-stack-centered,
-  .worlds-bracket-stack-final {
-    padding-top: 0;
+  .worlds-bracket-heading,
+  .worlds-bracket-slot,
+  .worlds-slot-champion {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .season-summary-status,
@@ -7427,6 +7898,123 @@ h1 {
   .bench-player-grid.roster-management-main-bench-grid {
     grid-template-columns: minmax(0, min(100%, 304px));
     justify-content: start;
+  }
+
+  .stack,
+  .main-hub,
+  .offseason-page,
+  .season-roster-manager,
+  .competition-hub-page,
+  .settings-page,
+  .inbox-page {
+    gap: 12px;
+  }
+
+  .card,
+  .main-hub .hub-panel,
+  .settings-page > .card {
+    padding: 12px;
+  }
+
+  .main-hub .weekly-match-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .main-hub .weekly-match-row {
+    max-width: none;
+  }
+
+  .starter-lineup-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  h1 {
+    font-size: 1.55rem;
+  }
+
+  .lede {
+    margin-bottom: 0;
+    font-size: 0.94rem;
+    line-height: 1.45;
+  }
+
+  .career-guide-banner {
+    gap: 8px;
+  }
+
+  .career-guide-banner p {
+    -webkit-line-clamp: 2;
+  }
+
+  .strategy-plan-summary dl,
+  .competition-hub-card dl {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .option-card {
+    min-height: 0;
+  }
+
+  .roster-management-status {
+    padding: 8px;
+  }
+
+  .lineup-slot {
+    min-height: 0;
+  }
+
+  .roster-management-card {
+    min-height: 0;
+  }
+
+  .roster-management-card-identity {
+    grid-template-columns: 62px minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .roster-management-card-portrait {
+    width: 62px;
+    height: 78px;
+  }
+
+  .roster-management-card-status-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .roster-management-card-status-strip > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .offseason-week-track {
+    gap: 6px;
+  }
+
+  .offseason-week-step {
+    padding: 7px 9px;
+  }
+
+  .offseason-player-row {
+    gap: 8px;
+  }
+
+  .offseason-player-portrait-cell {
+    min-height: 92px;
+  }
+
+  .offseason-player-portrait-cell .player-portrait {
+    width: 68px;
+    height: 88px;
+  }
+
+  .competition-hub-card {
+    min-height: 0;
+  }
+
+  .settings-planned-list article {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
 }
 
@@ -7716,7 +8304,33 @@ h1 {
 }
 
 .dashboard-message-panel {
+  width: 100%;
   gap: 0.75rem;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.dashboard-message-panel,
+button.opponent-analysis-panel {
+  cursor: pointer;
+}
+
+button.dashboard-message-panel:hover,
+button.opponent-analysis-panel:hover {
+  border-color: rgba(96, 165, 250, 0.55);
+  background: #121d32;
+}
+
+button.dashboard-message-panel:focus-visible,
+button.opponent-analysis-panel:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.85);
+  outline-offset: 2px;
+}
+
+#recent-messages:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.85);
+  outline-offset: 2px;
 }
 
 .dashboard-message-list {
@@ -7766,10 +8380,11 @@ h1 {
   padding: 0.38rem 0.65rem;
 }
 
-.settings-grid {
+.settings-overview-grid {
   display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(320px, 1fr);
   gap: 1rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
 }
 
 .settings-section {
@@ -7784,23 +8399,19 @@ h1 {
   justify-content: space-between;
 }
 
-.settings-section-header > div,
-.settings-career-scope-note {
+.settings-section-header > div {
   display: grid;
   gap: 0.35rem;
 }
 
-.settings-section-header span,
-.settings-career-scope-note span,
-.settings-card-content small {
+.settings-section-header span {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.settings-section-header strong,
-.settings-career-scope-note strong {
+.settings-section-header strong {
   color: var(--text);
   font-size: 1.05rem;
 }
@@ -7843,46 +8454,708 @@ h1 {
 }
 
 .settings-toggle-row small,
-.settings-save-note,
-.settings-career-scope-note p {
+.settings-save-note {
   margin: 0;
   color: var(--muted);
   line-height: 1.55;
 }
 
-.settings-card-content {
+.settings-planned-section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.settings-planned-list {
   display: grid;
   gap: 0.45rem;
 }
 
-.settings-option-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
+.settings-planned-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.36);
+  padding: 0.65rem 0.75rem;
 }
 
-.settings-option-meta span {
+.settings-planned-list article > div:not(.settings-planned-meta) {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.settings-planned-list strong {
+  color: var(--text);
+}
+
+.settings-planned-list p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.settings-planned-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.settings-planned-meta span {
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.48);
-  padding: 0.22rem 0.48rem;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  padding: 0.24rem 0.5rem;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.settings-card-content span {
-  color: var(--muted);
-  font-size: 0.78rem;
+/* Issue #54: compact pass for information-dense management screens. */
+.main-hub,
+.offseason-page,
+.season-roster-manager,
+.competition-hub-page,
+.settings-page,
+.inbox-page {
+  gap: 14px;
+}
+
+.main-hub .hub-panel,
+.offseason-page > .card,
+.offseason-overview-grid > .card,
+.competition-hub-page .competition-hub-card,
+.settings-page > .card,
+.inbox-hero,
+.inbox-layout {
+  box-shadow: 0 12px 26px rgb(0 0 0 / 16%);
+}
+
+.main-hub .hub-panel,
+.offseason-page > .card,
+.settings-page > .card {
+  padding: 14px;
+}
+
+.main-hub .match-hub-panel {
+  padding: 12px;
+}
+
+.main-hub .panel-title-row,
+.settings-hero,
+.offseason-timeline-header,
+.roster-management-header,
+.inbox-hero {
+  gap: 12px;
+}
+
+.main-hub .panel-title-row h2,
+.inbox-hero h1,
+.settings-hero h1,
+.roster-management-header h1,
+.offseason-timeline-header h1,
+.competition-hub-page h1 {
+  margin-bottom: 4px;
+}
+
+.match-hub-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.match-primary-card,
+.mini-panel,
+.starter-lineup-panel {
+  gap: 8px;
+  padding: 10px;
+}
+
+.match-primary-card h3 {
+  font-size: 1.15rem;
+}
+
+.match-primary-card p,
+.mini-panel > span,
+.dashboard-message-item span {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.match-data-row {
+  padding-top: 6px;
+}
+
+.match-metric-strip {
+  gap: 6px;
+}
+
+.match-metric {
+  padding: 7px 8px;
+}
+
+.starter-lineup-grid {
+  gap: 7px;
+}
+
+.starter-lineup-card {
+  gap: 6px;
+  padding: 8px;
+}
+
+.starter-lineup-portrait {
+  height: 86px;
+  min-height: 86px;
+}
+
+.match-side-stack {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+
+.match-side-stack > * {
+  min-width: 0;
+}
+
+.main-hub .match-side-stack .mini-panel {
+  gap: 5px;
+  padding: 7px;
+}
+
+.weekly-match-list {
+  gap: 6px;
+  padding-top: 8px;
+}
+
+.weekly-match-row {
+  min-height: 0;
+  padding: 5px 8px;
+}
+
+.weekly-match-row .match-row-title-with-logos {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.weekly-match-row .match-row-title-with-logos .team-name-with-logo {
+  max-width: min(44%, 180px);
+}
+
+.main-hub .weekly-match-row .team-logo-sm {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+}
+
+.main-hub .weekly-match-row span,
+.main-hub .match-row-meta {
+  font-size: 0.76rem;
+}
+
+.main-hub .analysis-title-row {
+  gap: 8px;
+}
+
+.main-hub .dashboard-message-list {
+  gap: 5px;
+}
+
+.main-hub .dashboard-message-item {
+  gap: 3px;
+  padding: 7px;
+}
+
+.dashboard-actions {
+  gap: 8px;
+}
+
+.dashboard-actions .button-primary {
+  min-width: 148px;
+}
+
+.season-summary-page {
+  gap: 14px;
+}
+
+.season-summary-header {
+  align-items: center;
+}
+
+.season-summary-header h1 {
+  margin-bottom: 4px;
+  font-size: 1.8rem;
+}
+
+.season-summary-header .lede {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.4;
+}
+
+.season-summary-status {
+  min-width: 168px;
+  padding: 10px;
+}
+
+.season-summary-page > .card,
+.season-summary-page .season-summary-grid > .card {
+  gap: 10px;
+  padding: 14px;
+}
+
+.season-summary-card-title {
+  gap: 8px;
+}
+
+.season-summary-card-title h2 {
+  font-size: 1.12rem;
+}
+
+.season-history-timeline,
+.season-summary-grid,
+.season-summary-page .season-summary-metrics,
+.season-competition-results,
+.season-summary-page .season-renewal-list,
+.season-summary-page .season-offseason-log-list,
+.season-summary-page .season-player-change-list {
+  gap: 8px;
+}
+
+.season-history-card {
+  gap: 4px;
+  min-height: 82px;
+  padding: 10px;
+}
+
+.season-summary-page .season-summary-metric {
+  min-height: 72px;
+  padding: 10px;
+}
+
+.season-summary-page .season-offseason-metrics .season-summary-metric {
+  min-height: 60px;
+}
+
+.season-summary-page .season-competition-result,
+.season-summary-page .season-renewal-row,
+.season-summary-page .season-offseason-log-row,
+.season-summary-page .season-player-change-group,
+.season-summary-page .season-summary-empty,
+.season-summary-page .season-summary-renewal-ready {
+  padding: 8px 9px;
+}
+
+.season-summary-page .season-summary-actions {
+  gap: 8px;
+}
+
+.season-summary-page .season-summary-actions .button {
+  min-height: 34px;
+  padding: 6px 11px;
+}
+
+.settings-overview-grid {
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.05fr);
+  gap: 0.75rem;
+}
+
+.settings-hero p {
+  line-height: 1.42;
+}
+
+.settings-section,
+.settings-planned-section {
+  gap: 0.6rem;
+}
+
+.settings-toggle-row {
+  gap: 0.6rem;
+  padding: 0.65rem;
+}
+
+.settings-toggle-row small,
+.settings-save-note {
+  font-size: 0.84rem;
+  line-height: 1.38;
+}
+
+.settings-planned-list {
+  gap: 0.35rem;
+}
+
+.settings-planned-list article {
+  padding: 0.52rem 0.65rem;
+}
+
+.settings-planned-list p {
+  line-height: 1.35;
+  -webkit-line-clamp: 1;
+}
+
+.settings-planned-meta span {
+  padding: 0.2rem 0.45rem;
+}
+
+.strategy-panel,
+.strategy-subsection {
+  display: grid;
+  gap: 10px;
+}
+
+.strategy-plan-summary {
+  gap: 8px;
+  padding: 11px;
+}
+
+.strategy-plan-summary p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.strategy-plan-summary dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.option-grid {
+  gap: 8px;
+}
+
+.option-card {
+  gap: 5px;
+  min-height: 0;
+  padding: 10px;
+}
+
+.option-card span {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.match-week-page {
+  gap: 14px;
+}
+
+.match-week-page > header {
+  display: grid;
+  gap: 4px;
+}
+
+.match-week-page > header .lede {
+  margin-bottom: 0;
+  max-width: 760px;
+}
+
+.match-week-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  max-width: 1120px;
+}
+
+.match-week-layout > .card {
+  gap: 11px;
+  padding: 14px;
+}
+
+.match-week-primary-stack {
+  gap: 11px;
+}
+
+.match-week-primary-stack > .card {
+  gap: 11px;
+  padding: 14px;
+}
+
+.match-week-layout h2 {
+  margin-bottom: 0;
+}
+
+.match-week-subpage-heading span {
+  font-size: 0.82rem;
+}
+
+.match-week-report-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+.match-week-report-grid article {
+  gap: 2px;
+  padding: 7px 8px;
+}
+
+.strategy-selection-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.strategy-selection-summary article {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid #303a52;
+  border-radius: 8px;
+  padding: 10px;
+  background: #111827;
+}
+
+.strategy-selection-summary span {
+  color: #93c5fd;
+  font-size: 0.72rem;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.settings-card-content strong {
+.strategy-selection-summary strong {
   color: var(--text);
-  font-size: 1rem;
 }
 
-.settings-card-content p {
+.strategy-selection-summary small {
   color: var(--muted);
-  margin: 0;
+  line-height: 1.35;
+}
+
+.career-guide-banner {
+  gap: 12px;
+}
+
+.career-guide-banner p {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.career-guide-banner strong {
+  font-size: 0.95rem;
+}
+
+.offseason-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.offseason-overview-grid > .card {
+  gap: 12px;
+  padding: 14px;
+}
+
+.offseason-week-track {
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.offseason-week-step {
+  padding: 8px 10px;
+}
+
+.offseason-budget-metrics {
+  margin-top: 6px;
+}
+
+.offseason-tab-list {
+  padding-bottom: 8px;
+}
+
+.offseason-tab {
+  padding: 7px 10px;
+}
+
+.offseason-list {
+  gap: 8px;
+  max-height: min(62vh, 560px);
+}
+
+.offseason-player-row {
+  grid-template-columns: 88px minmax(150px, 0.72fr) minmax(180px, 1fr) auto;
+  gap: 10px;
+  padding: 9px;
+}
+
+.offseason-player-portrait-cell {
+  min-height: 116px;
+}
+
+.offseason-player-portrait-cell .player-portrait {
+  width: 78px;
+  height: 102px;
+}
+
+.offseason-player-market-info {
+  gap: 3px;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.roster-management-header {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.55fr);
+  align-items: stretch;
+}
+
+.roster-management-status,
+.roster-management-budget-panel,
+.lineup-board,
+.bench-board {
+  padding: 10px;
+}
+
+.roster-management-metrics,
+.roster-management-budget-panel {
+  gap: 8px;
+}
+
+.roster-management-metric {
+  gap: 3px;
+  padding: 8px 10px;
+}
+
+.lineup-board {
+  gap: 9px;
+}
+
+.lineup-slot {
+  gap: 8px;
+  min-height: 278px;
+  padding: 8px;
+}
+
+.lineup-empty-slot {
+  min-height: 82px;
+}
+
+.roster-management-card {
+  gap: 8px;
+  min-height: 250px;
+  padding: 10px;
+}
+
+.roster-management-card-portrait {
+  height: 122px;
+}
+
+.roster-management-card-status-strip {
+  gap: 4px;
+}
+
+.roster-management-card-status-strip > span {
+  min-height: 24px;
+  font-size: 0.72rem;
+}
+
+.bench-player-grid {
+  gap: 8px;
+  max-height: min(62vh, 600px);
+}
+
+.roster-management-wide-grid,
+.roster-management-main-bench-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 224px), 1fr));
+}
+
+.competition-hub-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.competition-hub-card {
+  gap: 9px;
+  min-height: 194px;
+  padding: 11px;
+}
+
+.competition-hub-card dl {
+  gap: 6px;
+}
+
+.competition-hub-card p {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.inbox-hero {
+  padding: 0.85rem;
+}
+
+.inbox-layout {
+  min-height: 25rem;
+}
+
+.inbox-list {
+  max-height: 30rem;
+  padding: 0.5rem;
+}
+
+.inbox-message-item {
+  gap: 0.55rem;
+  padding: 0.58rem;
+}
+
+.inbox-filter-row {
+  padding: 0.45rem;
+}
+
+.inbox-filter-button {
+  min-height: 2.15rem;
+}
+
+.settings-overview-grid {
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.05fr);
+  gap: 0.75rem;
+}
+
+.settings-guide-panel {
+  align-self: stretch;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.36);
+  padding: 10px;
+}
+
+.settings-toggle-row {
+  padding: 0.65rem;
+}
+
+.settings-save-note {
+  line-height: 1.4;
+}
+
+.settings-planned-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.settings-planned-list article {
+  gap: 0.65rem;
+  padding: 0.52rem 0.65rem;
+}
+
+.settings-planned-list p {
+  -webkit-line-clamp: 1;
 }
 
 @media (max-width: 980px) {
@@ -7903,10 +9176,6 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .settings-grid {
-    grid-template-columns: 1fr;
-  }
-
   .settings-hero {
     flex-direction: column;
   }
@@ -7919,5 +9188,138 @@ h1 {
 
   .career-guide-points {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .stack,
+  .main-hub,
+  .offseason-page,
+  .season-roster-manager,
+  .competition-hub-page,
+  .settings-page,
+  .inbox-page {
+    gap: 12px;
+  }
+
+  .card,
+  .main-hub .hub-panel,
+  .settings-page > .card {
+    padding: 12px;
+  }
+
+  h1 {
+    font-size: 1.55rem;
+  }
+
+  .lede {
+    margin-bottom: 0;
+    font-size: 0.94rem;
+    line-height: 1.45;
+  }
+
+  .match-hub-grid,
+  .match-week-layout,
+  .offseason-overview-grid,
+  .settings-overview-grid,
+  .roster-management-header,
+  .lineup-board,
+  .roster-management-filter-row,
+  .roster-management-metrics,
+  .roster-management-budget-panel,
+  .bench-player-grid,
+  .offseason-player-row,
+  .offseason-filter-row,
+  .offseason-confirmation-card,
+  .offseason-closed-hero,
+  .offseason-window-grid,
+  .offseason-log-grid,
+  .offseason-log-filter-row,
+  .strategy-plan-summary dl,
+  .strategy-selection-summary,
+  .option-grid,
+  .option-grid-compact {
+    grid-template-columns: 1fr;
+  }
+
+  .starter-lineup-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .career-guide-banner {
+    gap: 8px;
+  }
+
+  .career-guide-banner p {
+    -webkit-line-clamp: 2;
+  }
+
+  .option-card {
+    min-height: 0;
+  }
+
+  .roster-management-status {
+    padding: 8px;
+  }
+
+  .lineup-slot,
+  .roster-management-card,
+  .competition-hub-card {
+    min-height: 0;
+  }
+
+  .roster-management-card-identity {
+    grid-template-columns: 62px minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .roster-management-card-portrait {
+    width: 62px;
+    height: 78px;
+  }
+
+  .roster-management-card-status-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .roster-management-card-status-strip > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .offseason-week-track {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .offseason-week-step {
+    padding: 7px 9px;
+  }
+
+  .offseason-player-row {
+    gap: 8px;
+  }
+
+  .offseason-player-portrait-cell {
+    min-height: 92px;
+  }
+
+  .offseason-player-portrait-cell .player-portrait {
+    width: 68px;
+    height: 88px;
+  }
+
+  .competition-hub-card dl {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .settings-planned-list article {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .settings-planned-meta {
+    justify-content: flex-start;
   }
 }

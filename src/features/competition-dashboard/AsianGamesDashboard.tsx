@@ -5,6 +5,7 @@ import {
   asianGamesCountryProfiles,
   asianGamesKoreaTeamId,
   asianGamesMatchIds,
+  asianGamesStageNames,
   getAsianGamesModeLabel,
   getAsianGamesRoleSelectionLabel,
   getAsianGamesTimelineLabel,
@@ -55,6 +56,17 @@ function getAsianGamesRosterRoleLabel(role: string) {
   return role.toUpperCase();
 }
 
+function getAsianGamesStageLabel(stageName: string) {
+  const labels: Record<string, string> = {
+    [asianGamesStageNames.quarterfinals]: "8강",
+    [asianGamesStageNames.semifinals]: "4강",
+    [asianGamesStageNames.bronzeMedal]: "동메달전",
+    [asianGamesStageNames.final]: "결승",
+  };
+
+  return labels[stageName] ?? stageName;
+}
+
 function AsianGamesTabs({
   activeTab,
   onTabChange,
@@ -63,9 +75,9 @@ function AsianGamesTabs({
   onTabChange: (tab: AsianGamesDashboardTab) => void;
 }) {
   const tabs: Array<{ id: AsianGamesDashboardTab; label: string }> = [
-    { id: "overview", label: "Overview" },
-    { id: "schedule", label: "Schedule" },
-    { id: "bracket", label: "Bracket" },
+    { id: "overview", label: "개요" },
+    { id: "schedule", label: "일정" },
+    { id: "bracket", label: "토너먼트" },
   ];
 
   return (
@@ -99,17 +111,17 @@ function AsianGamesSummary({
   return (
     <section className="competition-summary-grid competition-summary-grid-compact">
       <article className="competition-summary-card competition-summary-card-wide">
-        <p className="eyebrow">National Team</p>
+        <p className="eyebrow">국가대표</p>
         <h1>{competition.name}</h1>
         <span>{career.seasonState.currentDateLabel}</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Mode</p>
+        <p className="eyebrow">진행 방식</p>
         <strong>{getAsianGamesModeLabel(asianGamesState?.playMode ?? "undecided")}</strong>
         <span>선택은 대회 전체에 적용</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Medals</p>
+        <p className="eyebrow">메달</p>
         <strong>{medals ? `금 ${medals.goldTeamName}` : "미정"}</strong>
         <span>
           {medals
@@ -130,7 +142,7 @@ function AsianGamesOverview({ career }: { career: CareerSave }) {
       <article className="competition-panel asian-games-country-panel">
         <div className="panel-title-row">
           <div>
-            <p className="eyebrow">Entrants</p>
+            <p className="eyebrow">참가국</p>
             <h2>참가국</h2>
           </div>
           <span className="panel-note">8개 국가 싱글 엘리미네이션</span>
@@ -162,7 +174,7 @@ function AsianGamesOverview({ career }: { career: CareerSave }) {
       <article className="competition-panel asian-games-roster-panel">
         <div className="panel-title-row">
           <div>
-            <p className="eyebrow">Korea</p>
+            <p className="eyebrow">대한민국</p>
             <h2>대한민국 대표 6인</h2>
           </div>
           <span className="panel-note">
@@ -219,7 +231,7 @@ function AsianGamesScheduleView({
     <section className="competition-panel asian-games-schedule-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Schedule</p>
+          <p className="eyebrow">일정</p>
           <h2>Asian Games 일정 / 결과</h2>
         </div>
         <span className="panel-note">결승만 BO5 · 나머지 BO3</span>
@@ -244,7 +256,8 @@ function AsianGamesScheduleView({
                   <div>
                     <strong>{getMatchTitle(match)}</strong>
                     <span>
-                      {match.stageName} · {getFormatLabel(match)}
+                      {getAsianGamesStageLabel(match.stageName)} ·{" "}
+                      {getFormatLabel(match)}
                     </span>
                   </div>
                   <span>{getScoreLabel(record)}</span>
@@ -286,7 +299,7 @@ function AsianGamesBracketMatchCard({
       }`}
     >
       <header>
-        <strong>{match.stageName}</strong>
+        <strong>{getAsianGamesStageLabel(match.stageName)}</strong>
         <span>
           {getDateLabel(match.scheduledDate)} · {getFormatLabel(match)}
         </span>
@@ -375,8 +388,8 @@ function AsianGamesBracketView({
     <section className="competition-panel asian-games-bracket-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Bracket</p>
-          <h2>Asian Games 브래킷</h2>
+          <p className="eyebrow">토너먼트</p>
+          <h2>Asian Games 토너먼트</h2>
         </div>
         <span className="panel-note">8강 · 4강 · 동메달전 · 결승</span>
       </div>
@@ -409,15 +422,15 @@ function AsianGamesBracketView({
           ))}
           <section className="asian-games-medal-board">
             <div className="asian-games-medal-card asian-games-medal-gold">
-              <span>GOLD</span>
+              <span>금메달</span>
               <strong>{medals?.gold ?? "미정"}</strong>
             </div>
             <div className="asian-games-medal-card asian-games-medal-silver">
-              <span>SILVER</span>
+              <span>은메달</span>
               <strong>{medals?.silver ?? "미정"}</strong>
             </div>
             <div className="asian-games-medal-card asian-games-medal-bronze">
-              <span>BRONZE</span>
+              <span>동메달</span>
               <strong>{medals?.bronze ?? "미정"}</strong>
             </div>
           </section>

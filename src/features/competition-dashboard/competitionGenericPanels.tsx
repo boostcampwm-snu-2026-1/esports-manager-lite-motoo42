@@ -34,31 +34,31 @@ const lckCupStageNames = getLckCupStageNames();
 const knockoutRounds = [
   {
     id: "play-in-r1",
-    title: "Play-In R1",
+    title: "플레이-인 R1",
     stageName: lckCupStageNames.playInRound1,
     slots: 2,
   },
   {
     id: "play-in-r2",
-    title: "Play-In R2",
+    title: "플레이-인 R2",
     stageName: lckCupStageNames.playInRound2,
     slots: 2,
   },
   {
     id: "wildcard",
-    title: "Wildcard",
+    title: "와일드카드",
     stageName: lckCupStageNames.playoffsWildcard,
     slots: 1,
   },
   {
     id: "semifinals",
-    title: "Semifinals",
+    title: "준결승",
     stageName: lckCupStageNames.playoffsSemifinals,
     slots: 2,
   },
   {
     id: "finals",
-    title: "Final",
+    title: "결승",
     stageName: lckCupStageNames.finals,
     slots: 1,
   },
@@ -81,17 +81,17 @@ export function CompetitionSummary({
   return (
     <section className="competition-summary-grid">
       <article className="competition-summary-card">
-        <p className="eyebrow">Competition</p>
+        <p className="eyebrow">대회</p>
         <h1>{competition.name}</h1>
         <span>{career.seasonState.currentDateLabel}</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Stage</p>
+        <p className="eyebrow">단계</p>
         <strong>{getStatusText(competition)}</strong>
         <span>{competition.currentWeek}주차</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">User team</p>
+        <p className="eyebrow">우리 팀</p>
         <strong>
           {userStanding?.teamName ?? career.userTeam.name} · {career.userTeam.wins}W{" "}
           {career.userTeam.losses}L
@@ -99,7 +99,7 @@ export function CompetitionSummary({
         <span>현재 대회 기준 성적을 추적합니다.</span>
       </article>
       <article className="competition-summary-card">
-        <p className="eyebrow">Next</p>
+        <p className="eyebrow">다음 일정</p>
         <strong>
           {nextMatches[0] ? `${nextMatches[0].week}주차` : "예정 경기 없음"}
         </strong>
@@ -127,7 +127,7 @@ export function CompetitionFormatSummary({
 
   return (
     <article className="competition-summary-card competition-summary-card-format">
-      <p className="eyebrow">Format</p>
+      <p className="eyebrow">포맷</p>
       <strong>{template.formatSummary}</strong>
       <span>{template.qualificationRule ?? "대회 결과에 따라 다음 경로가 연결됩니다."}</span>
       <ul className="competition-format-list">
@@ -155,7 +155,7 @@ export function StandingsTable({
     <section className="competition-panel competition-table-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Standings</p>
+          <p className="eyebrow">순위표</p>
           <h2>전체 순위표</h2>
         </div>
         <span className="panel-note">경기승 · 세트득실 · 세트승 · 초기 시드 순</span>
@@ -206,7 +206,7 @@ export function GroupStatusPanel({
       <section className="competition-panel">
         <div className="panel-title-row">
           <div>
-            <p className="eyebrow">Format</p>
+            <p className="eyebrow">포맷</p>
             <h2>{competition.name} 현황</h2>
           </div>
           <span className="panel-note">{competition.status}</span>
@@ -225,7 +225,7 @@ export function GroupStatusPanel({
     <section className="competition-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Groups</p>
+          <p className="eyebrow">그룹 포인트</p>
           <h2>Baron / Elder 현황</h2>
         </div>
         <span className="panel-note">
@@ -246,7 +246,7 @@ export function GroupStatusPanel({
               <div className="competition-group-head">
                 <strong>{getGroupLabel(group)}</strong>
                 <span>
-                  {summary.groups[group].points} pts / diff{" "}
+                  {summary.groups[group].points}Points · 세트득실{" "}
                   {summary.groups[group].setDiff}
                 </span>
               </div>
@@ -281,7 +281,7 @@ export function SchedulePanel({
     <section className="competition-panel competition-schedule-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Schedule</p>
+          <p className="eyebrow">일정</p>
           <h2>일정 / 결과</h2>
         </div>
         <span className="panel-note">현재 주차 · 최근 결과 · 다음 예정</span>
@@ -311,7 +311,7 @@ export function SchedulePanel({
                     <strong>
                       {match ? getMatchTitle(match) : record.winnerTeamName}
                     </strong>
-                    <span>Winner: {record.winnerTeamName}</span>
+                    <span>승자: {record.winnerTeamName}</span>
                   </div>
                   <span>{getScoreLabel(record)}</span>
                 </div>
@@ -389,7 +389,7 @@ export function BracketPanel({
       <section className="competition-panel">
         <div className="panel-title-row">
           <div>
-            <p className="eyebrow">Tournament</p>
+            <p className="eyebrow">토너먼트</p>
             <h2>{competition.name} 브래킷</h2>
           </div>
           <span className="panel-note">대회 포맷 구현 후 자동 생성</span>
@@ -409,10 +409,10 @@ export function BracketPanel({
     <section className="competition-panel">
       <div className="panel-title-row">
         <div>
-          <p className="eyebrow">Tournament</p>
-          <h2>LCK Cup 토너먼트 브래킷</h2>
+          <p className="eyebrow">토너먼트</p>
+          <h2>LCK Cup 토너먼트</h2>
         </div>
-        <span className="panel-note">16:9 와이드 패널 · 좌에서 우로 진행</span>
+        <span className="panel-note">좌에서 우로 진행</span>
       </div>
       <div className="competition-bracket-frame">
         <div className="competition-bracket">
@@ -433,7 +433,7 @@ export function BracketPanel({
                     typeof slot === "number" ? (
                       <div className="bracket-match bracket-match-empty" key={slot}>
                         <span>진출팀 대기</span>
-                        <small>{round.stageName}</small>
+                        <small>{round.title}</small>
                       </div>
                     ) : (
                       <BracketMatch

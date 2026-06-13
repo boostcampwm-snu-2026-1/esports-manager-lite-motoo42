@@ -13,6 +13,11 @@ describe("TeamLogo", () => {
       "src",
       "/assets/logos/lck/teams/2026/t1.webp",
     );
+    expect(screen.getByTestId("team-logo")).toHaveAttribute(
+      "data-team-id",
+      "t1",
+    );
+    expect(screen.getByTestId("team-logo")).toHaveClass("team-logo-team-t1");
   });
 
   it("renders the LCK league logo", () => {

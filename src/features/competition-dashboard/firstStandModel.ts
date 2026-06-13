@@ -210,7 +210,7 @@ export function createFirstStandPreviewMatches(entrants: FirstStandEntrant[]) {
       groupEntrants.slice(blueIndex + 1).forEach((red) => {
         matches.push({
           id: `first-stand-group-${group}-${blue.id}-${red.id}`,
-          dateLabel: `Group ${group} Day ${matches.length + 1}`,
+          dateLabel: `${group}조 ${matches.length + 1}일차`,
           group,
           stageName: "Group Stage",
           blueTeamName: blue.name,
