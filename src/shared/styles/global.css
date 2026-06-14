@@ -8749,6 +8749,164 @@ button.opponent-analysis-panel:focus-visible {
   min-width: 148px;
 }
 
+/* Issue #67: keep the home match hub readable in the first desktop viewport. */
+.main-hub .match-hub-panel {
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.main-hub .match-hub-title-row {
+  align-items: center;
+}
+
+.main-hub .panel-title-row h2 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+.main-hub .dashboard-actions-inline .button {
+  min-height: 32px;
+  padding: 5px 10px;
+}
+
+.main-hub .match-primary-card {
+  gap: 7px;
+  padding: 9px 10px;
+}
+
+.main-hub .match-primary-card .eyebrow {
+  margin-bottom: 2px;
+  font-size: 0.76rem;
+}
+
+.main-hub .match-primary-card h3 {
+  font-size: 1.05rem;
+}
+
+.main-hub .match-primary-card > p:not(.eyebrow) {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.32;
+}
+
+.main-hub .match-team-link {
+  margin-top: 0;
+  font-size: 0.82rem;
+}
+
+.main-hub .match-metric-strip {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.main-hub .match-metric {
+  gap: 1px;
+  padding: 5px 7px;
+}
+
+.main-hub .match-metric span {
+  font-size: 0.68rem;
+}
+
+.main-hub .match-metric strong {
+  font-size: 0.84rem;
+}
+
+.main-hub .weekly-match-list {
+  gap: 5px;
+  padding-top: 6px;
+}
+
+.main-hub .weekly-match-list .section-label-row {
+  line-height: 1.2;
+}
+
+.main-hub .weekly-match-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 54px;
+  max-width: 300px;
+  padding: 6px 8px;
+}
+
+.main-hub .weekly-match-row strong {
+  font-size: 0.82rem;
+}
+
+.main-hub .weekly-match-row span,
+.main-hub .match-row-meta {
+  font-size: 0.72rem;
+}
+
+.main-hub .match-row-meta {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.main-hub .weekly-match-row .match-row-title-with-logos {
+  gap: 4px;
+}
+
+.main-hub .weekly-match-row .match-row-title-with-logos .team-name-with-logo {
+  max-width: min(46%, 150px);
+}
+
+.main-hub .starter-lineup-panel {
+  gap: 7px;
+  padding: 8px 10px;
+}
+
+.main-hub .starter-lineup-header {
+  padding-bottom: 0;
+}
+
+.main-hub .starter-lineup-grid {
+  gap: 6px;
+}
+
+.main-hub .starter-lineup-card {
+  gap: 4px;
+  padding: 6px;
+}
+
+.main-hub .starter-lineup-role {
+  min-height: 18px;
+  padding: 1px 6px;
+  font-size: 0.66rem;
+}
+
+.main-hub .starter-lineup-portrait {
+  height: 72px;
+  min-height: 72px;
+}
+
+.main-hub .starter-lineup-name {
+  font-size: 0.86rem;
+}
+
+.main-hub .starter-lineup-card .evaluation-stars {
+  gap: 3px;
+  font-size: 0.72rem;
+}
+
+.main-hub .starter-lineup-card .evaluation-star {
+  width: 11px;
+  height: 11px;
+}
+
+.main-hub .match-side-stack {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) repeat(2, minmax(0, 0.82fr));
+  gap: 7px;
+}
+
+.main-hub .match-side-stack .mini-panel {
+  gap: 4px;
+  padding: 6px 7px;
+}
+
 .season-summary-page {
   gap: 14px;
 }
