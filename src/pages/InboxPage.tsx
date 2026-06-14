@@ -1,5 +1,5 @@
 import { useGameDispatch, useGameSelector } from "../app/GameProvider";
-import type { InboxSubPage } from "../app/routes";
+import type { AppRoute, InboxSubPage, RouteSubPage } from "../app/routes";
 import { gameActions } from "../app/state";
 import {
   hasSeenCareerGuide,
@@ -11,10 +11,16 @@ import { CareerRequiredFallback } from "./CareerRequiredFallback";
 
 type InboxPageProps = {
   subPage?: InboxSubPage | null;
+  onGoTo: (
+    route: AppRoute,
+    options?: {
+      subPage?: RouteSubPage | null;
+    },
+  ) => void;
   onSubPageChange: (subPage: InboxSubPage) => void;
 };
 
-export function InboxPage({ subPage, onSubPageChange }: InboxPageProps) {
+export function InboxPage({ subPage, onGoTo, onSubPageChange }: InboxPageProps) {
   const career = useGameSelector((state) => state.career);
   const showFirstEntryGuides = useGameSelector(
     (state) => state.appSettings.guides.showFirstEntryGuides,
@@ -42,6 +48,7 @@ export function InboxPage({ subPage, onSubPageChange }: InboxPageProps) {
         onMarkRead={(messageId) =>
           dispatch(gameActions.markMessageRead(messageId))
         }
+        onGoTo={onGoTo}
         onSubPageChange={onSubPageChange}
       />
     </section>

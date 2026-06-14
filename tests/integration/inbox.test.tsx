@@ -170,6 +170,7 @@ describe("Inbox", () => {
         career={{ ...career, messages: [longMessage] }}
         onMarkAllRead={vi.fn()}
         onMarkRead={vi.fn()}
+        onGoTo={vi.fn()}
         onSubPageChange={vi.fn()}
         subPage="important"
       />,
@@ -206,6 +207,7 @@ describe("Inbox", () => {
         career={{ ...career, messages: [transferMessage] }}
         onMarkAllRead={vi.fn()}
         onMarkRead={vi.fn()}
+        onGoTo={vi.fn()}
         onSubPageChange={vi.fn()}
         subPage="important"
       />,
@@ -220,5 +222,56 @@ describe("Inbox", () => {
     ).toBeVisible();
     expect(screen.queryByText(/AI 재계약/)).not.toBeInTheDocument();
     expect(screen.getByText("이적 · 스토브리그")).toBeVisible();
+  });
+
+  it("shows contextual inbox action buttons for report and offseason summary messages", () => {
+    const career = createInitialCareer("T1");
+    const onGoTo = vi.fn();
+    const messages: CareerMessage[] = [
+      {
+        id: "weekly-squad-report",
+        dateKey: "2026-01-21",
+        dateLabel: "2026년 1월 21일",
+        category: "training",
+        priority: "normal",
+        title: "주간 선수단 리포트",
+        body:
+          "이번 주 선수단 리포트\n- 선발 평균 컨디션 86\n- 평균 피로도 36\n권장 조치: 주간 계획을 확인하세요.",
+        read: false,
+        createdTurn: 4,
+        source: "club",
+      },
+      {
+        id: "offseason-weekly-summary",
+        dateKey: "2025-12-24",
+        dateLabel: "2025년 12월 24일",
+        category: "transfer",
+        priority: "normal",
+        title: "스토브리그 주간 요약",
+        body: "1주차 주요 스토브리그 움직임입니다. Chovy 재계약(Gen.G).",
+        read: false,
+        createdTurn: 3,
+        source: "offseason",
+      },
+    ];
+
+    render(
+      <Inbox
+        career={{ ...career, messages }}
+        onMarkAllRead={vi.fn()}
+        onMarkRead={vi.fn()}
+        onGoTo={onGoTo}
+        onSubPageChange={vi.fn()}
+        subPage="all"
+      />,
+    );
+
+    expect(screen.getByText("선발 평균 컨디션 86")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "주간 계획으로 이동" }));
+    expect(onGoTo).toHaveBeenCalledWith("match-week", { subPage: "plan" });
+
+    fireEvent.click(screen.getByText("스토브리그 주간 요약"));
+    fireEvent.click(screen.getByRole("button", { name: "스토브리그로 이동" }));
+    expect(onGoTo).toHaveBeenCalledWith("offseason", { subPage: "overview" });
   });
 });

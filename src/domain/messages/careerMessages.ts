@@ -11,16 +11,14 @@ import type {
   MatchRecord,
   MatchSchedule,
   OffseasonLogEntry,
-  Player,
 } from "../../types/game";
 import type { CareerProgressResult } from "../game-progress/progressCareer";
+import type { MessageDraft } from "./messageDraft";
+import { createTemplateNewsMessages } from "./newsTemplates";
+import { createOffseasonWeeklySummaryMessages } from "./offseasonSummaries";
+import { createSquadReportMessages } from "./squadReports";
 
 export const maxCareerMessages = 120;
-
-type MessageDraft = Omit<CareerMessage, "id" | "read"> & {
-  id?: string;
-  read?: boolean;
-};
 
 function slugify(value: string) {
   return value
@@ -79,16 +77,18 @@ export function appendCareerMessages(
   }
 
   const existingMessages = career.messages ?? [];
+  const seenIds = new Set(existingMessages.map((message) => message.id));
   const seenKeys = new Set(existingMessages.map(getCareerMessageDedupeKey));
   const newMessages = drafts
     .map((draft, index) => createCareerMessage(draft, existingMessages.length + index))
     .filter((message) => {
       const key = getCareerMessageDedupeKey(message);
 
-      if (seenKeys.has(key)) {
+      if (seenIds.has(message.id) || seenKeys.has(key)) {
         return false;
       }
 
+      seenIds.add(message.id);
       seenKeys.add(key);
       return true;
     });
@@ -272,94 +272,6 @@ function createScheduleMessages({
   return drafts;
 }
 
-function getPlayerById(career: CareerSave, playerId: string) {
-  return career.lckPlayers.find((player) => player.id === playerId);
-}
-
-function getStatusWarningDraft({
-  nextCareer,
-  player,
-  previousPlayer,
-}: {
-  nextCareer: CareerSave;
-  player: Player;
-  previousPlayer?: Player;
-}): MessageDraft | null {
-  if (player.status.condition <= 55) {
-    return {
-      dateKey: nextCareer.seasonState.currentDateKey,
-      dateLabel: nextCareer.seasonState.currentDateLabel,
-      category: "training",
-      priority: "urgent",
-      title: "훈련 상태 보고",
-      body: `${player.name}의 컨디션이 ${player.status.condition}까지 내려갔습니다. 스크림 일정과 선발 기용을 점검하세요.`,
-      createdTurn: nextCareer.seasonState.currentTurn,
-      source: "club",
-      relatedPlayerId: player.id,
-    };
-  }
-
-  if (player.status.fatigue >= 85) {
-    return {
-      dateKey: nextCareer.seasonState.currentDateKey,
-      dateLabel: nextCareer.seasonState.currentDateLabel,
-      category: "training",
-      priority: "important",
-      title: "훈련 상태 보고",
-      body: `${player.name}의 피로도가 ${player.status.fatigue}까지 상승했습니다. 가벼운 훈련이나 휴식을 고려할 수 있습니다.`,
-      createdTurn: nextCareer.seasonState.currentTurn,
-      source: "club",
-      relatedPlayerId: player.id,
-    };
-  }
-
-  if (
-    previousPlayer &&
-    previousPlayer.status.form - player.status.form >= 8 &&
-    player.status.form <= 62
-  ) {
-    return {
-      dateKey: nextCareer.seasonState.currentDateKey,
-      dateLabel: nextCareer.seasonState.currentDateLabel,
-      category: "training",
-      priority: "important",
-      title: "훈련 상태 보고",
-      body: `${player.name}의 최근 폼이 하락했습니다. 다음 경기 전 역할과 훈련 방향을 확인하세요.`,
-      createdTurn: nextCareer.seasonState.currentTurn,
-      source: "club",
-      relatedPlayerId: player.id,
-    };
-  }
-
-  return null;
-}
-
-function createTrainingMessages({
-  nextCareer,
-  previousCareer,
-}: {
-  nextCareer: CareerSave;
-  previousCareer: CareerSave;
-}): MessageDraft[] {
-  return Object.values(nextCareer.userTeam.roster)
-    .filter((playerId): playerId is string => Boolean(playerId))
-    .map((playerId) => {
-      const player = getPlayerById(nextCareer, playerId);
-
-      if (!player) {
-        return null;
-      }
-
-      return getStatusWarningDraft({
-        nextCareer,
-        player,
-        previousPlayer: getPlayerById(previousCareer, playerId),
-      });
-    })
-    .filter((draft): draft is MessageDraft => Boolean(draft))
-    .slice(0, 2);
-}
-
 export function createProgressMessages({
   lastMatch,
   nextCareer,
@@ -377,11 +289,23 @@ export function createProgressMessages({
     nextCareer,
     previousCareer,
   });
-  const trainingMessages = lastMatch
-    ? createTrainingMessages({ nextCareer, previousCareer })
-    : [];
+  const squadReportMessages = createSquadReportMessages({
+    lastMatchPlayed: Boolean(lastMatch),
+    nextCareer,
+    previousCareer,
+  });
+  const newsMessages = createTemplateNewsMessages({
+    lastMatch,
+    nextCareer,
+    previousCareer,
+  });
 
-  return [...matchMessages, ...scheduleMessages, ...trainingMessages];
+  return [
+    ...matchMessages,
+    ...scheduleMessages,
+    ...squadReportMessages,
+    ...newsMessages,
+  ];
 }
 
 export function appendProgressMessages(
@@ -408,23 +332,29 @@ function createTransferMessageFromLog({
 }): MessageDraft {
   const isImportantOffseasonNews =
     log.isUserTeamRelated ||
-    log.type === "signing" ||
-    log.type === "ai-signing" ||
-    log.type === "renewal" ||
-    log.type === "release" ||
+    log.type === "system" ||
     log.type === "rejection" ||
     log.type === "blocked";
 
   return {
     dateKey: career.seasonState.currentDateKey,
     dateLabel: career.seasonState.currentDateLabel,
-    category: "transfer",
+    category: log.type === "system" ? "important" : "transfer",
     priority: isImportantOffseasonNews ? "important" : "normal",
-    title: "FA 협상 결과",
+    title: log.type === "system" ? "스토브리그 안내" : "FA 협상 결과",
     body: `${log.week}주차 ${log.day}일 기록입니다. ${log.message}`,
     createdTurn: career.seasonState.currentTurn,
     source: "offseason",
   };
+}
+
+function shouldCreateIndividualOffseasonMessage(log: OffseasonLogEntry) {
+  return (
+    log.isUserTeamRelated ||
+    log.type === "system" ||
+    log.type === "rejection" ||
+    log.type === "blocked"
+  );
 }
 
 export function createOffseasonLogMessages({
@@ -438,20 +368,18 @@ export function createOffseasonLogMessages({
     previousCareer.seasonState.offseason?.logEntries?.map((log) => log.id) ?? [],
   );
   const nextLogs = nextCareer.seasonState.offseason?.logEntries ?? [];
-
-  return nextLogs
+  const individualMessages = nextLogs
     .filter(
       (log) =>
-        !previousLogIds.has(log.id) &&
-        (log.isUserTeamRelated ||
-          log.type === "signing" ||
-          log.type === "ai-signing" ||
-          log.type === "renewal" ||
-          log.type === "release" ||
-          log.type === "rejection" ||
-          log.type === "blocked"),
+        !previousLogIds.has(log.id) && shouldCreateIndividualOffseasonMessage(log),
     )
     .map((log) => createTransferMessageFromLog({ career: nextCareer, log }));
+  const weeklySummaryMessages = createOffseasonWeeklySummaryMessages({
+    nextCareer,
+    previousCareer,
+  });
+
+  return [...individualMessages, ...weeklySummaryMessages];
 }
 
 export function appendOffseasonLogMessages(

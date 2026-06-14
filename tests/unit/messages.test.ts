@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   appendCareerMessages,
   appendOffseasonLogMessages,
+  createSquadReportMessages,
   createProgressMessages,
   maxCareerMessages,
 } from "../../src/domain/messages";
@@ -129,7 +130,7 @@ describe("career messages", () => {
     );
   });
 
-  it("copies general offseason signing news into important transfer messages", () => {
+  it("does not copy unrelated offseason signing news into individual messages", () => {
     const previousCareer = createInitialCareer("T1");
     const nextCareer = {
       ...previousCareer,
@@ -155,17 +156,144 @@ describe("career messages", () => {
       nextCareer,
     );
 
+    expect(careerWithMessages.messages).toHaveLength(0);
+  });
+
+  it("summarizes notable non-user offseason moves when a week rolls over", () => {
+    const previousCareer = createInitialCareer("T1");
+    const notablePlayer = [...previousCareer.lckPlayers]
+      .filter((player) => player.currentTeam !== previousCareer.userTeam.name)
+      .sort(
+        (left, right) =>
+          right.salaryExpectation - left.salaryExpectation ||
+          right.overall - left.overall,
+      )[0];
+
+    if (!notablePlayer) {
+      throw new Error("A notable non-user player was not found.");
+    }
+
+    const nextCareer = {
+      ...previousCareer,
+      seasonState: {
+        ...previousCareer.seasonState,
+        currentDateKey: "2025-12-08",
+        currentDateLabel: "2025년 12월 8일 (월)",
+        offseason: {
+          ...previousCareer.seasonState.offseason!,
+          currentDay: 8,
+          currentWeek: 2,
+          logEntries: [
+            ...(previousCareer.seasonState.offseason?.logEntries ?? []),
+            {
+              id: "notable-ai-transfer-log",
+              day: 7,
+              week: 1,
+              type: "ai-signing" as const,
+              message: `${notablePlayer.name} FA 영입 경쟁에서 Gen.G이 승리했습니다. 경쟁 2팀.`,
+            },
+          ],
+        },
+      },
+    };
+    const careerWithMessages = appendOffseasonLogMessages(
+      previousCareer,
+      nextCareer,
+    );
+
     expect(careerWithMessages.messages).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           category: "transfer",
-          priority: "important",
+          priority: "normal",
           source: "offseason",
-          title: "FA 협상 결과",
-          body: expect.stringContaining("Gen.G"),
+          title: "스토브리그 주간 요약",
+          body: expect.stringContaining(`${notablePlayer.name} -> Gen.G`),
         }),
       ]),
     );
+    expect(
+      (careerWithMessages.messages ?? []).some(
+        (message) => message.title === "FA 협상 결과",
+      ),
+    ).toBe(false);
+  });
+
+  it("creates one weekly squad report instead of multiple training alerts", () => {
+    const previousCareer = createCompetitionCareer();
+    const starterIds = Object.values(previousCareer.userTeam.roster).filter(
+      (playerId): playerId is string => Boolean(playerId),
+    );
+    const nextCareer = {
+      ...previousCareer,
+      lckPlayers: previousCareer.lckPlayers.map((player) => {
+        if (player.id === starterIds[0]) {
+          return {
+            ...player,
+            status: {
+              ...player.status,
+              condition: 50,
+            },
+          };
+        }
+
+        if (player.id === starterIds[1]) {
+          return {
+            ...player,
+            status: {
+              ...player.status,
+              fatigue: 90,
+            },
+          };
+        }
+
+        return player;
+      }),
+    };
+    const messages = createSquadReportMessages({
+      lastMatchPlayed: true,
+      nextCareer,
+      previousCareer,
+    });
+
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toEqual(
+      expect.objectContaining({
+        category: "training",
+        priority: "urgent",
+        source: "club",
+        title: "주간 선수단 리포트",
+      }),
+    );
+    expect(messages[0].body).toContain("컨디션 50");
+    expect(messages[0].body).toContain("피로도 90");
+  });
+
+  it("creates a stable weekly squad report when the competition week changes", () => {
+    const previousCareer = createCompetitionCareer();
+    const nextCareer = {
+      ...previousCareer,
+      seasonState: {
+        ...previousCareer.seasonState,
+        currentWeek: previousCareer.seasonState.currentWeek + 1,
+      },
+    };
+    const messages = createSquadReportMessages({
+      nextCareer,
+      previousCareer,
+    });
+
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toEqual(
+      expect.objectContaining({
+        category: "training",
+        priority: "normal",
+        source: "club",
+        title: "주간 선수단 리포트",
+      }),
+    );
+    expect(messages[0].body).toContain("선발 평균 컨디션");
+    expect(messages[0].body).toContain("평균 피로도");
   });
 
   it("keeps short message titles and moves details into the body", () => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { InboxSubPage } from "../../app/routes";
+import type { AppRoute, InboxSubPage, RouteSubPage } from "../../app/routes";
 import {
   careerMessageCategoryLabels,
   careerMessagePriorityLabels,
@@ -16,6 +16,12 @@ type InboxProps = {
   subPage?: InboxSubPage | null;
   onMarkAllRead: () => void;
   onMarkRead: (messageId: string) => void;
+  onGoTo: (
+    route: AppRoute,
+    options?: {
+      subPage?: RouteSubPage | null;
+    },
+  ) => void;
   onSubPageChange: (subPage: InboxSubPage) => void;
 };
 
@@ -80,7 +86,64 @@ function getFilterCount(messages: CareerMessage[], filter: InboxFilter) {
   return messages.filter((message) => message.category === filter).length;
 }
 
-function MessageDetail({ message }: { message: CareerMessage | undefined }) {
+function getMessageAction(message: CareerMessage) {
+  if (message.title === "주간 선수단 리포트") {
+    return {
+      label: "주간 계획으로 이동",
+      route: "match-week" as const,
+      subPage: "plan" as const,
+    };
+  }
+
+  if (message.title === "스토브리그 주간 요약") {
+    return {
+      label: "스토브리그로 이동",
+      route: "offseason" as const,
+      subPage: "overview" as const,
+    };
+  }
+
+  return null;
+}
+
+function MessageBody({ body }: { body: string }) {
+  const lines = body
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length <= 1) {
+    return <p className="inbox-detail-body">{body}</p>;
+  }
+
+  const [title, ...detailLines] = lines;
+  const bullets = detailLines.filter((line) => line.startsWith("- "));
+  const footerLines = detailLines.filter((line) => !line.startsWith("- "));
+
+  return (
+    <div className="inbox-report-body">
+      <strong className="inbox-report-title">{title}</strong>
+      {bullets.length > 0 && (
+        <ul className="inbox-report-list">
+          {bullets.map((line) => (
+            <li key={line}>{line.slice(2)}</li>
+          ))}
+        </ul>
+      )}
+      {footerLines.map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+    </div>
+  );
+}
+
+function MessageDetail({
+  message,
+  onGoTo,
+}: {
+  message: CareerMessage | undefined;
+  onGoTo: InboxProps["onGoTo"];
+}) {
   if (!message) {
     return (
       <section className="inbox-detail inbox-detail-empty">
@@ -90,6 +153,8 @@ function MessageDetail({ message }: { message: CareerMessage | undefined }) {
       </section>
     );
   }
+
+  const messageAction = getMessageAction(message);
 
   return (
     <section className="inbox-detail">
@@ -106,7 +171,21 @@ function MessageDetail({ message }: { message: CareerMessage | undefined }) {
           {careerMessagePriorityLabels[message.priority]}
         </span>
       </div>
-      <p>{message.body}</p>
+      <MessageBody body={message.body} />
+      {messageAction && (
+        <div className="inbox-detail-actions">
+          <Button
+            onClick={() =>
+              onGoTo(messageAction.route, {
+                subPage: messageAction.subPage,
+              })
+            }
+            type="button"
+          >
+            {messageAction.label}
+          </Button>
+        </div>
+      )}
       <dl className="inbox-detail-meta">
         <div>
           <dt>상태</dt>
@@ -127,6 +206,7 @@ export function Inbox({
   career,
   onMarkAllRead,
   onMarkRead,
+  onGoTo,
   onSubPageChange,
   subPage,
 }: InboxProps) {
@@ -226,7 +306,7 @@ export function Inbox({
             ))
           )}
         </section>
-        <MessageDetail message={selectedMessage} />
+        <MessageDetail message={selectedMessage} onGoTo={onGoTo} />
       </div>
     </section>
   );

@@ -82,6 +82,7 @@ export function AppRouteRenderer({
     return (
       <InboxPage
         subPage={inboxSubPage}
+        onGoTo={onGoTo}
         onSubPageChange={onInboxSubPageChange}
       />
     );
