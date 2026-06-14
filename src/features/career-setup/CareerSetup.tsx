@@ -1,22 +1,38 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { getLckTeamDisplayName, lck2026Teams } from "../../data/lckTeams";
 import { formatSalaryAmount } from "../../shared/format/money";
 import { Button } from "../../shared/ui/Button";
 import { Card } from "../../shared/ui/Card";
 import { TeamLogo } from "../../shared/ui/TeamLogo";
 import type { CareerStartMode } from "../../domain/career/createInitialCareer";
+import { GameGuideModal } from "../game-guide";
 
 type CareerSetupProps = {
   savePanel?: ReactNode;
   onStart: (teamName: string, startMode?: CareerStartMode) => void;
+  showGameGuideOnEntry?: boolean;
 };
 
-export function CareerSetup({ savePanel, onStart }: CareerSetupProps) {
-  const defaultTeam = lck2026Teams.find((team) => team.shortName === "T1") ?? lck2026Teams[0];
+export function CareerSetup({
+  savePanel,
+  onStart,
+  showGameGuideOnEntry = false,
+}: CareerSetupProps) {
+  const defaultTeam =
+    lck2026Teams.find((team) => team.shortName === "T1") ?? lck2026Teams[0];
   const [selectedTeamId, setSelectedTeamId] = useState(defaultTeam.id);
   const [useRealRosterStart, setUseRealRosterStart] = useState(false);
+  const [isGameGuideOpen, setIsGameGuideOpen] = useState(false);
+  const hasAutoOpenedGameGuide = useRef(false);
   const selectedTeam =
     lck2026Teams.find((team) => team.id === selectedTeamId) ?? defaultTeam;
+
+  useEffect(() => {
+    if (showGameGuideOnEntry && !hasAutoOpenedGameGuide.current) {
+      hasAutoOpenedGameGuide.current = true;
+      setIsGameGuideOpen(true);
+    }
+  }, [showGameGuideOnEntry]);
 
   return (
     <section className="stack">
@@ -29,6 +45,13 @@ export function CareerSetup({ savePanel, onStart }: CareerSetupProps) {
             2026 LCK 기존 선수단으로 프리시즌 스토브리그를 시작합니다.
           </p>
         </div>
+        <Button
+          className="career-game-guide-button"
+          onClick={() => setIsGameGuideOpen(true)}
+          variant="ghost"
+        >
+          게임 가이드
+        </Button>
       </header>
 
       <Card>
@@ -112,6 +135,9 @@ export function CareerSetup({ savePanel, onStart }: CareerSetupProps) {
         </div>
       </Card>
       {savePanel}
+      {isGameGuideOpen && (
+        <GameGuideModal onClose={() => setIsGameGuideOpen(false)} />
+      )}
     </section>
   );
 }

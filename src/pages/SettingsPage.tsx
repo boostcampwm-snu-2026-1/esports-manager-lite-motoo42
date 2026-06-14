@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useGameDispatch, useGameSelector } from "../app/GameProvider";
 import { gameActions } from "../app/state";
 import {
   appSettingDefinitions,
   type AppSettingDefinition,
 } from "../domain/settings/appSettings";
+import { GameGuideModal } from "../features/game-guide";
+import { Button } from "../shared/ui/Button";
 import { Card } from "../shared/ui/Card";
 
 function getScopeLabel(scope: AppSettingDefinition["scope"]) {
@@ -18,6 +21,7 @@ export function SettingsPage() {
   const appSettings = useGameSelector((state) => state.appSettings);
   const career = useGameSelector((state) => state.career);
   const dispatch = useGameDispatch();
+  const [isGameGuideOpen, setIsGameGuideOpen] = useState(false);
   const plannedSettings = appSettingDefinitions.filter(
     (option) => option.status === "planned",
   );
@@ -68,6 +72,11 @@ export function SettingsPage() {
               표시 여부는 전역 설정으로, 읽음 상태는 현재 커리어 저장 데이터로
               관리합니다.
             </p>
+            <div className="settings-guide-actions">
+              <Button variant="ghost" onClick={() => setIsGameGuideOpen(true)}>
+                게임 기초 가이드 보기
+              </Button>
+            </div>
             {career && (
               <p className="settings-save-note">
                 {career.userTeam.name} 커리어에는 가이드 읽음 상태와 플레이 흐름
@@ -103,6 +112,9 @@ export function SettingsPage() {
           </div>
         </div>
       </Card>
+      {isGameGuideOpen && (
+        <GameGuideModal onClose={() => setIsGameGuideOpen(false)} />
+      )}
     </section>
   );
 }
