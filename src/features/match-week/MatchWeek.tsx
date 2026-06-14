@@ -79,7 +79,10 @@ export function MatchWeek({
               <p className="eyebrow">{subPageTitle.eyebrow}</p>
               <h2>{subPageTitle.title}</h2>
             </div>
-            <span>{subPageTitle.description}</span>
+            <div className="match-week-subpage-meta">
+              <span>{subPageTitle.description}</span>
+              <Button onClick={onViewCalendar}>시즌 일정 보기</Button>
+            </div>
           </div>
           {activeSubPage === "report" ? (
             <OpponentReportView opponentReport={opponentReport} />
@@ -93,9 +96,6 @@ export function MatchWeek({
               onRunTodayScrim={onRunTodayScrim}
             />
           )}
-          <div className="match-week-actions">
-            <Button onClick={onViewCalendar}>시즌 일정 보기</Button>
-          </div>
         </section>
       </div>
     </section>

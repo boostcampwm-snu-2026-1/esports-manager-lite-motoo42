@@ -43,6 +43,29 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow: hidden;
+  background: #05070d;
+}
+
+.game-viewport-frame {
+  display: grid;
+  width: 100vw;
+  height: 100dvh;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 12%, rgb(79 70 229 / 18%), transparent 34%),
+    linear-gradient(135deg, #03050a 0%, #080b13 52%, #05070d 100%);
+}
+
+.game-viewport-stage {
+  --game-stage-height: min(100dvh, calc(100vw * 9 / 16));
+
+  position: relative;
+  width: min(100vw, calc(100dvh * 16 / 9));
+  height: var(--game-stage-height);
+  overflow: hidden;
+  background: #090d17;
+  box-shadow: 0 0 0 1px rgb(148 163 184 / 12%);
 }
 
 .small-screen-guard {
@@ -110,7 +133,7 @@ select {
 .app-shell {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
-  height: 100dvh;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
   background:
@@ -131,7 +154,7 @@ select {
 
 .app-shell-simple {
   display: block;
-  height: 100dvh;
+  height: 100%;
   min-height: 0;
   overflow: auto;
   padding: 32px;
@@ -144,7 +167,7 @@ select {
 
 .app-main-simple {
   display: grid;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100% - 64px);
   align-content: center;
 }
 
@@ -152,7 +175,7 @@ select {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 18px;
-  height: 100dvh;
+  height: 100%;
   min-height: 0;
   overflow: auto;
   padding: 16px 14px;
@@ -788,7 +811,7 @@ select {
 }
 
 .shell-submenu {
-  height: 100dvh;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
   padding: 18px 14px;
@@ -848,7 +871,7 @@ select {
 .shell-content {
   display: grid;
   grid-template-rows: auto 1fr;
-  height: 100dvh;
+  height: 100%;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -1078,7 +1101,7 @@ select {
 }
 
 .save-manager-confirm-backdrop {
-  position: fixed;
+  position: absolute;
   z-index: 180;
   inset: 0;
   display: grid;
@@ -1252,7 +1275,7 @@ select {
 }
 
 .game-progress-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 100;
   display: grid;
@@ -2030,6 +2053,65 @@ h1 {
   margin-bottom: 18px;
 }
 
+.match-week-report-view {
+  display: grid;
+  gap: 10px;
+}
+
+.match-week-report-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(128px, 160px);
+  gap: 10px;
+  align-items: stretch;
+  border: 1px solid #253048;
+  border-radius: 8px;
+  padding: 12px;
+  background: #0d1424;
+}
+
+.match-week-report-hero h3 {
+  margin: 0 0 4px;
+  font-size: 1.12rem;
+}
+
+.match-week-report-hero p {
+  margin: 0;
+  color: #b8c4d8;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.match-week-report-score {
+  display: grid;
+  gap: 3px;
+  place-items: center;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 10px;
+  background: #111827;
+  text-align: center;
+}
+
+.match-week-report-score span,
+.match-week-report-insight-grid span {
+  color: #93c5fd;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.match-week-report-score strong {
+  color: #ffffff;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.match-week-report-score small {
+  color: #c7d2fe;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
 .match-week-report-grid article {
   display: grid;
   gap: 4px;
@@ -2059,6 +2141,33 @@ h1 {
   grid-column: span 2;
 }
 
+.match-week-report-fact-grid {
+  margin-bottom: 0;
+}
+
+.match-week-report-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.match-week-report-insight-grid article {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border: 1px solid #253048;
+  border-radius: 8px;
+  padding: 10px;
+  background: #0d1424;
+}
+
+.match-week-report-insight-grid strong {
+  color: #e8edf6;
+  font-size: 0.84rem;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
 .match-week-subpage-heading {
   display: flex;
   gap: 12px;
@@ -2076,6 +2185,17 @@ h1 {
   font-size: 0.84rem;
   line-height: 1.4;
   text-align: right;
+}
+
+.match-week-subpage-meta {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.match-week-subpage-meta .button {
+  min-height: 34px;
+  padding: 6px 11px;
 }
 
 .match-week-workspace-card {
@@ -2372,7 +2492,7 @@ h1 {
   display: grid;
   gap: 16px;
   width: min(760px, 100%);
-  max-height: min(780px, calc(100dvh - 48px));
+  max-height: min(780px, calc(var(--game-stage-height) - 48px));
   overflow: auto;
   border: 1px solid #475569;
   border-radius: 8px;
@@ -2582,7 +2702,7 @@ h1 {
 }
 
 .lck-standings-scroll {
-  max-height: min(610px, calc(100dvh - 310px));
+  max-height: min(610px, calc(var(--game-stage-height) - 310px));
   overflow: auto;
   border: 1px solid #253048;
   border-top: 0;
@@ -2669,7 +2789,7 @@ h1 {
 .lck-schedule-scroll {
   display: grid;
   gap: 10px;
-  max-height: min(650px, calc(100dvh - 300px));
+  max-height: min(650px, calc(var(--game-stage-height) - 300px));
   overflow: auto;
   padding-right: 4px;
   scrollbar-gutter: stable;
@@ -5208,7 +5328,7 @@ h1 {
 }
 
 .modal-backdrop {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 50;
   display: grid;
@@ -5222,7 +5342,7 @@ h1 {
   display: grid;
   gap: 16px;
   width: min(1040px, calc(100vw - 48px));
-  max-height: min(860px, calc(100dvh - 48px));
+  max-height: min(860px, calc(var(--game-stage-height) - 48px));
   overflow: auto;
   border: 1px solid #475569;
   border-radius: 8px;
@@ -5283,7 +5403,7 @@ h1 {
   display: grid;
   gap: 16px;
   width: min(720px, 100%);
-  max-height: min(760px, calc(100dvh - 48px));
+  max-height: min(760px, calc(var(--game-stage-height) - 48px));
   overflow: auto;
   border: 1px solid #475569;
   border-radius: 8px;
@@ -5520,6 +5640,50 @@ h1 {
 .strategy-panel {
   display: grid;
   gap: 16px;
+}
+
+.weekly-plan-dashboard {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.1fr);
+  gap: 10px;
+}
+
+.weekly-plan-focus {
+  align-content: start;
+}
+
+.weekly-plan-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.weekly-plan-card-grid article {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border: 1px solid #303a52;
+  border-radius: 8px;
+  padding: 11px;
+  background: #111827;
+}
+
+.weekly-plan-card-grid article:last-child {
+  grid-column: 1 / -1;
+}
+
+.weekly-plan-card-grid span {
+  color: #93c5fd;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.weekly-plan-card-grid strong {
+  color: #e8edf6;
+  font-size: 0.84rem;
+  font-weight: 750;
+  line-height: 1.4;
 }
 
 .strategy-plan-summary,
@@ -5912,7 +6076,7 @@ h1 {
 }
 
 .season-summary-page {
-  max-width: 1180px;
+  width: 100%;
 }
 
 .season-summary-header {
@@ -5967,6 +6131,51 @@ h1 {
 
 .season-history-card strong {
   font-size: 1.06rem;
+}
+
+.season-summary-board {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 0.92fr)
+    minmax(0, 1.08fr)
+    minmax(250px, 0.9fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.season-summary-board > .card {
+  min-width: 0;
+}
+
+.season-summary-record-card {
+  grid-column: 1 / span 2;
+  grid-row: 1;
+}
+
+.season-summary-market-card {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.season-summary-competition-card {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.season-summary-player-card {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.season-summary-next-card {
+  grid-column: 3;
+  grid-row: 2;
+  align-content: start;
+}
+
+.season-summary-record-card .season-summary-metrics,
+.season-summary-market-card .season-summary-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .season-summary-status span,
@@ -6072,6 +6281,23 @@ h1 {
 .season-renewal-panel {
   display: grid;
   gap: 12px;
+}
+
+.season-summary-page .season-competition-results,
+.season-summary-page .season-renewal-list,
+.season-summary-page .season-offseason-log-list,
+.season-summary-page .season-player-change-list {
+  max-height: 160px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.season-summary-page .season-renewal-list {
+  max-height: 180px;
+}
+
+.season-summary-expired-note {
+  margin: 0;
 }
 
 .season-renewal-row .contract-select {
@@ -7369,7 +7595,7 @@ h1 {
   grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-template-rows: 34px repeat(6, minmax(84px, 1fr));
   grid-auto-rows: minmax(84px, 1fr);
-  min-height: min(560px, calc(100dvh - 320px));
+  min-height: min(560px, calc(var(--game-stage-height) - 320px));
   overflow: auto;
   border: 1px solid #253048;
   border-radius: 8px;
@@ -7615,10 +7841,15 @@ h1 {
   .signed-player-row,
   .season-summary-header,
   .season-history-timeline,
+  .season-summary-board,
   .season-summary-grid,
   .season-summary-metrics,
   .season-competition-result,
   .season-renewal-row,
+  .match-week-report-hero,
+  .match-week-report-insight-grid,
+  .weekly-plan-dashboard,
+  .weekly-plan-card-grid,
   .match-hub-grid,
   .match-side-stack,
   .match-metric-strip,
@@ -7731,6 +7962,11 @@ h1 {
 
   .match-week-report-grid {
     grid-template-columns: 1fr;
+  }
+
+  .season-summary-next-card {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .offseason-offer-controls select,
@@ -8318,7 +8554,7 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .settings-page {
-  max-width: 1180px;
+  width: 100%;
 }
 
 .settings-hero {
@@ -8534,6 +8770,13 @@ button.opponent-analysis-panel:focus-visible {
 .settings-page,
 .inbox-page {
   gap: 14px;
+}
+
+.match-week-page,
+.season-summary-page,
+.settings-page {
+  width: 100%;
+  max-width: none;
 }
 
 .main-hub .hub-panel,
@@ -8873,7 +9116,8 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .season-summary-page > .card,
-.season-summary-page .season-summary-grid > .card {
+.season-summary-page .season-summary-grid > .card,
+.season-summary-page .season-summary-board > .card {
   gap: 10px;
   padding: 14px;
 }
@@ -8900,6 +9144,10 @@ button.opponent-analysis-panel:focus-visible {
   gap: 4px;
   min-height: 82px;
   padding: 10px;
+}
+
+.season-summary-board {
+  gap: 10px;
 }
 
 .season-summary-page .season-summary-metric {
@@ -9029,7 +9277,8 @@ button.opponent-analysis-panel:focus-visible {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
-  max-width: 1120px;
+  width: 100%;
+  max-width: none;
 }
 
 .match-week-layout > .card {
@@ -9287,7 +9536,7 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .settings-overview-grid {
-  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.05fr);
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 1fr);
   gap: 0.75rem;
 }
 
@@ -9326,6 +9575,30 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 @media (max-width: 980px) {
+  .season-summary-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .season-summary-record-card,
+  .season-summary-market-card,
+  .season-summary-competition-card,
+  .season-summary-player-card,
+  .season-summary-next-card {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .season-summary-record-card .season-summary-metrics,
+  .season-summary-market-card .season-summary-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .match-week-report-hero,
+  .match-week-report-insight-grid,
+  .weekly-plan-dashboard {
+    grid-template-columns: 1fr;
+  }
+
   .inbox-filter-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -9419,6 +9692,11 @@ button.opponent-analysis-panel:focus-visible {
 
   .match-hub-grid,
   .match-week-layout,
+  .season-summary-board,
+  .match-week-report-hero,
+  .match-week-report-insight-grid,
+  .weekly-plan-dashboard,
+  .weekly-plan-card-grid,
   .offseason-overview-grid,
   .settings-field-row,
   .settings-overview-grid,
@@ -9455,7 +9733,7 @@ button.opponent-analysis-panel:focus-visible {
   }
 
   .game-guide-modal {
-    max-height: calc(100dvh - 32px);
+    max-height: calc(var(--game-stage-height) - 32px);
   }
 
   .game-guide-point-list article {
