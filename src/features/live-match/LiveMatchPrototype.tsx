@@ -24,7 +24,9 @@ export function LiveMatchPrototype({
   onExit,
   series,
 }: LiveMatchPrototypeProps) {
-  const [screen, setScreen] = useState<"match" | "draft">("match");
+  // Each set opens on its banpick screen; the match only starts when the user
+  // hits 경기 시작, so the draft is always seen first.
+  const [screen, setScreen] = useState<"match" | "draft">("draft");
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const setId = getLiveMatchSetId(career);
   const presentation = useMemo(
@@ -40,11 +42,20 @@ export function LiveMatchPrototype({
 
   const goToNextSet = useCallback(() => {
     setCurrentSetIndex((index) => Math.min(index + 1, sets.length - 1));
+    setScreen("draft");
   }, [sets.length]);
 
-  // No auto-advance: a finished set holds on its final stats until the user
-  // chooses to move on, so it never rushes past the set result.
-  const playback = useMatchPlayback({ timeline: baseSet.timeline });
+  // No auto-advance and no auto-start: each set waits on its draft screen, and a
+  // finished set holds on its final stats until the user chooses to move on.
+  const playback = useMatchPlayback({
+    autoPlay: false,
+    timeline: baseSet.timeline,
+  });
+
+  const startSet = useCallback(() => {
+    setScreen("match");
+    playback.play();
+  }, [playback]);
 
   const liveTeams = useMemo(
     () =>
@@ -117,7 +128,7 @@ export function LiveMatchPrototype({
         setCount={sets.length}
       />
       {screen === "draft" ? (
-        <LiveDraftScreen onShowMatch={() => setScreen("match")} set={liveSet} />
+        <LiveDraftScreen onShowMatch={startSet} set={liveSet} />
       ) : (
         <LiveMatchScreen
           commentary={commentary}

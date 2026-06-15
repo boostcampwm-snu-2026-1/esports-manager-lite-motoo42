@@ -124,7 +124,7 @@ export function LiveDraftScreen({ onShowMatch, set }: LiveDraftScreenProps) {
           <strong>12s</strong>
         </div>
         <button type="button" onClick={onShowMatch}>
-          경기 화면으로
+          경기 시작
         </button>
       </header>
       <FearlessPool draft={set.draft} />

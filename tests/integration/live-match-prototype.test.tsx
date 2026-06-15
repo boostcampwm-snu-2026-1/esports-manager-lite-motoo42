@@ -10,11 +10,35 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+// Each set opens on the draft screen; start the match before exercising it.
+function renderAndStart() {
+  const utils = render(<LiveMatchPrototype career={null} onExit={() => {}} />);
+
+  act(() => {
+    fireEvent.click(screen.getByText("경기 시작"));
+  });
+
+  return utils;
+}
+
 describe("LiveMatchPrototype", () => {
-  it("plays an engine-driven match and reveals commentary over time", () => {
+  it("opens on the draft screen and starts the match on 경기 시작", () => {
     const { container } = render(
       <LiveMatchPrototype career={null} onExit={() => {}} />,
     );
+
+    expect(container.querySelector(".live-draft-screen")).toBeTruthy();
+    expect(container.querySelector(".live-match-main")).toBeNull();
+
+    act(() => {
+      fireEvent.click(screen.getByText("경기 시작"));
+    });
+
+    expect(container.querySelector(".live-match-main")).toBeTruthy();
+  });
+
+  it("plays an engine-driven match and reveals commentary over time", () => {
+    const { container } = renderAndStart();
 
     act(() => {
       vi.advanceTimersByTime(2_000);
@@ -32,9 +56,7 @@ describe("LiveMatchPrototype", () => {
   });
 
   it("renders a live 10-player stat board with KDA after playback", () => {
-    const { container } = render(
-      <LiveMatchPrototype career={null} onExit={() => {}} />,
-    );
+    const { container } = renderAndStart();
 
     act(() => {
       vi.advanceTimersByTime(70_000);
@@ -45,7 +67,7 @@ describe("LiveMatchPrototype", () => {
   });
 
   it("jumps to the result when 세트 결과 is pressed", () => {
-    render(<LiveMatchPrototype career={null} onExit={() => {}} />);
+    renderAndStart();
 
     act(() => {
       fireEvent.click(screen.getByText("세트 결과"));
@@ -55,9 +77,7 @@ describe("LiveMatchPrototype", () => {
   });
 
   it("filters the feed down to swing moments under 핵심 상황", () => {
-    const { container } = render(
-      <LiveMatchPrototype career={null} onExit={() => {}} />,
-    );
+    const { container } = renderAndStart();
 
     act(() => {
       fireEvent.click(screen.getByText("세트 결과"));
@@ -73,7 +93,7 @@ describe("LiveMatchPrototype", () => {
   });
 
   it("pauses playback when 일시정지 is pressed", () => {
-    render(<LiveMatchPrototype career={null} onExit={() => {}} />);
+    renderAndStart();
 
     act(() => {
       vi.advanceTimersByTime(6_000);
