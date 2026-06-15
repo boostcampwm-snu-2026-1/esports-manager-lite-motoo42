@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import {
   applyStatSnapshotToTeams,
   createMockLiveMatchPresentation,
+  getLiveMatchSetId,
 } from "../../domain/live-match";
 import type { CareerSave } from "../../types/game";
 import { LiveDraftScreen } from "./components/LiveDraftScreen";
@@ -18,9 +19,14 @@ type LiveMatchPrototypeProps = {
 
 export function LiveMatchPrototype({ career, onExit }: LiveMatchPrototypeProps) {
   const [screen, setScreen] = useState<"match" | "draft">("match");
+  const setId = getLiveMatchSetId(career);
   const presentation = useMemo(
     () => createMockLiveMatchPresentation(career),
-    [career],
+    // Freeze the replay by set id (step 7 matchId freeze): career may change
+    // mid-replay (e.g. autosave), but the played match is fixed — rebuilding the
+    // timeline would reset playback. career is read only when the set id changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setId],
   );
   const playback = useMatchPlayback({ timeline: presentation.timeline });
 

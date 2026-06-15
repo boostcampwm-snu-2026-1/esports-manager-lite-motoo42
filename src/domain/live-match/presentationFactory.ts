@@ -68,6 +68,20 @@ function getPrimaryReviewResult(career: CareerSave | null) {
   return undefined;
 }
 
+// Stable id for the current live-match set — the played record's id (frozen for
+// the replay), else the upcoming match id, else the prototype key. Used to
+// memoize the presentation so career changes mid-replay don't rebuild the
+// timeline (which would reset playback).
+export function getLiveMatchSetId(career: CareerSave | null): string {
+  const reviewResult = getPrimaryReviewResult(career);
+
+  if (reviewResult) {
+    return reviewResult.record.id;
+  }
+
+  return getPrimaryPreviewMatch(career)?.id ?? "mock-live-match";
+}
+
 function getTeamNameForSide(match: MatchSchedule | undefined, side: "blue" | "red") {
   if (!match) {
     return side === "blue" ? "T1" : "Gen.G";

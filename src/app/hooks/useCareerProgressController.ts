@@ -106,7 +106,14 @@ export function useCareerProgressController({
       if (pendingResult) {
         dispatch(gameActions.commitProgressResult(pendingResult));
 
-        const nextRoute = getRouteForCareer(pendingResult.career);
+        // "match-review" is only reached right after the user plays their own
+        // match, so route into the live-match replay; exiting it returns to the
+        // normal post-match destination (main dashboard review).
+        const playedUserMatch =
+          pendingResult.career.seasonState.progressStatus === "match-review";
+        const nextRoute = playedUserMatch
+          ? "live-match"
+          : getRouteForCareer(pendingResult.career);
         const targetPath = getPathForRoute(
           nextRoute,
           nextRoute === "competition-dashboard"

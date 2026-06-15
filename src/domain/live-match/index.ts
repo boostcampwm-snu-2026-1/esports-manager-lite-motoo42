@@ -1,4 +1,5 @@
 export { createMockLiveMatchPresentation } from "./mockPresentation";
+export { getLiveMatchSetId } from "./presentationFactory";
 export { liveMatchRoleLabels, liveMatchRoles } from "./mockDraft";
 export { getLiveMatchUserTeamId } from "./playerSelection";
 export {
