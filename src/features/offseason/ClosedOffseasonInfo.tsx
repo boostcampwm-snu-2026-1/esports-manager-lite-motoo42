@@ -8,6 +8,7 @@ import { PlayerDetailModal } from "../../shared/ui/PlayerDetailModal";
 import { PlayerPortrait } from "../../shared/ui/PlayerPortrait";
 import type { CareerSave, Player, Role } from "../../types/game";
 import { OffseasonLogTeamSelect } from "./LogTab";
+import { OffseasonAllPlayersPanel } from "./OffseasonAllPlayersPanel";
 import {
   getActiveSalaryTotal,
   getClosedMarketPlayers,
@@ -309,6 +310,12 @@ export function ClosedOffseasonInfo({
       {activeSubPage === "overview" && <ClosedMarketOverviewPanel career={career} />}
       {activeSubPage === "free-agents" && (
         <ClosedMarketFreeAgentPanel
+          career={career}
+          onViewPlayer={(player) => setDetailPlayerId(player.id)}
+        />
+      )}
+      {activeSubPage === "all-players" && (
+        <OffseasonAllPlayersPanel
           career={career}
           onViewPlayer={(player) => setDetailPlayerId(player.id)}
         />

@@ -200,6 +200,12 @@ function getOffseasonSubMenuItems(): ShellSubMenuItem[] {
       subPage: "free-agents",
     },
     {
+      id: "all-players",
+      label: "선수 명부",
+      route: "offseason",
+      subPage: "all-players",
+    },
+    {
       id: "schedule",
       label: "일정 안내",
       route: "offseason",

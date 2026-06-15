@@ -53,9 +53,12 @@ export function PlayerDetailModal({
   const careerEntries = getPlayerCareerEntries(player);
   const overall = computeRoleOverall(player);
   const overallTier = getAttributeTier(overall);
+  // Only the user team's contracts are modelled (Team.contracts). For every other
+  // player — and the user's own players viewed from screens that don't pass the
+  // contract — default the term to 1 year so the field is never a bare "—".
   const contractTerm = contract
     ? `${contract.guaranteedYears}년${contract.optionYear ? " +옵션" : ""}`
-    : "—";
+    : "1년";
   const salaryLabel = contract ? "연봉" : "예상 연봉";
   const salaryValue = formatSalaryAmount(
     contract ? contract.salary : player.salaryExpectation,

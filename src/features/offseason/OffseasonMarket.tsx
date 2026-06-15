@@ -14,6 +14,7 @@ import { ContractOfferModal } from "./ContractOfferModal";
 import { ContractTab } from "./ContractTab";
 import { FreeAgentTab } from "./FreeAgentTab";
 import { LogTab } from "./LogTab";
+import { OffseasonAllPlayersPanel } from "./OffseasonAllPlayersPanel";
 import { RosterTab } from "./RosterTab";
 import {
   getOffseasonSubPageFromTab,
@@ -91,6 +92,15 @@ export function OffseasonMarket({
           onCancelFreeAgentSigning={onCancelFreeAgentSigning}
           onConfirmFreeAgentSigning={onConfirmFreeAgentSigning}
           onOpenNegotiation={setNegotiationTarget}
+          onViewPlayer={(player) => setDetailPlayerId(player.id)}
+        />
+      );
+    }
+
+    if (activeTab === "all-players") {
+      return (
+        <OffseasonAllPlayersPanel
+          career={career}
           onViewPlayer={(player) => setDetailPlayerId(player.id)}
         />
       );

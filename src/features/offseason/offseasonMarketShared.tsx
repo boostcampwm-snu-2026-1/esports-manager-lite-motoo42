@@ -22,7 +22,12 @@ import type {
   Role,
 } from "../../types/game";
 
-export type OffseasonTab = "contracts" | "free-agents" | "roster" | "log";
+export type OffseasonTab =
+  | "contracts"
+  | "free-agents"
+  | "all-players"
+  | "roster"
+  | "log";
 
 export type NegotiationMode = "renewal" | "free-agent";
 
@@ -62,6 +67,7 @@ export const requestedRosterRoleOptions: Array<{
 export const tabs: Array<{ id: OffseasonTab; label: string }> = [
   { id: "contracts", label: "내 팀 계약" },
   { id: "free-agents", label: "FA 시장" },
+  { id: "all-players", label: "선수 명부" },
   { id: "roster", label: "로스터 현황" },
   { id: "log", label: "이적 로그" },
 ];
@@ -69,6 +75,10 @@ export const tabs: Array<{ id: OffseasonTab; label: string }> = [
 export function getOffseasonSubPageFromTab(tab: OffseasonTab): OffseasonSubPage {
   if (tab === "free-agents") {
     return "free-agents";
+  }
+
+  if (tab === "all-players") {
+    return "all-players";
   }
 
   if (tab === "log") {
@@ -87,6 +97,10 @@ export function getOffseasonTabFromSubPage(
 ): OffseasonTab {
   if (subPage === "free-agents") {
     return "free-agents";
+  }
+
+  if (subPage === "all-players") {
+    return "all-players";
   }
 
   if (subPage === "log") {
@@ -403,9 +417,20 @@ export function getClosedMarketPlayers(career: CareerSave) {
     career.seasonState.offseason?.freeAgentPlayerIds ?? [],
   );
   const knownPlayerIds = new Set(career.lckPlayers.map((player) => player.id));
+  // Seeds are merged into lckPlayers by NAME (not id), so a seed whose name is
+  // already a rostered player under a different id (e.g. fa-2026-cuzz vs
+  // lck-2026-kt-rolster-cuzz) must be deduped by name here too — otherwise it
+  // reappears as a phantom "무소속 FA" that the detail modal cannot resolve.
+  const knownPlayerNames = new Set(
+    career.lckPlayers.map((player) => player.name.trim().toLowerCase()),
+  );
   const displayPlayers = [
     ...career.lckPlayers,
-    ...offseasonFreeAgentSeeds.filter((player) => !knownPlayerIds.has(player.id)),
+    ...offseasonFreeAgentSeeds.filter(
+      (player) =>
+        !knownPlayerIds.has(player.id) &&
+        !knownPlayerNames.has(player.name.trim().toLowerCase()),
+    ),
   ];
 
   return displayPlayers

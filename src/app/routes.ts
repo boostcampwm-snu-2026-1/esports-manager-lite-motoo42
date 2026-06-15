@@ -29,7 +29,12 @@ export type RosterSubPage = "main" | "academy" | "contracts";
 
 export type InboxSubPage = "all" | "important" | "schedule" | "transfer";
 
-export type OffseasonSubPage = "overview" | "free-agents" | "schedule" | "log";
+export type OffseasonSubPage =
+  | "overview"
+  | "free-agents"
+  | "schedule"
+  | "log"
+  | "all-players";
 
 export type TrainingSubPage = "report" | "plan" | "strategy" | "scrim";
 
@@ -106,6 +111,7 @@ const offseasonSubPages = new Set<OffseasonSubPage>([
   "free-agents",
   "schedule",
   "log",
+  "all-players",
 ]);
 const trainingSubPages = new Set<TrainingSubPage>([
   "report",
