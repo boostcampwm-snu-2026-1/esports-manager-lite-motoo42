@@ -11057,6 +11057,15 @@ button.opponent-analysis-panel:focus-visible {
   line-height: 1;
 }
 
+.live-objective-dragons {
+  gap: 2px;
+  padding: 0 6px;
+}
+
+.live-objective-dragons svg {
+  display: block;
+}
+
 .live-objective-center {
   color: var(--live-gold);
   letter-spacing: 0.08em;

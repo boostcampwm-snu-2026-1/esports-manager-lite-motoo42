@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import type {
-  LiveMatchObjectiveSnapshot,
+  DragonType,
   LiveMatchSetPresentation,
   LiveMatchSide,
   LiveMatchTeamPresentation,
@@ -9,6 +9,7 @@ import type {
 } from "../../../domain/live-match";
 import type { LiveCommentaryEntry } from "../liveCommentaryView";
 import type { MatchPlayback } from "../useMatchPlayback";
+import { LiveDragonIcon } from "./LiveDragonIcon";
 import { LiveMatchIcon } from "./LiveMatchIcon";
 import { LivePlayerPortraitRail } from "./LivePlayerPortraitRail";
 import { LiveStatsBoard } from "./LiveStatsBoard";
@@ -21,32 +22,59 @@ type LiveMatchScreenProps = {
   set: LiveMatchSetPresentation;
 };
 
-const objectiveIcons: Array<{
-  key: keyof LiveMatchObjectiveSnapshot;
+const counterObjectives: Array<{
+  key: "heralds" | "barons" | "towers";
   label: string;
   type: MatchTimelineEventType;
 }> = [
-  { key: "dragons", type: "dragon", label: "드래곤" },
   { key: "heralds", type: "herald", label: "전령" },
   { key: "barons", type: "baron", label: "바론" },
   { key: "towers", type: "tower", label: "타워" },
 ];
 
+function DragonTrack({ side, types }: { side: LiveMatchSide; types: DragonType[] }) {
+  // Mirror the order on the red side so both teams' dragons read symmetrically
+  // outward from the centre.
+  const ordered = side === "blue" ? types : [...types].reverse();
+
+  return (
+    <span
+      className="live-objective-dragons"
+      aria-label={`드래곤 ${types.length}개`}
+      title="드래곤"
+    >
+      {ordered.length === 0 ? (
+        <LiveMatchIcon type="dragon" size={14} />
+      ) : (
+        ordered.map((type, index) => (
+          <LiveDragonIcon key={`${type}-${index}`} type={type} size={14} />
+        ))
+      )}
+    </span>
+  );
+}
+
 function ObjectiveRow({ side, team }: { side: LiveMatchSide; team: LiveMatchTeamPresentation }) {
-  const items = side === "blue" ? objectiveIcons : [...objectiveIcons].reverse();
+  const counters = side === "blue" ? counterObjectives : [...counterObjectives].reverse();
+  const counterCells = counters.map((objective) => (
+    <span
+      aria-label={`${team.name} ${objective.label} ${team.objectives[objective.key]}개`}
+      key={objective.key}
+      title={objective.label}
+    >
+      <LiveMatchIcon type={objective.type} size={15} />
+      {team.objectives[objective.key]}
+    </span>
+  ));
+  const dragonCell = (
+    <DragonTrack key="dragons" side={side} types={team.objectives.dragonTypes} />
+  );
 
   return (
     <div className={`live-objective-row live-objective-row-${side}`}>
-      {items.map((objective) => (
-        <span
-          aria-label={`${team.name} ${objective.label} ${team.objectives[objective.key]}개`}
-          key={objective.key}
-          title={objective.label}
-        >
-          <LiveMatchIcon type={objective.type} size={15} />
-          {team.objectives[objective.key]}
-        </span>
-      ))}
+      {side === "blue"
+        ? [dragonCell, ...counterCells]
+        : [...counterCells, dragonCell]}
     </div>
   );
 }
@@ -157,7 +185,11 @@ export function LiveMatchScreen({
                 <div>
                   <strong>
                     <span className="live-event-icon" aria-hidden="true">
-                      <LiveMatchIcon type={entry.type} size={16} />
+                      {entry.dragonType ? (
+                        <LiveDragonIcon type={entry.dragonType} size={16} />
+                      ) : (
+                        <LiveMatchIcon type={entry.type} size={16} />
+                      )}
                     </span>
                     {entry.title}
                     {entry.badgeLabel ? (

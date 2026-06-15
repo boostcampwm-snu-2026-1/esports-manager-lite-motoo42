@@ -124,6 +124,23 @@ describe("match commentary narration", () => {
     expect(nexus.badgeLabel).toBe("GG");
   });
 
+  it("names the elemental dragon and its soul", () => {
+    const dragon = narrateEvent(
+      event({ type: "dragon", side: "blue", dragonType: "infernal" }),
+      context,
+    );
+    const soul = narrateEvent(
+      event({ type: "soul", side: "red", advantage: "red", dragonType: "ocean" }),
+      context,
+    );
+
+    expect(dragon.title).toBe("화염 드래곤");
+    expect(dragon.body).toContain("화염");
+    expect(soul.title).toBe("바다 영혼");
+    expect(soul.badgeLabel).toBe("영혼");
+    expect(soul.body).toContain("바다");
+  });
+
   it("carries a neutral advantage through as a neutral tone", () => {
     const result = narrateEvent(
       event({

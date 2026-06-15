@@ -1,5 +1,6 @@
 import {
   narrateEvent,
+  type DragonType,
   type LiveCommentaryTone,
   type LiveNarrationContext,
   type MatchTimelineEvent,
@@ -13,6 +14,7 @@ import {
 export type LiveCommentaryEntry = {
   badgeLabel?: string;
   body: string;
+  dragonType?: DragonType;
   id: string;
   time: string;
   title: string;
@@ -38,6 +40,7 @@ export function buildCommentaryEntries(
     return {
       badgeLabel: narration.badgeLabel,
       body: narration.body,
+      dragonType: event.dragonType,
       id: event.id,
       time: formatClock(event.timeSec),
       title: narration.title,

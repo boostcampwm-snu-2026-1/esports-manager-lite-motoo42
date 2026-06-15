@@ -1,6 +1,15 @@
 import type { Role } from "../../types/game";
-import type { MatchTimelineEvent } from "./matchTimeline";
+import type { DragonType, MatchTimelineEvent } from "./matchTimeline";
 import type { LiveMatchEventAdvantage, LiveMatchSide } from "./types";
+
+const dragonLabel: Record<DragonType, string> = {
+  infernal: "화염",
+  mountain: "대지",
+  ocean: "바다",
+  cloud: "바람",
+  hextech: "마법공학",
+  chemtech: "화학공학",
+};
 
 // Deterministic Korean commentary for timeline events. No AI / network: this is
 // the narration step deferred out of the generator so prose stays out of the
@@ -83,15 +92,23 @@ export function narrateEvent(
   switch (event.type) {
     case "kill":
       return narrateKill(event, context, tone);
-    case "dragon":
-      return { body: `${team.name} 드래곤 획득`, title: "드래곤", tone };
-    case "soul":
+    case "dragon": {
+      const elemental = event.dragonType ? dragonLabel[event.dragonType] : null;
       return {
-        badgeLabel: "영혼",
-        body: `${team.name} 드래곤 영혼 확보`,
-        title: "드래곤 영혼",
+        body: `${team.name} ${elemental ? `${elemental} ` : ""}드래곤 획득`,
+        title: elemental ? `${elemental} 드래곤` : "드래곤",
         tone,
       };
+    }
+    case "soul": {
+      const elemental = event.dragonType ? dragonLabel[event.dragonType] : null;
+      return {
+        badgeLabel: "영혼",
+        body: `${team.name} ${elemental ? `${elemental} ` : ""}영혼 확보`,
+        title: elemental ? `${elemental} 영혼` : "드래곤 영혼",
+        tone,
+      };
+    }
     case "herald":
       return { body: `${team.name} 전령 확보`, title: "전령", tone };
     case "baron":
