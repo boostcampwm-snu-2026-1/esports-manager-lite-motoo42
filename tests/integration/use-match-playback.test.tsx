@@ -95,6 +95,53 @@ describe("useMatchPlayback", () => {
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
+  it("resets to the start of a new set when the timeline changes", () => {
+    const secondSet = generateMatchTimeline({
+      seed: "hook-set-2",
+      winningSide: "red",
+      dominance: 0.6,
+    });
+    const { result, rerender } = renderHook(
+      ({ tl }) => useMatchPlayback({ timeline: tl }),
+      { initialProps: { tl: timeline } },
+    );
+
+    act(() => {
+      result.current.skipToEnd();
+    });
+    expect(result.current.status).toBe("finished");
+
+    act(() => {
+      rerender({ tl: secondSet });
+    });
+
+    expect(result.current.status).toBe("playing");
+    expect(result.current.gameTimeSec).toBe(0);
+    expect(result.current.durationSec).toBe(secondSet.durationSec);
+    expect(result.current.revealedEvents).toHaveLength(0);
+  });
+
+  it("keeps the user's frequency choice across a set change", () => {
+    const secondSet = generateMatchTimeline({
+      seed: "hook-set-3",
+      winningSide: "blue",
+      dominance: 0.4,
+    });
+    const { result, rerender } = renderHook(
+      ({ tl }) => useMatchPlayback({ timeline: tl }),
+      { initialProps: { tl: timeline } },
+    );
+
+    act(() => {
+      result.current.setFrequency("core");
+    });
+    act(() => {
+      rerender({ tl: secondSet });
+    });
+
+    expect(result.current.frequency).toBe("core");
+  });
+
   it("shows fewer commentary events under the core frequency", () => {
     const { result } = renderHook(() => useMatchPlayback({ timeline }));
 

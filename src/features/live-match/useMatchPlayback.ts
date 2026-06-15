@@ -61,6 +61,18 @@ export function useMatchPlayback({
     initialFrequency,
   );
 
+  // Reset per-set playback state when a new timeline arrives (e.g. the next set
+  // of a BO3/BO5). Done during render — React's recommended pattern — so the new
+  // set never flashes the previous set's finished state for a frame. User
+  // preferences (speed, frequency) intentionally persist across sets.
+  const [trackedTimeline, setTrackedTimeline] = useState(timeline);
+
+  if (trackedTimeline !== timeline) {
+    setTrackedTimeline(timeline);
+    setProgress(0);
+    setStatus(autoPlay ? "playing" : "idle");
+  }
+
   const onCompleteRef = useRef(onComplete);
 
   useEffect(() => {

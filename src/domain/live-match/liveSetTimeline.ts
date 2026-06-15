@@ -28,7 +28,9 @@ function clamp(value: number, min: number, max: number) {
 // Prototype stand-in: until step 7 feeds the real SeriesResult, derive an outcome
 // from draft power alone. The winner is the better-drafting side; the win chance
 // stays in a gentle 0.55..0.70 band so dominance never reads as a blowout from
-// draft power alone (netDraftPower already ranges -10..10).
+// draft power alone (netDraftPower already ranges -10..10). A dead-even draft
+// (netDraftPower === 0) falls to blue — acceptable only because this is
+// prototype-only and step 7 replaces it with the real match winner.
 export function standInOutcomeFromDraftPower({
   netDraftPower,
   seed,
