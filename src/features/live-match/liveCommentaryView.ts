@@ -7,30 +7,17 @@ import {
 } from "../../domain/live-match";
 
 // View model for the commentary feed: combines the domain narration (title/body/
-// badge/tone) with a UI symbol and a clock string. Emoji symbols match the
-// existing objective bar so the live match keeps one icon vocabulary (the app
-// has no icon webfont loaded).
+// badge/tone) with the event type (the screen maps it to a Tabler icon) and a
+// clock string.
 
 export type LiveCommentaryEntry = {
   badgeLabel?: string;
   body: string;
-  icon: string;
   id: string;
   time: string;
   title: string;
   tone: LiveCommentaryTone;
-};
-
-const eventIcon: Record<MatchTimelineEventType, string> = {
-  baron: "🟣",
-  dragon: "🐉",
-  elder: "🐲",
-  herald: "👁",
-  inhibitor: "🧱",
-  kill: "⚔️",
-  nexus: "🏆",
-  soul: "🐉",
-  tower: "🏰",
+  type: MatchTimelineEventType;
 };
 
 export function formatClock(timeSec: number): string {
@@ -51,11 +38,11 @@ export function buildCommentaryEntries(
     return {
       badgeLabel: narration.badgeLabel,
       body: narration.body,
-      icon: eventIcon[event.type],
       id: event.id,
       time: formatClock(event.timeSec),
       title: narration.title,
       tone: narration.tone,
+      type: event.type,
     };
   });
 }

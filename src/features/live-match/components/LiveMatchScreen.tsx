@@ -3,9 +3,11 @@ import type {
   LiveMatchSetPresentation,
   LiveMatchSide,
   LiveMatchTeamPresentation,
+  MatchTimelineEventType,
 } from "../../../domain/live-match";
 import type { LiveCommentaryEntry } from "../liveCommentaryView";
 import type { MatchPlayback } from "../useMatchPlayback";
+import { LiveMatchIcon } from "./LiveMatchIcon";
 import { LivePlayerPortraitRail } from "./LivePlayerPortraitRail";
 import { LiveStatsBoard } from "./LiveStatsBoard";
 
@@ -20,14 +22,14 @@ type LiveMatchScreenProps = {
 const FEED_VISIBLE_LIMIT = 8;
 
 const objectiveIcons: Array<{
-  icon: string;
   key: keyof LiveMatchObjectiveSnapshot;
   label: string;
+  type: MatchTimelineEventType;
 }> = [
-  { key: "dragons", icon: "🐉", label: "드래곤" },
-  { key: "heralds", icon: "👁", label: "전령" },
-  { key: "barons", icon: "🟣", label: "바론" },
-  { key: "towers", icon: "🏰", label: "타워" },
+  { key: "dragons", type: "dragon", label: "드래곤" },
+  { key: "heralds", type: "herald", label: "전령" },
+  { key: "barons", type: "baron", label: "바론" },
+  { key: "towers", type: "tower", label: "타워" },
 ];
 
 function ObjectiveRow({ side, team }: { side: LiveMatchSide; team: LiveMatchTeamPresentation }) {
@@ -41,10 +43,31 @@ function ObjectiveRow({ side, team }: { side: LiveMatchSide; team: LiveMatchTeam
           key={objective.key}
           title={objective.label}
         >
-          <b>{objective.icon}</b>
+          <LiveMatchIcon type={objective.type} size={15} />
           {team.objectives[objective.key]}
         </span>
       ))}
+    </div>
+  );
+}
+
+function FrequencyToggle({ playback }: { playback: MatchPlayback }) {
+  return (
+    <div className="live-frequency-toggle" role="group" aria-label="문자중계 빈도">
+      <button
+        type="button"
+        aria-pressed={playback.frequency === "major"}
+        onClick={() => playback.setFrequency("major")}
+      >
+        주요 상황
+      </button>
+      <button
+        type="button"
+        aria-pressed={playback.frequency === "core"}
+        onClick={() => playback.setFrequency("core")}
+      >
+        핵심 상황
+      </button>
     </div>
   );
 }
@@ -73,6 +96,7 @@ export function LiveMatchScreen({
           <div className="live-commentary-hero">
             <h1>문자중계</h1>
             <div className="live-commentary-actions">
+              <FrequencyToggle playback={playback} />
               <button type="button" onClick={onShowDraft}>
                 밴픽 화면
               </button>
@@ -99,38 +123,6 @@ export function LiveMatchScreen({
             </div>
           </div>
 
-          <div className="live-commentary-controls">
-            <input
-              type="range"
-              className="live-scrubber"
-              min={0}
-              max={playback.durationSec}
-              value={Math.round(playback.gameTimeSec)}
-              aria-label="경기 시점"
-              onChange={(event) => playback.seek(Number(event.target.value))}
-            />
-            <div
-              className="live-frequency-toggle"
-              role="group"
-              aria-label="문자중계 빈도"
-            >
-              <button
-                type="button"
-                aria-pressed={playback.frequency === "major"}
-                onClick={() => playback.setFrequency("major")}
-              >
-                주요 상황
-              </button>
-              <button
-                type="button"
-                aria-pressed={playback.frequency === "core"}
-                onClick={() => playback.setFrequency("core")}
-              >
-                핵심 상황
-              </button>
-            </div>
-          </div>
-
           <div className="live-commentary-feed">
             {visibleCommentary.map((entry) => (
               <article
@@ -141,7 +133,7 @@ export function LiveMatchScreen({
                 <div>
                   <strong>
                     <span className="live-event-icon" aria-hidden="true">
-                      {entry.icon}
+                      <LiveMatchIcon type={entry.type} size={16} />
                     </span>
                     {entry.title}
                     {entry.badgeLabel ? (
