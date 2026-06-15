@@ -70,6 +70,7 @@ export function LiveMatchPrototype({ career, onExit }: LiveMatchPrototypeProps) 
           commentary={commentary}
           onExit={onExit}
           onShowDraft={() => setScreen("draft")}
+          playback={playback}
           set={liveSet}
         />
       )}

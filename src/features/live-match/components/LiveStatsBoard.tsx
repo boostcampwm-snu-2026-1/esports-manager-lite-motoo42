@@ -32,12 +32,27 @@ function PlayerStatRow({
   );
   const kda = (
     <div className="live-player-kda">
-      <b>{player.stats.kills}</b>/<b>{player.stats.deaths}</b>/<b>{player.stats.assists}</b>
+      <b className="live-pop" key={`k${player.stats.kills}`}>
+        {player.stats.kills}
+      </b>
+      /
+      <b className="live-pop" key={`d${player.stats.deaths}`}>
+        {player.stats.deaths}
+      </b>
+      /
+      <b className="live-pop" key={`a${player.stats.assists}`}>
+        {player.stats.assists}
+      </b>
     </div>
   );
   const metrics = (
     <div className="live-player-metrics">
-      <span>Lv {player.stats.level}</span>
+      <span>
+        Lv{" "}
+        <span className="live-pop" key={`lv${player.stats.level}`}>
+          {player.stats.level}
+        </span>
+      </span>
       <span>{player.stats.gold}</span>
     </div>
   );

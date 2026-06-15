@@ -5,6 +5,7 @@ import type {
   LiveMatchTeamPresentation,
 } from "../../../domain/live-match";
 import type { LiveCommentaryEntry } from "../liveCommentaryView";
+import type { MatchPlayback } from "../useMatchPlayback";
 import { LivePlayerPortraitRail } from "./LivePlayerPortraitRail";
 import { LiveStatsBoard } from "./LiveStatsBoard";
 
@@ -12,8 +13,11 @@ type LiveMatchScreenProps = {
   commentary: LiveCommentaryEntry[];
   onExit: () => void;
   onShowDraft: () => void;
+  playback: MatchPlayback;
   set: LiveMatchSetPresentation;
 };
+
+const FEED_VISIBLE_LIMIT = 8;
 
 const objectiveIcons: Array<{
   icon: string;
@@ -49,8 +53,11 @@ export function LiveMatchScreen({
   commentary,
   onExit,
   onShowDraft,
+  playback,
   set,
 }: LiveMatchScreenProps) {
+  const visibleCommentary = commentary.slice(-FEED_VISIBLE_LIMIT);
+
   return (
     <>
       <div className="live-objective-strip">
@@ -69,15 +76,63 @@ export function LiveMatchScreen({
               <button type="button" onClick={onShowDraft}>
                 밴픽 화면
               </button>
-              <button type="button">빠른 진행</button>
-              <button type="button">세트 결과</button>
+              <button type="button" onClick={playback.toggle}>
+                {playback.isPlaying ? "일시정지" : "재생"}
+              </button>
+              <button
+                type="button"
+                aria-pressed={playback.speed === "fast"}
+                onClick={() =>
+                  playback.setSpeed(
+                    playback.speed === "fast" ? "normal" : "fast",
+                  )
+                }
+              >
+                빠른 진행
+              </button>
+              <button type="button" onClick={playback.skipToEnd}>
+                세트 결과
+              </button>
               <button type="button" onClick={onExit}>
                 허브로
               </button>
             </div>
           </div>
+
+          <div className="live-commentary-controls">
+            <input
+              type="range"
+              className="live-scrubber"
+              min={0}
+              max={playback.durationSec}
+              value={Math.round(playback.gameTimeSec)}
+              aria-label="경기 시점"
+              onChange={(event) => playback.seek(Number(event.target.value))}
+            />
+            <div
+              className="live-frequency-toggle"
+              role="group"
+              aria-label="문자중계 빈도"
+            >
+              <button
+                type="button"
+                aria-pressed={playback.frequency === "major"}
+                onClick={() => playback.setFrequency("major")}
+              >
+                주요 상황
+              </button>
+              <button
+                type="button"
+                aria-pressed={playback.frequency === "core"}
+                onClick={() => playback.setFrequency("core")}
+              >
+                핵심 상황
+              </button>
+            </div>
+          </div>
+
           <div className="live-commentary-feed">
-            {commentary.map((entry) => (
+            {visibleCommentary.map((entry) => (
               <article
                 className={`live-commentary-event live-tone-${entry.tone}`}
                 key={entry.id}

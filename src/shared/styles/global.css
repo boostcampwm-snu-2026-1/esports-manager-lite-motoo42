@@ -11540,8 +11540,8 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .live-commentary-actions {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(72px, auto));
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   align-items: center;
 }
@@ -11606,6 +11606,62 @@ button.opponent-analysis-panel:focus-visible {
   font-size: 0.64rem;
   font-weight: 800;
   vertical-align: middle;
+}
+
+.live-commentary-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.live-scrubber {
+  flex: 1;
+  min-width: 0;
+}
+
+.live-frequency-toggle {
+  display: inline-flex;
+  border: 1px solid rgb(148 163 184 / 22%);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.live-frequency-toggle button {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: #c4cfdf;
+  font-size: 0.74rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.live-frequency-toggle button[aria-pressed="true"] {
+  background: var(--live-blue-soft, rgb(56 130 246 / 22%));
+  color: #ffffff;
+}
+
+.live-commentary-actions button[aria-pressed="true"] {
+  border-color: var(--live-gold);
+  color: var(--live-gold);
+}
+
+@keyframes live-pop {
+  0% {
+    transform: scale(1.4);
+    color: var(--live-gold);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.live-pop {
+  display: inline-block;
+  animation: live-pop 0.45s ease-out;
 }
 
 .live-commentary-event time {
