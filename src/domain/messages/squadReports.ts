@@ -28,15 +28,6 @@ function createStatusItems({
 }) {
   const items: SquadReportItem[] = [];
 
-  if (player.status.condition <= 55) {
-    items.push({
-      player,
-      priority: "urgent",
-      score: 100 - player.status.condition,
-      text: `${player.name} 컨디션 ${player.status.condition}`,
-    });
-  }
-
   if (player.status.fatigue >= 85) {
     items.push({
       player,
@@ -138,9 +129,9 @@ function getAverageStatusValue(
 }
 
 function createStableWeeklyReportBody(starters: Player[]) {
-  const averageCondition = getAverageStatusValue(
+  const averageForm = getAverageStatusValue(
     starters,
-    (player) => player.status.condition,
+    (player) => player.status.form,
   );
   const averageFatigue = getAverageStatusValue(
     starters,
@@ -153,7 +144,7 @@ function createStableWeeklyReportBody(starters: Player[]) {
     (left, right) => right.status.fatigue - left.status.fatigue,
   )[0];
   const notes = [
-    `선발 평균 컨디션 ${averageCondition}`,
+    `선발 평균 폼 ${averageForm}`,
     `평균 피로도 ${averageFatigue}`,
     bestFormPlayer
       ? `${bestFormPlayer.name} 폼 ${bestFormPlayer.status.form}`

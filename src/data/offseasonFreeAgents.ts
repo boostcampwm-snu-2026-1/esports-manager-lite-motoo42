@@ -48,8 +48,6 @@ function createFreeAgent(input: FreeAgentInput): Player {
       form: 62,
       fatigue: 8,
       morale: "neutral",
-      condition: 94,
-      injuryRisk: 9,
     },
     mindset: {
       pressureResistance: input.mental,

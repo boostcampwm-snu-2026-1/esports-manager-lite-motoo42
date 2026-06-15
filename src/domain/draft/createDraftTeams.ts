@@ -151,8 +151,6 @@ function createOpponentPlayer(opponent: Opponent, role: Role): Player {
       form: 72,
       fatigue: 20,
       morale: "neutral",
-      condition: 86,
-      injuryRisk: 10,
     },
     mindset: {
       pressureResistance: clamp(base + 2, 55, 98),

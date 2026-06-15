@@ -98,9 +98,8 @@ export function PlayerDetailModal({
           <EvaluationStars player={player} />
 
           <div className="player-profile-status-grid">
-            <StatusMetric label="컨디션" value={player.status.condition} />
+            <StatusMetric label="폼" value={player.status.form} />
             <StatusMetric label="피로도" value={player.status.fatigue} />
-            <StatusMetric label="부상 위험" value={player.status.injuryRisk} />
             <StatusMetric
               label="사기"
               value={

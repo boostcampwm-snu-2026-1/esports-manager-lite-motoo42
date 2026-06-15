@@ -234,7 +234,7 @@ describe("career messages", () => {
             ...player,
             status: {
               ...player.status,
-              condition: 50,
+              morale: "very-low" as const,
             },
           };
         }
@@ -262,12 +262,12 @@ describe("career messages", () => {
     expect(messages[0]).toEqual(
       expect.objectContaining({
         category: "training",
-        priority: "urgent",
+        priority: "important",
         source: "club",
         title: "주간 선수단 리포트",
       }),
     );
-    expect(messages[0].body).toContain("컨디션 50");
+    expect(messages[0].body).toContain("사기 매우 낮음");
     expect(messages[0].body).toContain("피로도 90");
   });
 
@@ -294,7 +294,7 @@ describe("career messages", () => {
         title: "주간 선수단 리포트",
       }),
     );
-    expect(messages[0].body).toContain("선발 평균 컨디션");
+    expect(messages[0].body).toContain("선발 평균 폼");
     expect(messages[0].body).toContain("평균 피로도");
   });
 

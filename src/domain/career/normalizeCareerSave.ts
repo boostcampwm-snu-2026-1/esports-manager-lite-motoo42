@@ -189,8 +189,6 @@ function normalizePlayer(player: Player): Player {
     evaluationStars: player.status?.evaluationStars,
     fatigue: player.status?.fatigue ?? 0,
     morale: player.status?.morale ?? "neutral",
-    condition: player.status?.condition ?? 100,
-    injuryRisk: player.status?.injuryRisk ?? 5,
   };
   const normalized: Player = {
     ...player,

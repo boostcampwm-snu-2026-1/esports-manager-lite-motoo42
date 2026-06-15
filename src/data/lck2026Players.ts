@@ -183,8 +183,6 @@ function createGeneratedPlayer(seed: Lck2026RosterSeed): Player {
       form: seed.rosterTier === "main" ? 70 : 64,
       fatigue: seed.rosterTier === "main" ? 18 : 10,
       morale: "neutral",
-      condition: seed.rosterTier === "main" ? 88 : 92,
-      injuryRisk: seed.rosterTier === "main" ? 12 : 8,
     },
     mindset: {
       pressureResistance: clamp(overall + roleOffsets.mental, 45, 95),

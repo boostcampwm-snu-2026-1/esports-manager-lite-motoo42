@@ -67,10 +67,6 @@ export function rollPlayerIntoNextSeason(player: Player): Player {
     evaluationStars: undefined,
     fatigue: 0,
     morale: "neutral" as const,
-    condition: 100,
-    injuryRisk: clampStatusValue(
-      Math.min(10, ratingUpdatedPlayer.status.injuryRisk / 2),
-    ),
   };
   const nextPlayer = {
     ...ratingUpdatedPlayer,

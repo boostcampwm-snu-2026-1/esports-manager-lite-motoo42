@@ -67,8 +67,6 @@ export type PlayerStatus = {
   evaluationStars?: number;
   fatigue: number;
   morale: MoraleLevel;
-  condition: number;
-  injuryRisk: number;
 };
 
 export type MoraleLevel = "very-high" | "high" | "neutral" | "low" | "very-low";

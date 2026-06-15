@@ -312,8 +312,8 @@ function RosterPlayerCard({
         <EvaluationStars player={player} />
       </div>
       <div className="roster-management-card-status-strip">
+        <span>폼 {player.status.form}</span>
         <span>피로 {player.status.fatigue}</span>
-        <span>컨디션 {player.status.condition}</span>
         <span className="card-morale-cell">
           <MoraleIndicator level={player.status.morale} />
           {getMoraleLabel(player.status.morale)}
