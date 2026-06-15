@@ -12007,6 +12007,12 @@ button.opponent-analysis-panel:focus-visible {
   opacity: 0.55;
 }
 
+.live-item-slot-boots {
+  margin-left: 5px;
+  border-color: rgb(245 158 11 / 45%);
+  box-shadow: -6px 0 0 -5px rgb(148 163 184 / 40%);
+}
+
 .live-item-slot-mythic {
   background: linear-gradient(135deg, #f59e0b, #7c2d12);
 }

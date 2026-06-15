@@ -56,17 +56,33 @@ function PlayerStatRow({
       <span>{player.stats.gold}</span>
     </div>
   );
+  const slots = player.stats.itemSlots;
+  const bootsIndex = slots.findIndex((slot) => slot?.tags.includes("boots"));
+  const boots = bootsIndex >= 0 ? slots[bootsIndex] : null;
+  const itemSlots = slots.filter((_, index) => index !== bootsIndex).slice(0, 5);
+
+  while (itemSlots.length < 5) {
+    itemSlots.push(null);
+  }
+
   const items = (
     <div className="live-item-slots" aria-label={`${player.name} items`}>
-      {player.stats.itemSlots.map((item, index) => (
+      {itemSlots.map((item, index) => (
         <span
           className={`live-item-slot ${item ? "" : "live-item-slot-empty"}`}
-          key={`${item?.id ?? "empty"}-${index}`}
+          key={`item-${item?.id ?? "empty"}-${index}`}
           title={item?.name}
         >
           {item ? <img alt="" src={item.iconUrl} /> : null}
         </span>
       ))}
+      <span
+        className={`live-item-slot live-item-slot-boots ${boots ? "" : "live-item-slot-empty"}`}
+        title={boots ? `신발 · ${boots.name}` : "신발 슬롯"}
+        aria-label="신발 슬롯"
+      >
+        {boots ? <img alt="" src={boots.iconUrl} /> : null}
+      </span>
     </div>
   );
 
