@@ -46,7 +46,7 @@ function getPrimaryPreviewMatch(career: CareerSave | null) {
 // The just-played user match, if any. Present once the match simulation has run
 // (progress status "match-review"), and it is what step 7 replays.
 function getPrimaryReviewResult(career: CareerSave | null) {
-  if (!career) {
+  if (!career || career.seasonState.progressStatus !== "match-review") {
     return undefined;
   }
 

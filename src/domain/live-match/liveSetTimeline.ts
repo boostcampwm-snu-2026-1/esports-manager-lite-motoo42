@@ -61,11 +61,18 @@ export function liveMatchOutcomeFromRecord(record: {
   winProbability?: number;
 }): LiveMatchOutcome {
   const userChance = record.winProbability ?? 0.5;
+  // "none" has no user perspective (e.g. an AI-only match), so treat the winner
+  // as a coin-flip rather than reading the user-keyed probability.
+  const winnerWinProbability =
+    record.userResult === "none"
+      ? 0.5
+      : record.userResult === "win"
+        ? userChance
+        : 1 - userChance;
 
   return {
     seed: record.id,
-    winnerWinProbability:
-      record.userResult === "win" ? userChance : 1 - userChance,
+    winnerWinProbability,
     winningSide: record.winnerSide,
   };
 }

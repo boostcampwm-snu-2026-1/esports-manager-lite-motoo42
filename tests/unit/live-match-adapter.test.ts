@@ -166,6 +166,18 @@ describe("live match outcome from a played record", () => {
     expect(outcome.seed).toBe("rec-2");
   });
 
+  it("treats a no-user (AI-only) result as a coin-flip", () => {
+    const outcome = liveMatchOutcomeFromRecord({
+      id: "rec-ai",
+      userResult: "none",
+      winnerSide: "blue",
+      winProbability: 0.9,
+    });
+
+    expect(outcome.winningSide).toBe("blue");
+    expect(outcome.winnerWinProbability).toBe(0.5);
+  });
+
   it("freezes the timeline by the record id (deterministic replay)", () => {
     const record = {
       id: "rec-3",
