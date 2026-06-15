@@ -38,14 +38,13 @@ export function LiveMatchPrototype({
   const safeIndex = Math.min(currentSetIndex, sets.length - 1);
   const baseSet = sets[safeIndex];
 
-  const handleSetComplete = useCallback(() => {
+  const goToNextSet = useCallback(() => {
     setCurrentSetIndex((index) => Math.min(index + 1, sets.length - 1));
   }, [sets.length]);
 
-  const playback = useMatchPlayback({
-    onComplete: handleSetComplete,
-    timeline: baseSet.timeline,
-  });
+  // No auto-advance: a finished set holds on its final stats until the user
+  // chooses to move on, so it never rushes past the set result.
+  const playback = useMatchPlayback({ timeline: baseSet.timeline });
 
   const liveTeams = useMemo(
     () =>
@@ -93,7 +92,13 @@ export function LiveMatchPrototype({
   const redSetWins = finishedSets.filter(
     (set) => set.timeline.winningSide === "red",
   ).length;
-  const seriesComplete = currentSetFinished && safeIndex === sets.length - 1;
+  const isLastSet = safeIndex === sets.length - 1;
+  const seriesComplete = currentSetFinished && isLastSet;
+  const showSetBreak = currentSetFinished && !isLastSet;
+  const setWinnerName =
+    baseSet.timeline.winningSide === "blue"
+      ? liveSet.blueTeam.name
+      : liveSet.redTeam.name;
 
   const livePresentation = useMemo(
     () => ({ ...presentation, currentSet: liveSet }),
@@ -121,6 +126,15 @@ export function LiveMatchPrototype({
           playback={playback}
           set={liveSet}
         />
+      )}
+      {showSetBreak && (
+        <div className="live-series-result live-set-break" role="status">
+          <span>세트 {baseSet.gameNumber} 종료</span>
+          <strong>{setWinnerName} 승</strong>
+          <button type="button" onClick={goToNextSet}>
+            다음 세트
+          </button>
+        </div>
       )}
       {seriesComplete && (
         <div className="live-series-result" role="status">
