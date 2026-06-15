@@ -1,5 +1,9 @@
 import type { MatchStatSnapshot, ObjectiveTally, TeamStatSnapshot } from "./matchStats";
 import type {
+  LiveNarrationContext,
+  LiveNarrationTeamContext,
+} from "./matchNarration";
+import type {
   LiveMatchObjectiveSnapshot,
   LiveMatchTeamPresentation,
 } from "./types";
@@ -76,5 +80,36 @@ export function applyStatSnapshotToTeams({
   return {
     blueTeam: applyStatSnapshotToTeam({ snapshot: snapshot.blue, team: blueTeam }),
     redTeam: applyStatSnapshotToTeam({ snapshot: snapshot.red, team: redTeam }),
+  };
+}
+
+function toNarrationTeamContext(
+  team: LiveMatchTeamPresentation,
+): LiveNarrationTeamContext {
+  const players = {} as LiveNarrationTeamContext["players"];
+
+  for (const player of team.players) {
+    players[player.role] = {
+      championName: player.champion.name,
+      name: player.name,
+    };
+  }
+
+  return { name: team.name, players, shortName: team.shortName };
+}
+
+// Builds the name/champion lookup the commentary narrator needs from the same
+// team presentations the screen already renders, so prose stays consistent with
+// what is on screen.
+export function buildNarrationContext({
+  blueTeam,
+  redTeam,
+}: {
+  blueTeam: LiveMatchTeamPresentation;
+  redTeam: LiveMatchTeamPresentation;
+}): LiveNarrationContext {
+  return {
+    blue: toNarrationTeamContext(blueTeam),
+    red: toNarrationTeamContext(redTeam),
   };
 }

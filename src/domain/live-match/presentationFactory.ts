@@ -15,6 +15,11 @@ import {
   createLiveMatchDraftFromSummary,
   getDraftPickChampionIds,
 } from "./draftAdapter";
+import { buildNarrationContext } from "./liveSnapshotAdapter";
+import {
+  createSetTimeline,
+  standInOutcomeFromDraftPower,
+} from "./liveSetTimeline";
 import { mockLiveMatchDraft } from "./mockDraft";
 import { liveMatchRoles } from "./mockDraft";
 import { mockLiveMatchTimelineEvents } from "./mockTimeline";
@@ -216,19 +221,29 @@ export function createLiveMatchPresentationFromCareer(
 
   const formatLabel = format.toUpperCase();
   const stageName = match?.stageName ?? "LCK Cup Group Battle";
+  const seed = match?.id ?? "mock-live-match";
+  const timeline = createSetTimeline(
+    standInOutcomeFromDraftPower({
+      netDraftPower: generatedDraft.netDraftPower,
+      seed,
+    }),
+  );
+  const narrationContext = buildNarrationContext({ blueTeam, redTeam });
 
   return {
     currentSet: {
       blueTeam,
       draft,
       gameNumber: 1,
-      gameTime: "28:34",
+      gameTime: "00:00",
       redTeam,
       stageName,
       timelineEvents: mockLiveMatchTimelineEvents,
     },
     formatLabel,
-    id: match?.id ?? "mock-live-match",
+    id: seed,
+    narrationContext,
     stageName,
+    timeline,
   };
 }

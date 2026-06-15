@@ -11580,6 +11580,34 @@ button.opponent-analysis-panel:focus-visible {
   border-left-color: var(--live-gold);
 }
 
+.live-tone-blue {
+  border-left-color: var(--live-blue);
+}
+
+.live-tone-red {
+  border-left-color: var(--live-red);
+}
+
+.live-tone-neutral {
+  border-left-color: var(--live-gold);
+}
+
+.live-event-icon {
+  margin-right: 6px;
+  font-size: 0.95rem;
+}
+
+.live-event-badge {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: rgb(148 163 184 / 20%);
+  color: #e2e8f0;
+  font-size: 0.64rem;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
 .live-commentary-event time {
   color: var(--live-gold);
   font-size: 0.78rem;

@@ -4,10 +4,12 @@ import type {
   LiveMatchSide,
   LiveMatchTeamPresentation,
 } from "../../../domain/live-match";
+import type { LiveCommentaryEntry } from "../liveCommentaryView";
 import { LivePlayerPortraitRail } from "./LivePlayerPortraitRail";
 import { LiveStatsBoard } from "./LiveStatsBoard";
 
 type LiveMatchScreenProps = {
+  commentary: LiveCommentaryEntry[];
   onExit: () => void;
   onShowDraft: () => void;
   set: LiveMatchSetPresentation;
@@ -43,7 +45,12 @@ function ObjectiveRow({ side, team }: { side: LiveMatchSide; team: LiveMatchTeam
   );
 }
 
-export function LiveMatchScreen({ onExit, onShowDraft, set }: LiveMatchScreenProps) {
+export function LiveMatchScreen({
+  commentary,
+  onExit,
+  onShowDraft,
+  set,
+}: LiveMatchScreenProps) {
   return (
     <>
       <div className="live-objective-strip">
@@ -70,15 +77,23 @@ export function LiveMatchScreen({ onExit, onShowDraft, set }: LiveMatchScreenPro
             </div>
           </div>
           <div className="live-commentary-feed">
-            {set.timelineEvents.map((event) => (
+            {commentary.map((entry) => (
               <article
-                className={`live-commentary-event live-event-${event.type}`}
-                key={event.time}
+                className={`live-commentary-event live-tone-${entry.tone}`}
+                key={entry.id}
               >
-                <time>{event.time}</time>
+                <time>{entry.time}</time>
                 <div>
-                  <strong>{event.title}</strong>
-                  <p>{event.body}</p>
+                  <strong>
+                    <span className="live-event-icon" aria-hidden="true">
+                      {entry.icon}
+                    </span>
+                    {entry.title}
+                    {entry.badgeLabel ? (
+                      <span className="live-event-badge">{entry.badgeLabel}</span>
+                    ) : null}
+                  </strong>
+                  <p>{entry.body}</p>
                 </div>
               </article>
             ))}

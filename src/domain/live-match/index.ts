@@ -31,6 +31,7 @@ export type {
 export {
   applyStatSnapshotToTeam,
   applyStatSnapshotToTeams,
+  buildNarrationContext,
   formatLiveGold,
   toLiveObjectiveSnapshot,
 } from "./liveSnapshotAdapter";

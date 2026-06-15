@@ -1,6 +1,8 @@
 import type { Role } from "../../types/game";
 import type { Champion } from "../champions";
 import type { MatchItem } from "../items";
+import type { LiveNarrationContext } from "./matchNarration";
+import type { GeneratedMatchTimeline } from "./matchTimeline";
 
 export type LiveMatchSide = "blue" | "red";
 
@@ -89,5 +91,7 @@ export type LiveMatchPresentation = {
   currentSet: LiveMatchSetPresentation;
   formatLabel: string;
   id: string;
+  narrationContext: LiveNarrationContext;
   stageName: string;
+  timeline: GeneratedMatchTimeline;
 };

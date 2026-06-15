@@ -104,12 +104,14 @@ export function narrateEvent(
           }
         : { body: `${team.name} 바론 획득`, title: "바론", tone };
     case "elder":
-      return {
-        badgeLabel: event.isSteal ? "스틸" : "장로",
-        body: `${team.name} 장로 드래곤 확보`,
-        title: "장로 드래곤",
-        tone,
-      };
+      return event.isSteal
+        ? {
+            badgeLabel: "스틸",
+            body: `${team.name} 장로 스틸! 후반 한타를 가져갑니다`,
+            title: "장로 스틸",
+            tone,
+          }
+        : { body: `${team.name} 장로 드래곤 확보`, title: "장로 드래곤", tone };
     case "tower":
       return { body: `${team.name} 타워 철거`, title: "타워", tone };
     case "inhibitor":
