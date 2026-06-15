@@ -34,8 +34,20 @@ export {
   formatLiveGold,
   toLiveObjectiveSnapshot,
 } from "./liveSnapshotAdapter";
-export { createSetTimeline } from "./liveSetTimeline";
+export { createSetTimeline, standInOutcomeFromDraftPower } from "./liveSetTimeline";
 export type { LiveMatchOutcome } from "./liveSetTimeline";
+export {
+  computeDisplayDurationMs,
+  filterByFrequency,
+  frequencyLabel,
+  gameTimeAtProgress,
+  getDisplayDurationForSpeed,
+  getRevealedEvents,
+} from "./livePlaybackModel";
+export type {
+  MatchCommentaryFrequency,
+  MatchPlaybackSpeed,
+} from "./livePlaybackModel";
 export type {
   LiveMatchDraftPresentation,
   LiveMatchFearlessRow,
