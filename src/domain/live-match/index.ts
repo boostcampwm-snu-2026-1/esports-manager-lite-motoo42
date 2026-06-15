@@ -35,7 +35,11 @@ export {
   formatLiveGold,
   toLiveObjectiveSnapshot,
 } from "./liveSnapshotAdapter";
-export { createSetTimeline, standInOutcomeFromDraftPower } from "./liveSetTimeline";
+export {
+  createSetTimeline,
+  liveMatchOutcomeFromRecord,
+  standInOutcomeFromDraftPower,
+} from "./liveSetTimeline";
 export type { LiveMatchOutcome } from "./liveSetTimeline";
 export {
   computeDisplayDurationMs,

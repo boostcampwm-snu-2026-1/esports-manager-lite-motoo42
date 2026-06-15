@@ -1,4 +1,4 @@
-import { getPreviewMatches } from "../season/progressSeason";
+import { getPreviewMatches, getReviewRecords } from "../season/progressSeason";
 import { championPool } from "../champions";
 import { runSimpleDraft, type DraftTeam } from "../draft";
 import { getLckOpponentStyle } from "../opponents/lckOpponentProfiles";
@@ -18,6 +18,7 @@ import {
 import { buildNarrationContext } from "./liveSnapshotAdapter";
 import {
   createSetTimeline,
+  liveMatchOutcomeFromRecord,
   standInOutcomeFromDraftPower,
 } from "./liveSetTimeline";
 import { mockLiveMatchDraft } from "./mockDraft";
@@ -40,6 +41,31 @@ function getPrimaryPreviewMatch(career: CareerSave | null) {
   return getPreviewMatches(career.seasonState).find(
     (match) => match.blueTeamId === userTeamId || match.redTeamId === userTeamId,
   );
+}
+
+// The just-played user match, if any. Present once the match simulation has run
+// (progress status "match-review"), and it is what step 7 replays.
+function getPrimaryReviewResult(career: CareerSave | null) {
+  if (!career) {
+    return undefined;
+  }
+
+  const userTeamId = getLiveMatchUserTeamId(career);
+
+  for (const record of getReviewRecords(career.seasonState)) {
+    const schedule = career.seasonState.scheduledMatches.find(
+      (match) => match.id === record.scheduleId,
+    );
+
+    if (
+      schedule &&
+      (schedule.blueTeamId === userTeamId || schedule.redTeamId === userTeamId)
+    ) {
+      return { record, schedule };
+    }
+  }
+
+  return undefined;
 }
 
 function getTeamNameForSide(match: MatchSchedule | undefined, side: "blue" | "red") {
@@ -180,15 +206,20 @@ function createLiveMatchDraftSummary({
 export function createLiveMatchPresentationFromCareer(
   career: CareerSave | null,
 ): LiveMatchPresentation {
-  const match = getPrimaryPreviewMatch(career);
+  const reviewResult = getPrimaryReviewResult(career);
+  const match = reviewResult?.schedule ?? getPrimaryPreviewMatch(career);
   const userTeamId = getLiveMatchUserTeamId(career);
   const format = match?.format ?? "bo3";
-  const generatedDraft = createLiveMatchDraftSummary({
-    career,
-    format,
-    match,
-    userTeamId,
-  });
+  // Use the real banpick from the played match when available; otherwise the
+  // prototype stand-in draft.
+  const generatedDraft =
+    reviewResult?.record.draft ??
+    createLiveMatchDraftSummary({
+      career,
+      format,
+      match,
+      userTeamId,
+    });
   let blueTeam = createMockLiveMatchTeam({
     career,
     match,
@@ -221,13 +252,16 @@ export function createLiveMatchPresentationFromCareer(
 
   const formatLabel = format.toUpperCase();
   const stageName = match?.stageName ?? "LCK Cup Group Battle";
-  const seed = match?.id ?? "mock-live-match";
-  const timeline = createSetTimeline(
-    standInOutcomeFromDraftPower({
-      netDraftPower: generatedDraft.netDraftPower,
-      seed,
-    }),
-  );
+  // Real result replays the decided match (frozen by record id); otherwise the
+  // draft-power stand-in keyed by the schedule id.
+  const outcome = reviewResult
+    ? liveMatchOutcomeFromRecord(reviewResult.record)
+    : standInOutcomeFromDraftPower({
+        netDraftPower: generatedDraft.netDraftPower,
+        seed: match?.id ?? "mock-live-match",
+      });
+  const id = reviewResult?.record.id ?? match?.id ?? "mock-live-match";
+  const timeline = createSetTimeline(outcome);
   const narrationContext = buildNarrationContext({ blueTeam, redTeam });
 
   return {
@@ -241,7 +275,7 @@ export function createLiveMatchPresentationFromCareer(
       timelineEvents: mockLiveMatchTimelineEvents,
     },
     formatLabel,
-    id: seed,
+    id,
     narrationContext,
     stageName,
     timeline,

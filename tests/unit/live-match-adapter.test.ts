@@ -4,7 +4,10 @@ import {
   formatLiveGold,
   toLiveObjectiveSnapshot,
 } from "../../src/domain/live-match/liveSnapshotAdapter";
-import { createSetTimeline } from "../../src/domain/live-match/liveSetTimeline";
+import {
+  createSetTimeline,
+  liveMatchOutcomeFromRecord,
+} from "../../src/domain/live-match/liveSetTimeline";
 import { getFinalMatchSnapshot } from "../../src/domain/live-match/matchStats";
 import type { ObjectiveTally, TeamStatSnapshot } from "../../src/domain/live-match/matchStats";
 import type { Role } from "../../src/types/game";
@@ -131,5 +134,48 @@ describe("live set timeline seam", () => {
     };
 
     expect(createSetTimeline(outcome)).toEqual(createSetTimeline(outcome));
+  });
+});
+
+describe("live match outcome from a played record", () => {
+  it("uses the user's chance directly on a win", () => {
+    const outcome = liveMatchOutcomeFromRecord({
+      id: "rec-1",
+      userResult: "win",
+      winnerSide: "blue",
+      winProbability: 0.62,
+    });
+
+    expect(outcome).toEqual({
+      seed: "rec-1",
+      winningSide: "blue",
+      winnerWinProbability: 0.62,
+    });
+  });
+
+  it("flips the chance to the winner on a user loss", () => {
+    const outcome = liveMatchOutcomeFromRecord({
+      id: "rec-2",
+      userResult: "loss",
+      winnerSide: "red",
+      winProbability: 0.7,
+    });
+
+    expect(outcome.winningSide).toBe("red");
+    expect(outcome.winnerWinProbability).toBeCloseTo(0.3, 5);
+    expect(outcome.seed).toBe("rec-2");
+  });
+
+  it("freezes the timeline by the record id (deterministic replay)", () => {
+    const record = {
+      id: "rec-3",
+      userResult: "win" as const,
+      winnerSide: "blue" as const,
+      winProbability: 0.55,
+    };
+
+    expect(
+      createSetTimeline(liveMatchOutcomeFromRecord(record)),
+    ).toEqual(createSetTimeline(liveMatchOutcomeFromRecord(record)));
   });
 });

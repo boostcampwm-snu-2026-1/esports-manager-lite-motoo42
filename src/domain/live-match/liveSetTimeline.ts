@@ -50,6 +50,26 @@ export function standInOutcomeFromDraftPower({
   };
 }
 
+// Build a replay outcome from a real, already-decided match record. This is the
+// step 7 path: the match simulation already produced winnerSide / winProbability,
+// so the replay reproduces that result instead of re-simulating. winProbability
+// is the user's pre-game chance, so the winner's chance flips on a user loss.
+export function liveMatchOutcomeFromRecord(record: {
+  id: string;
+  userResult: "win" | "loss" | "none";
+  winnerSide: LiveMatchSide;
+  winProbability?: number;
+}): LiveMatchOutcome {
+  const userChance = record.winProbability ?? 0.5;
+
+  return {
+    seed: record.id,
+    winnerWinProbability:
+      record.userResult === "win" ? userChance : 1 - userChance,
+    winningSide: record.winnerSide,
+  };
+}
+
 export function createSetTimeline(
   outcome: LiveMatchOutcome,
 ): GeneratedMatchTimeline {
