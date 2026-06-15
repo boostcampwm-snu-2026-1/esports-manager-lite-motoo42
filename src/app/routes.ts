@@ -2,6 +2,7 @@ import type { CompetitionId } from "../types/game";
 
 export type AppRoute =
   | "career-setup"
+  | "live-match"
   | "inbox"
   | "roster-builder"
   | "main-dashboard"
@@ -42,6 +43,7 @@ export type RouteSubPage =
 
 export const appRoutes: AppRoute[] = [
   "career-setup",
+  "live-match",
   "inbox",
   "roster-builder",
   "main-dashboard",
@@ -57,6 +59,7 @@ export const appRoutes: AppRoute[] = [
 
 const routePathByRoute: Record<AppRoute, string> = {
   "career-setup": "/",
+  "live-match": "/live-match",
   inbox: "/inbox",
   "roster-builder": "/roster",
   "main-dashboard": "/hub",
@@ -214,6 +217,10 @@ export function getPathForRoute(
 }
 
 export function getRouteMatchFromPath(pathname: string): RouteMatch {
+  if (pathname === "/live-match") {
+    return { route: "live-match" };
+  }
+
   if (pathname === "/roster") {
     return { route: "roster-builder", rosterSubPage: null };
   }

@@ -1,6 +1,7 @@
 import { AppShell } from "../shared/layout/AppShell";
 import { useLocation } from "react-router-dom";
 import { AppRouteRenderer } from "./AppRouteRenderer";
+import { LiveMatchPage } from "../pages/LiveMatchPage";
 import { useGameDispatch, useGameSelector } from "./GameProvider";
 import { useAppNavigation } from "./hooks/useAppNavigation";
 import { useAsianGamesDecision } from "./hooks/useAsianGamesDecision";
@@ -85,43 +86,47 @@ export function AppContent() {
   return (
     <div className="game-viewport-frame">
       <div className="game-viewport-stage">
-        <AppShell
-          career={career}
-          isProgressBlocked={Boolean(asianGamesDecisionState)}
-          isProgressing={isProgressing}
-          progressNotice={progressNotice}
-          progressOverlay={progressOverlay}
-          route={renderedRoute}
-          selectedCompetitionId={renderedCompetitionId}
-          competitionSubPage={routeMatch.competitionSubPage}
-          calendarSubPage={routeMatch.calendarSubPage}
-          rosterSubPage={routeMatch.rosterSubPage}
-          inboxSubPage={routeMatch.inboxSubPage}
-          offseasonSubPage={routeMatch.offseasonSubPage}
-          trainingSubPage={routeMatch.trainingSubPage}
-          currentHash={location.hash}
-          autoSaveStatus={career ? autoSaveStatus : undefined}
-          onGoTo={goToRoute}
-          onProgress={handleProgress}
-        >
-          <AppRouteRenderer
-            calendarSubPage={routeMatch.calendarSubPage}
+        {renderedRoute === "live-match" ? (
+          <LiveMatchPage onGoTo={goToRoute} />
+        ) : (
+          <AppShell
+            career={career}
+            isProgressBlocked={Boolean(asianGamesDecisionState)}
+            isProgressing={isProgressing}
+            progressNotice={progressNotice}
+            progressOverlay={progressOverlay}
+            route={renderedRoute}
+            selectedCompetitionId={renderedCompetitionId}
             competitionSubPage={routeMatch.competitionSubPage}
+            calendarSubPage={routeMatch.calendarSubPage}
+            rosterSubPage={routeMatch.rosterSubPage}
             inboxSubPage={routeMatch.inboxSubPage}
             offseasonSubPage={routeMatch.offseasonSubPage}
-            rosterSubPage={routeMatch.rosterSubPage}
             trainingSubPage={routeMatch.trainingSubPage}
-            teamId={routeMatch.teamId}
-            onCalendarSubPageChange={handleCalendarSubPageChange}
-            onCompetitionSubPageChange={handleCompetitionSubPageChange}
-            onInboxSubPageChange={handleInboxSubPageChange}
-            onOffseasonSubPageChange={handleOffseasonSubPageChange}
+            currentHash={location.hash}
+            autoSaveStatus={career ? autoSaveStatus : undefined}
             onGoTo={goToRoute}
-            competitionId={renderedCompetitionId}
-            route={renderedRoute}
-            savePanel={savePanel}
-          />
-        </AppShell>
+            onProgress={handleProgress}
+          >
+            <AppRouteRenderer
+              calendarSubPage={routeMatch.calendarSubPage}
+              competitionSubPage={routeMatch.competitionSubPage}
+              inboxSubPage={routeMatch.inboxSubPage}
+              offseasonSubPage={routeMatch.offseasonSubPage}
+              rosterSubPage={routeMatch.rosterSubPage}
+              trainingSubPage={routeMatch.trainingSubPage}
+              teamId={routeMatch.teamId}
+              onCalendarSubPageChange={handleCalendarSubPageChange}
+              onCompetitionSubPageChange={handleCompetitionSubPageChange}
+              onInboxSubPageChange={handleInboxSubPageChange}
+              onOffseasonSubPageChange={handleOffseasonSubPageChange}
+              onGoTo={goToRoute}
+              competitionId={renderedCompetitionId}
+              route={renderedRoute}
+              savePanel={savePanel}
+            />
+          </AppShell>
+        )}
         {asianGamesDecisionState && (
           <AsianGamesDecisionModal
             asianGamesState={asianGamesDecisionState}

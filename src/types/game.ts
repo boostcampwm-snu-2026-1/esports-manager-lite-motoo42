@@ -374,7 +374,9 @@ export type MatchDraftSummary = {
   bluePicks: Partial<Record<Role, DraftPickSummary>>;
   redPicks: Partial<Record<Role, DraftPickSummary>>;
   blueBans: string[];
+  blueBanIds?: string[];
   redBans: string[];
+  redBanIds?: string[];
   blueDraftPower: number;
   redDraftPower: number;
   netDraftPower: number;

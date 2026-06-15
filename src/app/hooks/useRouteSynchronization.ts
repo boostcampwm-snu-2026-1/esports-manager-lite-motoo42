@@ -24,7 +24,7 @@ function getDisplayRouteMatch({
   routeMatch: RouteMatch;
 }): RouteMatch {
   if (!career) {
-    return routeMatch.route === "career-setup"
+    return routeMatch.route === "career-setup" || routeMatch.route === "live-match"
       ? routeMatch
       : { route: "career-setup" };
   }
@@ -71,7 +71,7 @@ export function useRouteSynchronization({
     const isUnknownPath =
       routeMatch.route === "career-setup" && location.pathname !== "/";
 
-    if (!career && location.pathname !== "/") {
+    if (!career && location.pathname !== "/" && routeMatch.route !== "live-match") {
       recordRouteDebugTrace({
         fromPath: location.pathname,
         reason: "protected-route-without-career",
