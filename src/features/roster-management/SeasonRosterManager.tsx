@@ -811,6 +811,9 @@ export function SeasonRosterManager({
 
       {detailPlayer && (
         <PlayerDetailModal
+          contract={team.contracts.find(
+            (entry) => entry.playerId === detailPlayer.id,
+          )}
           player={detailPlayer}
           onClose={() => setDetailPlayer(null)}
           rosterLabel={detailRosterLabel}

@@ -1,16 +1,20 @@
 import type { ReactNode } from "react";
 import { getLckTeamDisplayName } from "../../data/lckTeams";
+import { computeRoleOverall, getAttributeTier } from "../../domain/player-attributes";
 import {
   getPlayerCareerEntries,
   getPlayerProfileSummary,
 } from "../../domain/players";
 import { getMoraleLabel } from "../../domain/player-status";
-import type { Player, Role } from "../../types/game";
+import type { Player, PlayerContract, Role } from "../../types/game";
+import { formatSalaryAmount } from "../format/money";
 import { EvaluationStars } from "./EvaluationStars";
 import { MoraleIndicator } from "./MoraleIndicator";
+import { PlayerAttributePanel } from "./PlayerAttributePanel";
 import { PlayerPortrait } from "./PlayerPortrait";
 
 type PlayerDetailModalProps = {
+  contract?: PlayerContract;
   extraContent?: ReactNode;
   onClose: () => void;
   player: Player;
@@ -26,15 +30,9 @@ const roleLabels: Record<Role, string> = {
   support: "서폿",
 };
 
-function DetailMetric({
-  label,
-  value,
-}: {
-  label: string;
-  value: ReactNode;
-}) {
+function StatusMetric({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <article className="player-detail-stat">
+    <article className="player-profile-status-cell">
       <span>{label}</span>
       <strong>{value}</strong>
     </article>
@@ -42,6 +40,7 @@ function DetailMetric({
 }
 
 export function PlayerDetailModal({
+  contract,
   extraContent,
   onClose,
   player,
@@ -52,90 +51,96 @@ export function PlayerDetailModal({
     ? getLckTeamDisplayName(player.currentTeam)
     : "FA";
   const careerEntries = getPlayerCareerEntries(player);
+  const overall = computeRoleOverall(player);
+  const overallTier = getAttributeTier(overall);
+  const contractTerm = contract
+    ? `${contract.guaranteedYears}년${contract.optionYear ? " +옵션" : ""}`
+    : "—";
+  const salaryLabel = contract ? "연봉" : "예상 연봉";
+  const salaryValue = formatSalaryAmount(
+    contract ? contract.salary : player.salaryExpectation,
+  );
 
   return (
-    <div className="modal-backdrop" onMouseDown={onClose} role="presentation">
-      <section
-        aria-label={`${player.name} 선수 상세`}
-        aria-modal="true"
-        className="player-detail-modal player-detail-modal-large"
-        onMouseDown={(event) => event.stopPropagation()}
-        role="dialog"
-      >
+    <div
+      aria-label={`${player.name} 선수 상세`}
+      aria-modal="true"
+      className="player-profile-screen"
+      role="dialog"
+    >
+      <header className="player-profile-topbar">
         <button
           aria-label="닫기"
-          className="modal-close-button"
+          className="player-profile-back"
           onClick={onClose}
           type="button"
         >
-          ×
+          <span aria-hidden="true">←</span> 선수 프로필
         </button>
+        <span className="player-profile-context">{titlePrefix}</span>
+      </header>
 
-        <div className="player-detail-hero player-detail-hero-large">
+      <div className="player-profile-cols">
+        <section className="player-profile-left" aria-label="선수 정보">
           <PlayerPortrait
-            className="player-detail-portrait"
+            className="player-profile-portrait"
             player={player}
             size="lg"
           />
-          <div className="player-detail-hero-copy">
-            <p className="eyebrow">{titlePrefix}</p>
-            <h2>{player.name}</h2>
-            <p className="player-detail-subtitle">
-              {roleLabels[player.role]} · {player.age}세 · {currentTeamLabel}
-              {rosterLabel ? ` · ${rosterLabel}` : ""}
-            </p>
-            <EvaluationStars player={player} />
-            <p className="player-detail-profile-summary">
-              {getPlayerProfileSummary(player)}
-            </p>
+          <h2 className="player-profile-name">{player.name}</h2>
+          <p className="player-profile-subtitle">
+            {roleLabels[player.role]} · {player.age}세 · {currentTeamLabel}
+            {rosterLabel ? ` · ${rosterLabel}` : ""}
+          </p>
+          <EvaluationStars player={player} />
+
+          <div className="player-profile-status-grid">
+            <StatusMetric label="컨디션" value={player.status.condition} />
+            <StatusMetric label="피로도" value={player.status.fatigue} />
+            <StatusMetric label="부상 위험" value={player.status.injuryRisk} />
+            <StatusMetric
+              label="사기"
+              value={
+                <span className="player-detail-morale-value">
+                  <MoraleIndicator level={player.status.morale} />
+                  {getMoraleLabel(player.status.morale)}
+                </span>
+              }
+            />
           </div>
-        </div>
 
-        <div className="player-detail-grid">
-          <DetailMetric label="컨디션" value={player.status.condition} />
-          <DetailMetric label="피로도" value={player.status.fatigue} />
-          <DetailMetric label="부상 위험" value={player.status.injuryRisk} />
-          <DetailMetric
-            label="사기"
-            value={
-              <span className="player-detail-morale-value">
-                <MoraleIndicator level={player.status.morale} />
-                {getMoraleLabel(player.status.morale)}
-              </span>
-            }
-          />
-        </div>
-
-        <section className="player-detail-section">
-          <div className="panel-title-row">
-            <div>
-              <p className="eyebrow">Career</p>
-              <h3>커리어</h3>
+          <div className="player-profile-zone-label">계약</div>
+          <div className="player-profile-contract">
+            <div className="player-profile-contract-row">
+              <span>계약 기간</span>
+              <strong>{contractTerm}</strong>
             </div>
-            <span className="panel-note">대표 기록 / 현재 소속 기반</span>
-          </div>
-          <div className="player-detail-career-list">
-            {careerEntries.map((entry) => (
-              <article
-                className="player-detail-career-entry"
-                key={`${entry.teamName}-${entry.period}`}
-              >
-                <strong>{entry.teamName}</strong>
-                <span>{entry.period}</span>
-              </article>
-            ))}
+            <div className="player-profile-contract-row">
+              <span>{salaryLabel}</span>
+              <strong>{salaryValue}</strong>
+            </div>
           </div>
         </section>
 
-        {extraContent}
+        <section className="player-profile-center" aria-label="세부 능력치">
+          <div className="player-profile-zone-label">능력치</div>
+          <PlayerAttributePanel player={player} />
+        </section>
 
-        <section className="player-detail-section">
-          <div className="panel-title-row">
-            <div>
-              <p className="eyebrow">Traits</p>
-              <h3>특징</h3>
-            </div>
+        <section className="player-profile-right" aria-label="평가 및 커리어">
+          <div className="player-profile-overall-card">
+            <span>포지션 종합</span>
+            <strong className={`player-attr-tier-${overallTier}`}>
+              {overall}
+            </strong>
+            <small>잠재 {player.potential}</small>
           </div>
+
+          <p className="player-profile-summary">
+            {getPlayerProfileSummary(player)}
+          </p>
+
+          <div className="player-profile-zone-label">특징</div>
           <div className="trait-row">
             {player.traits.length > 0 ? (
               player.traits.map((trait) => <span key={trait}>{trait}</span>)
@@ -143,8 +148,33 @@ export function PlayerDetailModal({
               <span>기록된 특징 없음</span>
             )}
           </div>
+
+          <div className="player-profile-career">
+            <div className="panel-title-row">
+              <div>
+                <p className="eyebrow">Career</p>
+                <h3>커리어</h3>
+              </div>
+              <span className="panel-note">대표 기록 / 현재 소속 기반</span>
+            </div>
+            <div className="player-profile-career-list">
+              {careerEntries.map((entry) => (
+                <article
+                  className="player-profile-career-entry"
+                  key={`${entry.teamName}-${entry.period}`}
+                >
+                  <strong>{entry.teamName}</strong>
+                  <span>{entry.period}</span>
+                </article>
+              ))}
+            </div>
+          </div>
         </section>
-      </section>
+      </div>
+
+      {extraContent ? (
+        <div className="player-profile-extra">{extraContent}</div>
+      ) : null}
     </div>
   );
 }
