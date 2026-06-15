@@ -28,12 +28,15 @@ const series: SeriesResult = {
 };
 
 describe("summarizeSeriesGames", () => {
-  it("keeps per-game order, win probability, and game number", () => {
+  it("keeps per-game order, game number, and the winner's win probability", () => {
     const summaries = summarizeSeriesGames(series, true);
 
     expect(summaries).toHaveLength(3);
     expect(summaries.map((game) => game.gameNumber)).toEqual([1, 2, 3]);
-    expect(summaries.map((game) => game.winProbability)).toEqual([0.55, 0.6, 0.48]);
+    // Game 1 went to the opponent, so its winner chance is 1 - 0.55.
+    expect(summaries[0].winnerWinProbability).toBeCloseTo(0.45, 5);
+    expect(summaries[1].winnerWinProbability).toBeCloseTo(0.6, 5);
+    expect(summaries[2].winnerWinProbability).toBeCloseTo(0.48, 5);
   });
 
   it("maps the user as blue: user wins -> blue, opponent wins -> red", () => {

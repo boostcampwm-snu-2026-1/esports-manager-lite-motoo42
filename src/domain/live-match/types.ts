@@ -1,7 +1,6 @@
 import type { Role } from "../../types/game";
 import type { Champion } from "../champions";
 import type { MatchItem } from "../items";
-import type { LiveNarrationContext } from "./matchNarration";
 import type { GeneratedMatchTimeline } from "./matchTimeline";
 
 export type LiveMatchSide = "blue" | "red";
@@ -84,14 +83,17 @@ export type LiveMatchSetPresentation = {
   gameTime: string;
   redTeam: LiveMatchTeamPresentation;
   stageName: string;
+  timeline: GeneratedMatchTimeline;
   timelineEvents: LiveMatchTimelineEvent[];
 };
 
 export type LiveMatchPresentation = {
+  // currentSet mirrors sets[0]; the prototype swaps in the live current set as it
+  // advances through a BO3/BO5. Narration is derived per set from its own teams
+  // (champions differ per set), so it is not stored here.
   currentSet: LiveMatchSetPresentation;
   formatLabel: string;
   id: string;
-  narrationContext: LiveNarrationContext;
+  sets: LiveMatchSetPresentation[];
   stageName: string;
-  timeline: GeneratedMatchTimeline;
 };

@@ -397,7 +397,9 @@ export type MatchSeriesGameSummary = {
   draft?: MatchDraftSummary;
   gameNumber: number;
   winnerSide: "blue" | "red";
-  winProbability: number;
+  // The winning side's pre-game chance (already flipped from the user-keyed
+  // value), so the replay can size dominance without a user concept.
+  winnerWinProbability: number;
 };
 
 export type MatchSeriesReplay = {

@@ -8,17 +8,22 @@ export function summarizeSeriesGames(
   series: SeriesResult,
   userIsBlue: boolean,
 ): MatchSeriesGameSummary[] {
-  return series.games.map((game) => ({
-    draft: game.result.draft,
-    gameNumber: game.gameNumber,
-    winnerSide:
-      game.result.winner === "user"
+  return series.games.map((game) => {
+    const userWon = game.result.winner === "user";
+
+    return {
+      draft: game.result.draft,
+      gameNumber: game.gameNumber,
+      winnerSide: userWon
         ? userIsBlue
           ? "blue"
           : "red"
         : userIsBlue
           ? "red"
           : "blue",
-    winProbability: game.result.winProbability,
-  }));
+      winnerWinProbability: userWon
+        ? game.result.winProbability
+        : 1 - game.result.winProbability,
+    };
+  });
 }

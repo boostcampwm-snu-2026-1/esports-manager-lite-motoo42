@@ -17,11 +17,13 @@ type LiveMatchPageProps = {
 
 export function LiveMatchPage({ onGoTo }: LiveMatchPageProps) {
   const career = useGameSelector((state) => state.career);
+  const series = useGameSelector((state) => state.liveMatchSeries);
 
   return (
     <LiveMatchPrototype
       career={career}
       onExit={() => onGoTo("main-dashboard")}
+      series={series}
     />
   );
 }
