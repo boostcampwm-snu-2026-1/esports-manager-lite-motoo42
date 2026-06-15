@@ -51,60 +51,258 @@
   --color-scrollbar-thumb-hover: #64748b;
   --shadow-card: 0 18px 36px rgb(0 0 0 / 20%);
   --shadow-stage: 0 0 0 1px rgb(148 163 184 / 12%);
+  --surface-base: #0b1020;
+  --surface-raised: #121929;
+  --surface-overlay: #182033;
+  --surface-sunken: #0d1424;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --status-success-bg: rgba(34, 197, 94, 0.14);
+  --status-success-border: rgba(34, 197, 94, 0.42);
+  --status-success-text: #86efac;
+  --status-danger-bg: rgba(239, 68, 68, 0.14);
+  --status-danger-border: rgba(239, 68, 68, 0.42);
+  --status-danger-text: #fca5a5;
+  --status-info-bg: rgba(56, 189, 248, 0.14);
+  --status-info-border: rgba(56, 189, 248, 0.42);
+  --status-info-text: #7dd3fc;
+  --status-warning-bg: rgba(245, 158, 11, 0.16);
+  --status-warning-border: rgba(245, 158, 11, 0.42);
+  --status-warning-text: #fcd34d;
+  --status-neutral-bg: rgba(148, 163, 184, 0.14);
+  --status-neutral-border: rgba(148, 163, 184, 0.34);
+  --status-neutral-text: #cbd5e1;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --text: #0f172a;
-  --muted: #64748b;
-  --accent: #4f46e5;
-  --color-body-bg: #e8eef6;
-  --color-root-bg: #f8fafc;
-  --color-stage-bg: #f8fafc;
-  --color-frame-bg:
-    radial-gradient(circle at 50% 12%, rgb(79 70 229 / 10%), transparent 34%),
-    linear-gradient(135deg, #dfe7f2 0%, #f8fafc 52%, #e8eef6 100%);
-  --color-shell-bg:
-    radial-gradient(circle at top right, rgb(79 70 229 / 10%), transparent 30%),
-    linear-gradient(135deg, #f8fafc 0%, #eef2ff 52%, #e8eef6 100%);
-  --color-sidebar-bg: #ffffff;
-  --color-card-bg: #ffffff;
-  --color-control-bg: rgba(248, 250, 252, 0.86);
-  --color-input-bg: #ffffff;
-  --color-menu-button-bg: #f8fafc;
-  --color-menu-button-border: #dbe3ef;
-  --color-menu-button-text: #334155;
-  --color-menu-button-active-bg: #eef2ff;
-  --color-menu-button-active-border: #6366f1;
-  --color-menu-icon-bg: #ffffff;
-  --color-menu-icon-border: #cbd5e1;
-  --color-submenu-bg: #f1f5f9;
-  --color-submenu-item-bg: #ffffff;
-  --color-submenu-item-active-bg: #e0e7ff;
-  --color-topbar-bg: rgb(248 250 252 / 94%);
-  --color-pill-bg: #ffffff;
-  --color-pill-border: #dbe3ef;
-  --color-pill-text: #334155;
-  --color-border: #cbd5e1;
-  --color-border-subtle: rgba(100, 116, 139, 0.24);
-  --color-border-strong: #94a3b8;
-  --color-button-bg: #ffffff;
-  --color-button-hover-bg: #eef2ff;
-  --color-button-hover-border: #818cf8;
-  --color-primary-button-bg: #4f46e5;
+  --text: #2c2a24;
+  --muted: #6b6458;
+  --accent: #5a4ad1;
+  --color-body-bg: #fbfaf7;
+  --color-root-bg: #fefefc;
+  --color-stage-bg: #fefefc;
+  --color-frame-bg: #fbfaf7;
+  --color-shell-bg: #fefefc;
+  --color-sidebar-bg: #fffefd;
+  --color-card-bg: #fffefd;
+  --color-control-bg: rgba(255, 254, 253, 0.9);
+  --color-input-bg: #fffffe;
+  --color-menu-button-bg: #fffefd;
+  --color-menu-button-border: #ece6dc;
+  --color-menu-button-text: #4a4438;
+  --color-menu-button-active-bg: #efeafb;
+  --color-menu-button-active-border: #6c5ce0;
+  --color-menu-icon-bg: #fffefd;
+  --color-menu-icon-border: #ece6dc;
+  --color-submenu-bg: #fcfbf8;
+  --color-submenu-item-bg: #fffefd;
+  --color-submenu-item-active-bg: #efeafb;
+  --color-topbar-bg: rgb(255 254 253 / 95%);
+  --color-pill-bg: #fffefd;
+  --color-pill-border: #ece6dc;
+  --color-pill-text: #4a4438;
+  --color-border: #ebe5db;
+  --color-border-subtle: rgba(120, 100, 65, 0.12);
+  --color-border-strong: #ddd4c6;
+  --color-button-bg: #fffefd;
+  --color-button-hover-bg: #fbfaf7;
+  --color-button-hover-border: #d2c8b6;
+  --color-primary-button-bg: #5a4ad1;
   --color-primary-button-text: #ffffff;
-  --color-ghost-button-border: #c7d2fe;
-  --color-ghost-button-text: #3730a3;
-  --color-settings-chip-bg: rgba(79, 70, 229, 0.08);
-  --color-settings-chip-border: rgba(79, 70, 229, 0.26);
-  --color-settings-chip-text: #3730a3;
-  --color-scrollbar-track: rgba(203, 213, 225, 0.58);
-  --color-scrollbar-track-webkit: rgba(203, 213, 225, 0.46);
-  --color-scrollbar-thumb: #94a3b8;
-  --color-scrollbar-thumb-border: rgba(248, 250, 252, 0.86);
-  --color-scrollbar-thumb-hover: #64748b;
-  --shadow-card: 0 16px 32px rgb(15 23 42 / 10%);
-  --shadow-stage: 0 0 0 1px rgb(15 23 42 / 10%);
+  --color-ghost-button-border: #d8cef0;
+  --color-ghost-button-text: #4434a3;
+  --color-settings-chip-bg: rgba(90, 74, 209, 0.1);
+  --color-settings-chip-border: rgba(90, 74, 209, 0.28);
+  --color-settings-chip-text: #4434a3;
+  --color-scrollbar-track: rgba(214, 205, 189, 0.36);
+  --color-scrollbar-track-webkit: rgba(214, 205, 189, 0.3);
+  --color-scrollbar-thumb: #ddd4c6;
+  --color-scrollbar-thumb-border: rgba(253, 252, 249, 0.86);
+  --color-scrollbar-thumb-hover: #d2c8b6;
+  --shadow-card: 0 16px 32px rgb(70 55 25 / 6%);
+  --shadow-stage: 0 0 0 1px rgb(90 70 35 / 8%);
+  --surface-base: #fefefc;
+  --surface-raised: #fffefd;
+  --surface-overlay: #fffffe;
+  --surface-sunken: #fbf9f5;
+  --status-success-bg: #dcf3e3;
+  --status-success-border: #9bd3ad;
+  --status-success-text: #1d6b3a;
+  --status-danger-bg: #f7e0dd;
+  --status-danger-border: #e3a99f;
+  --status-danger-text: #a8331f;
+  --status-info-bg: #dceef4;
+  --status-info-border: #9cc4d6;
+  --status-info-text: #1c5e78;
+  --status-warning-bg: #f5ead0;
+  --status-warning-border: #ddc488;
+  --status-warning-text: #8a5a0c;
+  --status-neutral-bg: #ece6da;
+  --status-neutral-border: #d2c6b2;
+  --status-neutral-text: #5b5346;
+}
+
+/* Light-mode status fixes (P1): chips / badges / panels that hardcoded dark
+   fills and had no light override — now driven by the --status-* tokens. */
+:root[data-theme="light"] .shell-save-status-saving,
+:root[data-theme="light"] .save-manager-autosave-saving {
+  border-color: var(--status-info-border);
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
+}
+
+:root[data-theme="light"] .shell-save-status-saved,
+:root[data-theme="light"] .save-manager-autosave-saved {
+  border-color: var(--status-success-border);
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
+}
+
+:root[data-theme="light"] .shell-save-status-failed,
+:root[data-theme="light"] .shell-save-status-conflict,
+:root[data-theme="light"] .save-manager-autosave-failed,
+:root[data-theme="light"] .save-manager-autosave-conflict {
+  border-color: var(--status-danger-border);
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+}
+
+:root[data-theme="light"] .save-manager-actions button {
+  border-color: var(--color-border);
+  background: var(--color-button-bg);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .save-manager-actions .save-manager-delete-button {
+  border-color: var(--status-danger-border);
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+}
+
+:root[data-theme="light"] .lck-rounds-group-badge-legend {
+  border-color: var(--status-warning-border);
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+}
+
+:root[data-theme="light"] .lck-rounds-group-badge-rise {
+  border-color: var(--status-info-border);
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
+}
+
+:root[data-theme="light"] .inbox-read-chip-read {
+  border-color: var(--status-neutral-border);
+  background: var(--status-neutral-bg);
+  color: var(--status-neutral-text);
+}
+
+:root[data-theme="light"] .inbox-read-chip-read::before {
+  background: var(--status-neutral-border);
+}
+
+:root[data-theme="light"] .inbox-read-chip-unread {
+  border-color: var(--status-info-border);
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
+}
+
+:root[data-theme="light"] .inbox-priority-normal {
+  background: var(--status-neutral-bg);
+  color: var(--status-neutral-text);
+}
+
+:root[data-theme="light"] .offseason-confirmation-section {
+  border-color: var(--status-info-border);
+  background: var(--status-info-bg);
+}
+
+:root[data-theme="light"] .offseason-confirmation-notice {
+  border-color: var(--status-warning-border);
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+}
+
+:root[data-theme="light"] .offseason-confirmation-card,
+:root[data-theme="light"] .offseason-confirmation-player-card {
+  border-color: var(--color-border);
+  background: var(--color-card-bg);
+}
+
+/* Light-mode bug fixes (user-reported): player career entry boxes stayed dark,
+   standings table/scroll borders stayed dark navy, and the season-roadmap
+   summary titles were white-on-white. */
+:root[data-theme="light"] .player-profile-career-entry {
+  border-color: var(--color-border-subtle);
+  background: var(--surface-sunken);
+}
+
+:root[data-theme="light"] .player-profile-career-entry span {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .lck-standings-table {
+  border-bottom-color: var(--color-border);
+}
+
+:root[data-theme="light"] .lck-standings-scroll {
+  border-color: var(--color-border);
+}
+
+:root[data-theme="light"] .season-roadmap-summary-grid strong {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .season-roadmap-summary-grid span {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .starter-lineup-name {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .lck-cup-standings-scroll {
+  border-color: var(--color-border);
+}
+
+/* Save-manager delete / bulk-delete confirmation modals stayed fully dark. */
+:root[data-theme="light"] .save-manager-confirm-card {
+  border-color: var(--status-danger-border);
+  background: var(--color-card-bg);
+  box-shadow: 0 24px 70px rgb(60 45 15 / 18%);
+}
+
+:root[data-theme="light"] .save-manager-confirm-card dl div,
+:root[data-theme="light"] .save-manager-bulk-item {
+  border-color: var(--color-border-subtle);
+  background: var(--surface-sunken);
+}
+
+:root[data-theme="light"] .save-manager-confirm-card dt,
+:root[data-theme="light"] .save-manager-bulk-toolbar span,
+:root[data-theme="light"] .save-manager-bulk-item small {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .save-manager-confirm-card dd,
+:root[data-theme="light"] .save-manager-bulk-item strong {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .save-manager-confirm-actions button,
+:root[data-theme="light"] .save-manager-bulk-toolbar button {
+  border-color: var(--color-border);
+  background: var(--color-button-bg);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .save-manager-confirm-actions .save-manager-delete-confirm {
+  border-color: var(--status-danger-text);
+  background: var(--status-danger-text);
+  color: #ffffff;
 }
 
 :root {
@@ -5725,13 +5923,13 @@ h1 {
 }
 
 :root[data-theme="light"] .player-attr-tooltip {
-  border-color: #cfd7e6;
-  background: #ffffff;
-  color: #3c485c;
+  border-color: var(--color-border);
+  background: var(--surface-overlay);
+  color: var(--text);
 }
 
 :root[data-theme="light"] .player-attr-tooltip::after {
-  border-top-color: #ffffff;
+  border-top-color: var(--surface-overlay);
 }
 
 .player-attr-value {
@@ -5864,18 +6062,18 @@ h1 {
 }
 
 :root[data-theme="light"] .player-profile-screen {
-  background: #f3f5fa;
+  background: var(--color-stage-bg);
 }
 
 :root[data-theme="light"] .player-profile-topbar {
-  border-bottom-color: #dfe4ee;
-  background: #ffffff;
+  border-bottom-color: var(--color-border);
+  background: var(--color-sidebar-bg);
 }
 
 :root[data-theme="light"] .player-profile-back {
-  border-color: #cfd7e6;
-  background: #f1f4fa;
-  color: #1f2a3d;
+  border-color: var(--color-border);
+  background: var(--color-button-bg);
+  color: var(--text);
 }
 
 :root[data-theme="light"] .player-profile-status-cell,
@@ -5883,21 +6081,21 @@ h1 {
 :root[data-theme="light"] .player-attr-panel,
 :root[data-theme="light"] .player-profile-overall-card,
 :root[data-theme="light"] .player-profile-career {
-  border-color: #dfe4ee;
-  background: #ffffff;
+  border-color: var(--color-border);
+  background: var(--color-card-bg);
 }
 
 :root[data-theme="light"] .player-profile-name,
 :root[data-theme="light"] .player-profile-status-cell strong,
 :root[data-theme="light"] .player-profile-contract-row strong,
 :root[data-theme="light"] .player-profile-career-entry strong {
-  color: #1f2a3d;
+  color: var(--text);
 }
 
 :root[data-theme="light"] .player-profile-subtitle,
 :root[data-theme="light"] .player-profile-summary,
 :root[data-theme="light"] .player-attr-name {
-  color: #3c485c;
+  color: var(--muted);
 }
 
 :root[data-theme="light"] .player-attr-tier-worldclass {
