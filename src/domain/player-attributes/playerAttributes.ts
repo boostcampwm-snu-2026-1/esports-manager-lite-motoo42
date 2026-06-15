@@ -2,10 +2,12 @@ import type { Player, Role } from "../../types/game";
 
 // Player detail attributes (#72). This is a presentation/derivation layer over the
 // existing Player fields — it does NOT change the data model or the match-result
-// calculation. 13 of the 15 attributes map straight onto existing fields (several
-// of which were previously hidden inside `mindset` / `adaptability`); the two new
-// ones (`positioning`, `aggression`) are seeded deterministically from related
-// stats so they read as independent attributes without needing a save migration.
+// calculation. 11 of the 16 attributes map straight onto existing fields (several
+// of which were previously hidden inside `mindset` / `adaptability`); five are
+// derived deterministically per player — `positioning`, `lateGame`, `aggression`
+// from related stats, and `ego` / `leadership` as wide-spread, skill-independent
+// traits. None of the derived five (nor the temperament group) feed the position
+// overall. `potential` stays off the panel, shown only as 잠재 next to the overall.
 
 export type PlayerAttributeKey =
   | "laning"
@@ -20,9 +22,10 @@ export type PlayerAttributeKey =
   | "mentalStrength"
   | "clutch"
   | "composure"
-  | "growth"
+  | "lateGame"
   | "aggression"
-  | "ego";
+  | "ego"
+  | "leadership";
 
 export const playerAttributeLabels: Record<PlayerAttributeKey, string> = {
   laning: "라인전",
@@ -37,9 +40,10 @@ export const playerAttributeLabels: Record<PlayerAttributeKey, string> = {
   mentalStrength: "정신력",
   clutch: "클러치",
   composure: "침착함",
-  growth: "성장성",
+  lateGame: "후반 캐리",
   aggression: "공격성",
   ego: "에고",
+  leadership: "리더십",
 };
 
 // One-sentence, present-tense descriptions of what each attribute represents —
@@ -52,15 +56,16 @@ export const playerAttributeDescriptions: Record<PlayerAttributeKey, string> = {
   championPool: "다룰 수 있는 챔피언의 폭과 밴픽 유연성을 결정합니다.",
   teamfight: "한타와 소규모 교전에서의 기여도를 좌우합니다.",
   macro: "맵 장악과 오브젝트 판단 등 거시 운영에 영향을 줍니다.",
-  prediction: "적의 움직임과 메타 변화를 읽는 감각에 영향을 줍니다.",
+  prediction: "적의 움직임과 다음 수를 미리 읽는 감각에 영향을 줍니다.",
   shotcalling: "팀의 콜과 교전 시점 결정에 영향을 줍니다.",
   focus: "경기 내내 일관된 수행력을 유지하는 데 영향을 줍니다.",
   mentalStrength: "압박 상황에서 흔들리지 않는 정신적 강함을 나타냅니다.",
   clutch: "박빙의 결정적 순간에 발휘하는 수행력을 좌우합니다.",
   composure: "위기와 손해 상황에서 평정을 유지하는 능력을 나타냅니다.",
-  growth: "앞으로 능력치가 성장할 수 있는 잠재력을 나타냅니다.",
+  lateGame: "후반 한타에서 경기를 캐리하는 능력을 좌우합니다.",
   aggression: "공격적인 플레이와 적극적인 교전 성향에 영향을 줍니다.",
-  ego: "자기 주장과 팀 내 영향력의 강도를 나타냅니다.",
+  ego: "자신의 판단과 플레이 방향을 강하게 밀고 나가려는 성향을 나타냅니다.",
+  leadership: "팀을 이끌고 팀 내 영향력을 발휘하는 능력을 나타냅니다.",
 };
 
 export type PlayerAttributeGroup = {
@@ -74,7 +79,7 @@ export const playerAttributeGroups: PlayerAttributeGroup[] = [
   { key: "technical", attributes: ["laning", "mechanics", "positioning", "championPool"] },
   { key: "tactical", attributes: ["teamfight", "macro", "prediction", "shotcalling"] },
   { key: "mental", attributes: ["focus", "mentalStrength", "clutch", "composure"] },
-  { key: "temperament", attributes: ["growth", "aggression", "ego"] },
+  { key: "temperament", attributes: ["lateGame", "aggression", "ego", "leadership"] },
 ];
 
 function clamp(value: number, min: number, max: number) {
@@ -97,6 +102,16 @@ function seededVariation(id: string, salt: string, spread: number) {
   return (unit * 2 - 1) * spread;
 }
 
+// A deterministic, widely-spread rating for "soft" personality traits that do not
+// track skill (ego, leadership). Summing two independent seeds gives a roughly
+// triangular spread centered mid-range: most players land in the middle, but the
+// gray (<50) and gold (90+) tails are reachable — including for top players.
+function seededWideRating(id: string, salt: string) {
+  return (
+    66 + seededVariation(id, `${salt}-a`, 18) + seededVariation(id, `${salt}-b`, 16)
+  );
+}
+
 export function getPlayerAttributes(
   player: Player,
 ): Record<PlayerAttributeKey, number> {
@@ -115,19 +130,25 @@ export function getPlayerAttributes(
     teamfight: score(player.teamfight),
     macro: score(player.macro),
     prediction: score(player.adaptability.metaAdaptability),
-    shotcalling: score(player.mindset.leadership),
+    shotcalling: score(player.mindset.communication),
     focus: score(player.mindset.consistency),
     mentalStrength: score(player.mental),
     clutch: score(player.mindset.clutch),
     composure: score(player.mindset.tiltControl),
-    growth: score(player.potential),
+    lateGame: score(
+      player.teamfight * 0.45 +
+        player.mechanics * 0.3 +
+        player.mindset.clutch * 0.25 +
+        seededVariation(player.id, "lateGame", 7),
+    ),
     aggression: score(
       player.mechanics * 0.4 +
         player.teamfight * 0.35 +
         (100 - player.mindset.tiltControl) * 0.25 +
         seededVariation(player.id, "aggression", 10),
     ),
-    ego: score(player.mindset.ambition),
+    ego: score(seededWideRating(player.id, "ego")),
+    leadership: score(seededWideRating(player.id, "leadership")),
   };
 }
 

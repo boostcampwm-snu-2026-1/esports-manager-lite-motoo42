@@ -28,7 +28,7 @@ function makePlayer(overrides: PlayerOverrides = {}): Player {
 const allKeys = playerAttributeGroups.flatMap((group) => group.attributes);
 
 describe("player attributes", () => {
-  it("derives all 15 attributes within 1..99", () => {
+  it("derives all 16 attributes within 1..99", () => {
     for (const player of lck2026Players.slice(0, 12)) {
       const attributes = getPlayerAttributes(player);
 
@@ -91,6 +91,29 @@ describe("player attributes", () => {
     expect(computeRoleOverall(player, "jungle")).toBeGreaterThan(
       computeRoleOverall(player, "mid"),
     );
+  });
+
+  it("excludes the soft traits (ego/leadership) from the position overall", () => {
+    const core: PlayerOverrides = {
+      laning: 75,
+      teamfight: 75,
+      macro: 75,
+      championPool: 75,
+      mental: 75,
+      mindset: { consistency: 75, clutch: 75 },
+    };
+    const a = makePlayer({ ...core, id: "trait-seed-alpha" });
+    const b = makePlayer({ ...core, id: "trait-seed-omega" });
+    const attributesA = getPlayerAttributes(a);
+    const attributesB = getPlayerAttributes(b);
+
+    // The wide-spread soft traits really do differ between the two ids...
+    expect(
+      attributesA.ego !== attributesB.ego ||
+        attributesA.leadership !== attributesB.leadership,
+    ).toBe(true);
+    // ...yet the position overall is identical, proving they are excluded from it.
+    expect(computeRoleOverall(a)).toBe(computeRoleOverall(b));
   });
 
   it("provides a short one-line description for every attribute", () => {
