@@ -63,7 +63,10 @@ export type GeneratedMatchTimeline = {
 
 export type GenerateMatchTimelineInput = {
   // 0 = coin-flip, 1 = total stomp. Drives game length and the winner's lead.
-  dominance?: number;
+  // Required on purpose: tone depends entirely on this, so a forgotten value is
+  // a compile error rather than a silent "medium game". Callers derive it via
+  // dominanceFromWinnerWinProbability(winner's pre-game chance).
+  dominance: number;
   seed: string;
   winningSide: LiveMatchSide;
 };
@@ -196,7 +199,7 @@ export function generateMatchTimeline(
   const random = createSeededRandom(input.seed);
   const winningSide = input.winningSide;
   const losingSide = opposite(winningSide);
-  const dominance = clamp(input.dominance ?? 0.5, 0, 1);
+  const dominance = clamp(input.dominance, 0, 1);
   const durationMin = toGameDurationMinutes(random, dominance);
   const durationSec = Math.round(durationMin * 60);
   const events: DraftEvent[] = [];

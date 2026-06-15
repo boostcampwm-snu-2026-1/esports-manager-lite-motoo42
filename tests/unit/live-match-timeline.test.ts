@@ -24,22 +24,22 @@ function deathsBySide(timeline: GeneratedMatchTimeline) {
 
 describe("match timeline generator", () => {
   it("is deterministic for the same seed", () => {
-    const first = generateMatchTimeline({ seed: "match-a", winningSide: "blue" });
-    const second = generateMatchTimeline({ seed: "match-a", winningSide: "blue" });
+    const first = generateMatchTimeline({ seed: "match-a", winningSide: "blue", dominance: 0.4 });
+    const second = generateMatchTimeline({ seed: "match-a", winningSide: "blue", dominance: 0.4 });
 
     expect(second).toEqual(first);
   });
 
   it("produces different timelines for different seeds", () => {
-    const first = generateMatchTimeline({ seed: "match-a", winningSide: "blue" });
-    const second = generateMatchTimeline({ seed: "match-b", winningSide: "blue" });
+    const first = generateMatchTimeline({ seed: "match-a", winningSide: "blue", dominance: 0.4 });
+    const second = generateMatchTimeline({ seed: "match-b", winningSide: "blue", dominance: 0.4 });
 
     expect(second.events).not.toEqual(first.events);
   });
 
   it("keeps blue kills equal to red deaths (and vice versa)", () => {
     for (const seed of ["s1", "s2", "s3", "s4", "s5"]) {
-      const timeline = generateMatchTimeline({ seed, winningSide: "red" });
+      const timeline = generateMatchTimeline({ seed, winningSide: "red", dominance: 0.4 });
       const deaths = deathsBySide(timeline);
 
       expect(timeline.finalKills.blue).toBe(deaths.red);
@@ -78,7 +78,7 @@ describe("match timeline generator", () => {
   });
 
   it("only ever assigns the five known roles to kill participants", () => {
-    const timeline = generateMatchTimeline({ seed: "roles", winningSide: "red" });
+    const timeline = generateMatchTimeline({ seed: "roles", winningSide: "red", dominance: 0.4 });
 
     for (const event of killEvents(timeline)) {
       const roles = [
