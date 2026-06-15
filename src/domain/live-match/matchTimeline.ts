@@ -44,6 +44,9 @@ export type MatchTimelineEvent = {
   advantage: LiveMatchEventAdvantage;
   id: string;
   importance: LiveMatchImportance;
+  // Set on baron/elder events: true when the objective was stolen. Preserved so
+  // the message-rendering step can phrase a steal differently from a clean take.
+  isSteal?: boolean;
   kill?: MatchTimelineKillInfo;
   side: LiveMatchSide;
   timeSec: number;
@@ -110,18 +113,27 @@ function createSoloKill(
   };
 }
 
+function teamfightAssistCount(random: () => number, progress: number) {
+  // Assist counts shift with game time. Early skirmishes are small (1-2 assists,
+  // a 4-assist fight is very rare); late teamfights are full 5v5 brawls (3-4
+  // assists, a 1-assist fight is rare). The full 1-4 range still occurs, and the
+  // game-wide average lands in the ~2-3 band the spec asks for.
+  const center = lerp(1.5, 3.5, clamp(progress, 0, 1));
+  const noisy = center + (random() - 0.5) * 2.2;
+
+  return clamp(Math.round(noisy), 1, 4);
+}
+
 function createTeamfightKill(
   random: () => number,
   isLaningPhase: boolean,
+  progress: number,
 ): MatchTimelineKillInfo {
   const killerRole = pickRole(random);
-  // Teamfight kills carry 2-3 assists so the team assist-to-kill ratio lands in
-  // the ~2-3 range the spec asks for; laning solo kills supply the 0-assist case.
-  const assistCount = 2 + Math.floor(random() * 2);
   const assistRoles = sampleRoles(
     random,
     matchTimelineRoles.filter((role) => role !== killerRole),
-    assistCount,
+    teamfightAssistCount(random, progress),
   );
 
   return {
@@ -166,11 +178,16 @@ function countKillsBySide(
 }
 
 /**
- * Derive a 0..1 dominance value from a win probability. 0.5 win chance maps to
- * a coin-flip (0); a lopsided probability maps toward a stomp (1).
+ * Derive a 0..1 dominance value from the PRE-GAME win chance of the team that
+ * actually won. Favored winners map toward a stomp (1); a coin-flip maps to 0.
+ *
+ * Only the upside is mapped, so an upset stays close: if the underdog won, pass
+ * their (sub-0.5) win chance and dominance clamps to 0 — the replay reads as a
+ * scrappy game, not a blowout. Callers must compute the winner's probability,
+ * e.g. `winner === "user" ? result.winProbability : 1 - result.winProbability`.
  */
-export function toMatchDominance(winProbability: number) {
-  return clamp(Math.abs(winProbability - 0.5) * 2, 0, 1);
+export function dominanceFromWinnerWinProbability(winnerWinProbability: number) {
+  return clamp((winnerWinProbability - 0.5) * 2, 0, 1);
 }
 
 export function generateMatchTimeline(
@@ -241,6 +258,7 @@ export function generateMatchTimeline(
       events.push({
         advantage: side,
         importance: isSteal ? "critical" : "high",
+        isSteal,
         side,
         timeSec: clamp(
           Math.round((22 + index * 7 + random() * 4) * 60),
@@ -253,13 +271,15 @@ export function generateMatchTimeline(
     }
   }
 
-  // 4. Elder dragon — only in longer games.
+  // 4. Elder dragon — only in longer games, occasionally stolen.
   if (durationMin >= 35 && random() < 0.7) {
     const side = winnerWeighted(0.2);
+    const isSteal = random() < 0.1;
 
     events.push({
       advantage: side,
       importance: "critical",
+      isSteal,
       side,
       timeSec: clamp(
         Math.round((35 + random() * (durationMin - 35)) * 60),
@@ -298,13 +318,14 @@ export function generateMatchTimeline(
       12 * 60,
       durationSec - 150,
     );
+    const progress = timeSec / durationSec;
     const isEvenTrade = random() < 0.22;
 
     if (isEvenTrade) {
       events.push({
         advantage: "neutral",
         importance: "low",
-        kill: createTeamfightKill(random, false),
+        kill: createTeamfightKill(random, false, progress),
         side: winningSide,
         timeSec,
         type: "kill",
@@ -313,7 +334,7 @@ export function generateMatchTimeline(
       events.push({
         advantage: "neutral",
         importance: "low",
-        kill: createTeamfightKill(random, false),
+        kill: createTeamfightKill(random, false, progress),
         side: losingSide,
         timeSec: timeSec + 8,
         type: "kill",
@@ -328,7 +349,7 @@ export function generateMatchTimeline(
     events.push({
       advantage: side,
       importance: isBigFight ? "high" : "medium",
-      kill: createTeamfightKill(random, false),
+      kill: createTeamfightKill(random, false, progress),
       side,
       timeSec,
       type: "kill",
@@ -339,7 +360,7 @@ export function generateMatchTimeline(
       events.push({
         advantage: side,
         importance: "high",
-        kill: createTeamfightKill(random, false),
+        kill: createTeamfightKill(random, false, progress),
         side,
         timeSec: timeSec + 10,
         type: "kill",
@@ -388,12 +409,14 @@ export function generateMatchTimeline(
   const closingKills = 2 + Math.floor(random() * 3);
 
   for (let index = 0; index < closingKills; index += 1) {
+    const timeSec = closingFightStart + index * 12;
+
     events.push({
       advantage: winningSide,
       importance: index === closingKills - 1 ? "critical" : "high",
-      kill: createTeamfightKill(random, false),
+      kill: createTeamfightKill(random, false, timeSec / durationSec),
       side: winningSide,
-      timeSec: closingFightStart + index * 12,
+      timeSec,
       type: "kill",
       visible: true,
     });

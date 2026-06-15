@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  dominanceFromWinnerWinProbability,
   generateMatchTimeline,
   matchTimelineRoles,
-  toMatchDominance,
   type GeneratedMatchTimeline,
 } from "../../src/domain/live-match/matchTimeline";
 import type { LiveMatchSide } from "../../src/domain/live-match/types";
@@ -137,10 +137,72 @@ describe("match timeline generator", () => {
     }
   });
 
-  it("maps win probability to a 0..1 dominance scale", () => {
-    expect(toMatchDominance(0.5)).toBe(0);
-    expect(toMatchDominance(1)).toBe(1);
-    expect(toMatchDominance(0)).toBe(1);
-    expect(toMatchDominance(0.75)).toBeCloseTo(0.5, 5);
+  it("maps the winner's win probability to a 0..1 dominance scale (upsets stay close)", () => {
+    expect(dominanceFromWinnerWinProbability(0.5)).toBe(0);
+    expect(dominanceFromWinnerWinProbability(1)).toBe(1);
+    // Underdog winner: their pre-game chance was below 0.5, so the game reads as
+    // close (0), not a blowout.
+    expect(dominanceFromWinnerWinProbability(0.3)).toBe(0);
+    expect(dominanceFromWinnerWinProbability(0.75)).toBeCloseTo(0.5, 5);
+  });
+
+  it("preserves steal metadata on baron/elder events for later narration", () => {
+    let sawSteal = false;
+
+    for (let index = 0; index < 40; index += 1) {
+      const timeline = generateMatchTimeline({
+        seed: `steal-${index}`,
+        winningSide: "blue",
+        dominance: 0.1,
+      });
+
+      for (const event of timeline.events) {
+        if (event.type === "baron" || event.type === "elder") {
+          expect(typeof event.isSteal).toBe("boolean");
+
+          if (event.isSteal) {
+            sawSteal = true;
+          }
+        }
+      }
+    }
+
+    // Steals are rare but must be reachable across many games.
+    expect(sawSteal).toBe(true);
+  });
+
+  it("scales teamfight assist counts up as the game goes later", () => {
+    let earlyAssists = 0;
+    let earlyKills = 0;
+    let lateAssists = 0;
+    let lateKills = 0;
+
+    for (let index = 0; index < 8; index += 1) {
+      const timeline = generateMatchTimeline({
+        seed: `assist-curve-${index}`,
+        winningSide: "blue",
+        dominance: 0.2,
+      });
+
+      for (const event of timeline.events) {
+        if (event.type !== "kill" || !event.kill || event.kill.isSolo) {
+          continue;
+        }
+
+        const progress = event.timeSec / timeline.durationSec;
+
+        if (progress < 0.4) {
+          earlyAssists += event.kill.assistRoles.length;
+          earlyKills += 1;
+        } else if (progress > 0.6) {
+          lateAssists += event.kill.assistRoles.length;
+          lateKills += 1;
+        }
+      }
+    }
+
+    expect(earlyKills).toBeGreaterThan(0);
+    expect(lateKills).toBeGreaterThan(0);
+    expect(lateAssists / lateKills).toBeGreaterThan(earlyAssists / earlyKills);
   });
 });

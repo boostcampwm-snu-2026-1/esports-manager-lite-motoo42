@@ -2,9 +2,9 @@ export { createMockLiveMatchPresentation } from "./mockPresentation";
 export { liveMatchRoleLabels, liveMatchRoles } from "./mockDraft";
 export { getLiveMatchUserTeamId } from "./playerSelection";
 export {
+  dominanceFromWinnerWinProbability,
   generateMatchTimeline,
   matchTimelineRoles,
-  toMatchDominance,
 } from "./matchTimeline";
 export type {
   GeneratedMatchTimeline,
