@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createInitialCareer } from "../../src/domain/career/createInitialCareer";
 import { SaveManager } from "../../src/features/save-manager";
@@ -11,6 +17,10 @@ function jsonResponse(body: unknown, status = 200) {
     },
     status,
   });
+}
+
+function noContentResponse() {
+  return new Response(null, { status: 204 });
 }
 
 function createSaveDto(overrides: Partial<CareerSaveDto> = {}): CareerSaveDto {
@@ -197,5 +207,180 @@ describe("SaveManager", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/api/saves/save-1?ownerId=local-dev"),
     );
+  });
+
+  it("deletes a selected save after confirmation", async () => {
+    const career = createInitialCareer("T1");
+    const save = createSaveDto();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ saves: [save] }))
+      .mockResolvedValueOnce(noContentResponse())
+      .mockResolvedValueOnce(jsonResponse({ saves: [] }));
+    const onActiveSaveChange = vi.fn();
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <SaveManager
+        activeSaveId="save-1"
+        activeSaveRevision={1}
+        career={career}
+        onActiveSaveChange={onActiveSaveChange}
+        onLoadCareer={vi.fn()}
+        variant="panel"
+      />,
+    );
+
+    await screen.findByText("저장 목록 동기화됨");
+    fireEvent.click(screen.getByRole("button", { name: "삭제" }));
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "저장 삭제 확인",
+    });
+
+    expect(within(dialog).getByText("T1 S1")).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "삭제" }));
+
+    await waitFor(() => expect(onActiveSaveChange).toHaveBeenCalledWith(null));
+    expect(fetchMock.mock.calls[1][0]).toContain(
+      "/api/saves/save-1?ownerId=local-dev",
+    );
+    expect(fetchMock.mock.calls[1][1]).toEqual(
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(await screen.findByText("저장 슬롯 없음")).toBeInTheDocument();
+  });
+
+  it("keeps a save when delete confirmation is cancelled", async () => {
+    const save = createSaveDto();
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ saves: [save] }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <SaveManager
+        activeSaveId={null}
+        career={null}
+        onActiveSaveChange={vi.fn()}
+        onLoadCareer={vi.fn()}
+        variant="panel"
+      />,
+    );
+
+    await screen.findByText("저장 목록 동기화됨");
+    fireEvent.click(screen.getByRole("button", { name: "삭제" }));
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "저장 삭제 확인",
+    });
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "취소" }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "저장 삭제 확인" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("bulk deletes selected saves and clears the active save meta when needed", async () => {
+    const career = createInitialCareer("T1");
+    const saveOne = createSaveDto({
+      id: "save-1",
+      saveName: "T1 S1",
+      revision: 1,
+    });
+    const saveTwo = createSaveDto({
+      id: "save-2",
+      saveName: "Gen.G S1",
+      revision: 1,
+    });
+    const saveThree = createSaveDto({
+      id: "save-3",
+      saveName: "KT S1",
+      revision: 1,
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ saves: [saveOne, saveTwo, saveThree] }))
+      .mockResolvedValueOnce(noContentResponse())
+      .mockResolvedValueOnce(noContentResponse())
+      .mockResolvedValueOnce(jsonResponse({ saves: [saveThree] }));
+    const onActiveSaveChange = vi.fn();
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <SaveManager
+        activeSaveId="save-1"
+        activeSaveRevision={1}
+        career={career}
+        onActiveSaveChange={onActiveSaveChange}
+        onLoadCareer={vi.fn()}
+        variant="panel"
+      />,
+    );
+
+    await screen.findByText("저장 목록 동기화됨");
+    fireEvent.click(screen.getByRole("button", { name: "일괄 삭제" }));
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "저장 일괄 삭제",
+    });
+
+    fireEvent.click(within(dialog).getByLabelText(/T1 S1/));
+    fireEvent.click(within(dialog).getByLabelText(/Gen\.G S1/));
+    fireEvent.click(within(dialog).getByRole("button", { name: "선택 삭제" }));
+
+    await waitFor(() => expect(onActiveSaveChange).toHaveBeenCalledWith(null));
+    expect(fetchMock.mock.calls[1][0]).toContain(
+      "/api/saves/save-1?ownerId=local-dev",
+    );
+    expect(fetchMock.mock.calls[1][1]).toEqual(
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(fetchMock.mock.calls[2][0]).toContain(
+      "/api/saves/save-2?ownerId=local-dev",
+    );
+    expect(fetchMock.mock.calls[2][1]).toEqual(
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(await screen.findByText("저장 슬롯 2개 삭제됨")).toBeInTheDocument();
+  });
+
+  it("keeps all saves when bulk deletion is cancelled", async () => {
+    const save = createSaveDto();
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ saves: [save] }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <SaveManager
+        activeSaveId={null}
+        career={null}
+        onActiveSaveChange={vi.fn()}
+        onLoadCareer={vi.fn()}
+        variant="panel"
+      />,
+    );
+
+    await screen.findByText("저장 목록 동기화됨");
+    fireEvent.click(screen.getByRole("button", { name: "일괄 삭제" }));
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "저장 일괄 삭제",
+    });
+
+    fireEvent.click(within(dialog).getByLabelText(/T1 S1/));
+    fireEvent.click(within(dialog).getByRole("button", { name: "취소" }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "저장 일괄 삭제" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

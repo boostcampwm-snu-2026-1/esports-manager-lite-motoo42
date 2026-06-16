@@ -2,20 +2,28 @@ import type { ContractTypeSelections } from "../../domain/roster";
 import type {
   CareerProgressResult,
 } from "../../domain/game-progress/progressCareer";
+import type { ScrimRequestInput } from "../../domain/scrim";
 import type { OffseasonContractOfferInput } from "../../domain/season";
+import type { CareerStartMode } from "../../domain/career/createInitialCareer";
 import type {
   AsianGamesPlayMode,
   CareerSave,
+  CareerGuideId,
   CompetitionId,
+  CareerMessage,
   Player,
   Role,
   StrategyId,
   TrainingIntensity,
 } from "../../types/game";
+import type {
+  MessageNewsFrequency,
+  ThemeMode,
+} from "../../domain/settings/appSettings";
 import type { AppRoute } from "../routes";
 
 export type GameAction =
-  | { type: "start-career"; teamName: string }
+  | { type: "start-career"; teamName: string; startMode?: CareerStartMode }
   | { type: "load-career"; career: CareerSave }
   | { type: "go-to"; route: AppRoute }
   | {
@@ -41,8 +49,26 @@ export type GameAction =
   | { type: "confirm-free-agent-signing"; offerId: string }
   | { type: "cancel-free-agent-signing"; offerId: string }
   | { type: "start-next-season" }
+  | { type: "set-theme-mode"; mode: ThemeMode }
+  | { type: "set-background-music-enabled"; enabled: boolean }
+  | { type: "set-background-music-volume"; volume: number }
+  | { type: "set-sound-effects-enabled"; enabled: boolean }
+  | { type: "set-sound-effects-volume"; volume: number }
+  | { type: "set-first-entry-guides-enabled"; enabled: boolean }
+  | { type: "set-ai-news-enabled"; enabled: boolean }
+  | { type: "set-message-news-frequency"; frequency: MessageNewsFrequency }
+  | { type: "mark-career-guide-seen"; guideId: CareerGuideId }
+  | { type: "mark-message-read"; messageId: string }
+  | { type: "mark-all-messages-read" }
+  | {
+      type: "apply-ai-news-message";
+      messageId: string;
+      news: Pick<CareerMessage, "body" | "title">;
+    }
   | { type: "set-strategy"; strategy: StrategyId }
   | { type: "set-training-intensity"; trainingIntensity: TrainingIntensity }
+  | { type: "request-scrim"; request: ScrimRequestInput }
+  | { type: "run-today-scrim" }
   | {
       type: "set-asian-games-play-mode";
       playMode: Exclude<AsianGamesPlayMode, "undecided">;

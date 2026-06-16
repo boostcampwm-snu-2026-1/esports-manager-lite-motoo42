@@ -1,6 +1,8 @@
 import { findLckTeamSeed, getLckTeamProfile } from "../../data/lckTeams";
+import { offseasonFreeAgentSeeds } from "../../data/offseasonFreeAgents";
 import type {
   CareerSave,
+  OffseasonAiRenewalPlan,
   Player,
   PlayerContract,
   Role,
@@ -8,6 +10,7 @@ import type {
   Team,
 } from "../../types/game";
 import { createInitialSeasonState } from "../season/createInitialSeasonState";
+import { createAiRenewalPlans } from "../season/offseason-market/aiRenewals";
 import { formatSeasonDateLabel } from "../season/seasonScheduleDates";
 
 const preseasonStartDateKey = "2025-12-17";
@@ -69,14 +72,32 @@ function createExpiredContract(player: Player): PlayerContract {
   };
 }
 
+function mergePreseasonFreeAgents(players: Player[]) {
+  const seenIds = new Set(players.map((player) => player.id));
+  const seenNames = new Set(
+    players.map((player) => player.name.trim().toLowerCase()),
+  );
+
+  return [
+    ...players,
+    ...offseasonFreeAgentSeeds.filter((player) => {
+      const nameKey = player.name.trim().toLowerCase();
+
+      return !seenIds.has(player.id) && !seenNames.has(nameKey);
+    }),
+  ];
+}
+
 function createPreseasonOffseasonState({
   seasonState,
   selectedTeamPlayerIds,
   marketPlayerIds,
+  aiRenewalPlans,
 }: {
   seasonState: SeasonState;
   selectedTeamPlayerIds: string[];
   marketPlayerIds: string[];
+  aiRenewalPlans: OffseasonAiRenewalPlan[];
 }): SeasonState {
   return {
     ...seasonState,
@@ -112,6 +133,7 @@ function createPreseasonOffseasonState({
       resolvedExpiredPlayerIds: [],
       retiredPlayerIds: [],
       militaryServicePlayerIds: [],
+      aiRenewalPlans,
       validationErrors: [],
       logEntries: [
         {
@@ -130,9 +152,10 @@ function createPreseasonOffseasonState({
 export function createPreseasonStoveLeagueCareer(
   career: CareerSave,
 ): CareerSave {
+  const lckPlayers = mergePreseasonFreeAgents(career.lckPlayers);
   const userTeamProfile = getLckTeamProfile(career.userTeam.name);
   const sourceTeamName = getRosterSourceTeamName(career.userTeam.name);
-  const selectedTeamPlayers = career.lckPlayers
+  const selectedTeamPlayers = lckPlayers
     .filter((player) => isTeamPlayer(player, sourceTeamName))
     .sort((left, right) => left.id.localeCompare(right.id));
   const selectedTeamPlayerIds = selectedTeamPlayers.map((player) => player.id);
@@ -142,12 +165,13 @@ export function createPreseasonStoveLeagueCareer(
   const academyRosterPlayerIds = selectedTeamPlayerIds.filter(
     (playerId) => !starterIds.has(playerId),
   );
-  const marketPlayerIds = career.lckPlayers
+  const marketPlayerIds = lckPlayers
     .filter(
       (player) =>
         player.region === "lck" &&
         player.league === "LCK" &&
         player.availableForRoster &&
+        !player.currentTeam &&
         !selectedTeamPlayerIdSet.has(player.id),
     )
     .map((player) => player.id);
@@ -180,8 +204,10 @@ export function createPreseasonStoveLeagueCareer(
   return {
     ...career,
     currentSeason: 1,
+    lckPlayers,
     userTeam,
     seasonState: createPreseasonOffseasonState({
+      aiRenewalPlans: createAiRenewalPlans(lckPlayers, career.userTeam.name),
       seasonState,
       selectedTeamPlayerIds,
       marketPlayerIds,

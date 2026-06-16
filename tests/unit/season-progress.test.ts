@@ -21,6 +21,19 @@ function createActiveSeason() {
   );
 }
 
+function createIdleSeasonOn(dateKey: string) {
+  return {
+    ...createActiveSeason(),
+    currentDateKey: dateKey,
+    currentDateLabel:
+      dateKey === "2026-01-15"
+        ? "2026년 1월 15일 (목)"
+        : "2026년 1월 16일 (금)",
+    progressStatus: "idle" as const,
+    nextMatchIds: [],
+  };
+}
+
 function createBlueWinRecord(match: MatchSchedule, index: number): MatchRecord {
   const t1IsBlue = match.blueTeamName === "T1";
   const t1IsRed = match.redTeamName === "T1";
@@ -48,18 +61,24 @@ function createBlueWinRecord(match: MatchSchedule, index: number): MatchRecord {
 describe("season progress", () => {
   it("starts LCK Cup on the first real match date and keeps play locked to user match days", () => {
     const season = createActiveSeason();
+    const currentMatches = getCurrentDateScheduledMatches(season);
 
     expect(season.scheduledMatches).toHaveLength(25);
     expect(season.currentDateKey).toBe("2026-01-14");
-    expect(season.progressStatus).toBe("idle");
-    expect(getSeasonProgressActionLabel(season)).toBe("진행");
-    expect(getPreviewMatches(season)).toHaveLength(0);
-    expect(getCurrentDateScheduledMatches(season)).toHaveLength(1);
-    expect(getCurrentDateScheduledMatches(season)[0].format).toBe("bo3");
+    expect(season.progressStatus).toBe("match-preview");
+    expect(getSeasonProgressActionLabel(season)).toBe("플레이");
+    expect(getPreviewMatches(season)).toHaveLength(2);
+    expect(currentMatches).toHaveLength(2);
+    expect(currentMatches[0].format).toBe("bo3");
+    expect(
+      currentMatches.some(
+        (match) => match.blueTeamName === "T1" || match.redTeamName === "T1",
+      ),
+    ).toBe(true);
   });
 
   it("can jump from idle to the next user match preview", () => {
-    const season = createActiveSeason();
+    const season = createIdleSeasonOn("2026-01-15");
     const previewSeason = advanceToNextMatchWeek(season);
     const previewMatches = getPreviewMatches(previewSeason);
 
@@ -75,7 +94,7 @@ describe("season progress", () => {
   });
 
   it("records a completed user match day and moves to review state", () => {
-    const season = advanceToNextMatchWeek(createActiveSeason());
+    const season = createActiveSeason();
     const matches = getCurrentDateScheduledMatches(season);
     const reviewedSeason = recordCompletedMatches(
       season,
@@ -97,7 +116,7 @@ describe("season progress", () => {
   });
 
   it("continues from review by one day instead of skipping a whole week", () => {
-    const season = advanceToNextMatchWeek(createActiveSeason());
+    const season = createActiveSeason();
     const matches = getCurrentDateScheduledMatches(season);
     const reviewedSeason = recordCompletedMatches(
       season,
@@ -115,10 +134,10 @@ describe("season progress", () => {
   });
 
   it("advances an idle non-user day by one real calendar date", () => {
-    const season = createActiveSeason();
+    const season = createIdleSeasonOn("2026-01-15");
     const nextDaySeason = advanceToNextDay(season);
 
-    expect(nextDaySeason.currentDateKey).toBe("2026-01-15");
-    expect(nextDaySeason.currentDateLabel).toBe("2026년 1월 15일 (목)");
+    expect(nextDaySeason.currentDateKey).toBe("2026-01-16");
+    expect(nextDaySeason.currentDateLabel).toBe("2026년 1월 16일 (금)");
   });
 });

@@ -235,8 +235,8 @@ export function SeasonSummary({
     offseason?.status !== "ready-for-next-season";
   const finalRecord = summary.finalRecord ?? {
     wins: career.userTeam.wins,
-      losses: career.userTeam.losses,
-    };
+    losses: career.userTeam.losses,
+  };
   const competitionResults = summary.competitionResults ?? [];
   const offseasonSummary = summary.offseasonSummary;
   const renewedNames = getPlayerNames(
@@ -302,8 +302,8 @@ export function SeasonSummary({
         summaries={summaryOptions}
       />
 
-      <div className="season-summary-grid season-summary-detail-grid">
-        <Card>
+      <div className="season-summary-board">
+        <Card className="season-summary-record-card">
           <div className="season-summary-card-title">
             <div>
               <p className="eyebrow">남은 기록</p>
@@ -329,7 +329,7 @@ export function SeasonSummary({
           </div>
         </Card>
 
-        <Card>
+        <Card className="season-summary-competition-card">
           <div className="season-summary-card-title">
             <div>
               <p className="eyebrow">시즌의 발자취</p>
@@ -338,10 +338,8 @@ export function SeasonSummary({
           </div>
           <CompetitionResultList results={competitionResults} />
         </Card>
-      </div>
 
-      <div className="season-summary-grid">
-        <Card>
+        <Card className="season-summary-market-card">
           <div className="season-summary-card-title">
             <div>
               <p className="eyebrow">스토브리그의 흔적</p>
@@ -357,7 +355,7 @@ export function SeasonSummary({
           <OffseasonLogList entries={notableLogEntries} />
         </Card>
 
-        <Card>
+        <Card className="season-summary-player-card">
           <div className="season-summary-card-title">
             <div>
               <p className="eyebrow">선수 변화</p>
@@ -385,72 +383,76 @@ export function SeasonSummary({
             </p>
           )}
         </Card>
+
+        <Card className="season-summary-next-card">
+          <div className="season-summary-card-title">
+            <div>
+              <p className="eyebrow">Next Chapter</p>
+              <h2>
+                {isCareerComplete || hasThreeSeasonHistory
+                  ? "커리어 결산"
+                  : "다음 장"}
+              </h2>
+            </div>
+          </div>
+
+          {isCareerComplete || hasThreeSeasonHistory ? (
+            <div className="season-summary-empty">
+              <strong>세 시즌의 기록이 히스토리에 남았습니다.</strong>
+              <span>승리와 이적, 남겨진 이름들이 이 커리어의 결말입니다.</span>
+            </div>
+          ) : canEnterOffseason ? (
+            <div className="season-summary-renewal-ready">
+              <strong>28일 스토브리그가 대기 중입니다.</strong>
+              <span>
+                이 시즌의 마지막 결정은 재계약, 방출, 그리고 FA 시장에서
+                이어집니다.
+              </span>
+            </div>
+          ) : (
+            <div className="season-summary-empty">
+              <strong>기록은 시즌 히스토리에 보존됩니다.</strong>
+              <span>다음 결산은 시즌이 끝난 뒤 다시 열립니다.</span>
+            </div>
+          )}
+
+          {canEnterOffseason && expiredPlayers.length > 0 && (
+            <div className="season-renewal-panel">
+              <div className="section-label-row">
+                <span>계약 만료</span>
+                <strong>{expiredPlayers.length} players</strong>
+              </div>
+              <div className="season-renewal-list">
+                {expiredPlayers.map((player) => (
+                  <article className="season-renewal-row" key={player.id}>
+                    <div>
+                      <strong>{player.name}</strong>
+                      <span>
+                        {player.role.toUpperCase()} · {player.currentTeam} ·
+                        salary {formatSalaryAmount(player.salaryExpectation)}
+                      </span>
+                      <small>스토브리그 1주차에서 재계약 또는 방출 결정</small>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="season-summary-actions">
+            <Button disabled={!canEnterOffseason} onClick={onStartOffseason}>
+              스토브리그 진입
+            </Button>
+            <Button variant="ghost" onClick={onViewRoster}>
+              로스터 확인
+            </Button>
+          </div>
+        </Card>
       </div>
-
-      <Card>
-        <div className="season-summary-card-title">
-          <div>
-            <p className="eyebrow">Next Chapter</p>
-            <h2>{isCareerComplete || hasThreeSeasonHistory ? "커리어 결산" : "다음 장"}</h2>
-          </div>
-        </div>
-
-        {isCareerComplete || hasThreeSeasonHistory ? (
-          <div className="season-summary-empty">
-            <strong>세 시즌의 기록이 히스토리에 남았습니다.</strong>
-            <span>승리와 이적, 남겨진 이름들이 이 커리어의 결말입니다.</span>
-          </div>
-        ) : canEnterOffseason ? (
-          <div className="season-summary-renewal-ready">
-            <strong>28일 스토브리그가 대기 중입니다.</strong>
-            <span>
-              이 시즌의 마지막 결정은 재계약, 방출, 그리고 FA 시장에서
-              이어집니다.
-            </span>
-          </div>
-        ) : (
-          <div className="season-summary-empty">
-            <strong>기록은 시즌 히스토리에 보존됩니다.</strong>
-            <span>다음 결산은 시즌이 끝난 뒤 다시 열립니다.</span>
-          </div>
-        )}
-
-        {canEnterOffseason && expiredPlayers.length > 0 && (
-          <div className="season-renewal-panel">
-            <div className="section-label-row">
-              <span>계약 만료</span>
-              <strong>{expiredPlayers.length} players</strong>
-            </div>
-            <div className="season-renewal-list">
-              {expiredPlayers.map((player) => (
-                <article className="season-renewal-row" key={player.id}>
-                  <div>
-                    <strong>{player.name}</strong>
-                    <span>
-                      {player.role.toUpperCase()} · {player.currentTeam} · salary{" "}
-                      {formatSalaryAmount(player.salaryExpectation)}
-                    </span>
-                    <small>스토브리그 1주차에서 재계약 또는 방출 결정</small>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="season-summary-actions">
-          <Button disabled={!canEnterOffseason} onClick={onStartOffseason}>
-            스토브리그 진입
-          </Button>
-          <Button variant="ghost" onClick={onViewRoster}>
-            로스터 확인
-          </Button>
-        </div>
-      </Card>
 
       {summary.expiredContractPlayerIds &&
         summary.expiredContractPlayerIds.length > 0 && (
-          <p className="muted">
+          <p className="muted season-summary-expired-note">
             만료 선수:{" "}
             {summary.expiredContractPlayerIds
               .map((playerId) => getPlayerName(career.lckPlayers, playerId))

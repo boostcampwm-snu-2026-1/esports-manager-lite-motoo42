@@ -10,6 +10,7 @@ import {
   lckRounds12RegularWeeks,
   transitionFromLckCupToLckRounds12,
 } from "../../src/domain/season";
+import { getLckSchedulePolicyIssues } from "../../src/domain/season/lckSchedulePolicy";
 import { recordCompletedMatches } from "../../src/domain/season/progressSeason";
 import type { MatchRecord, MatchSchedule } from "../../src/types/game";
 
@@ -98,6 +99,7 @@ describe("LCK Rounds 1-2 format", () => {
     expect(schedule[0].scheduledDate).toBe("2026-04-01");
     expect(schedule[schedule.length - 1].scheduledDate).toBe("2026-05-31");
     expect([...matchesByDate.values()].every((count) => count === 2)).toBe(true);
+    expect(getLckSchedulePolicyIssues(schedule)).toEqual([]);
   });
 
   it("activates playoffs and stores the top six playoff qualifiers after the regular season", () => {

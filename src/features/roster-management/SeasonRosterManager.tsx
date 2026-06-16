@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -17,7 +17,9 @@ import {
   isLineupEditableDate,
 } from "../../domain/season/seasonScheduleDates";
 import { formatSalaryAmount } from "../../shared/format/money";
+import { EvaluationStars } from "../../shared/ui/EvaluationStars";
 import { MoraleIndicator } from "../../shared/ui/MoraleIndicator";
+import { PlayerDetailModal } from "../../shared/ui/PlayerDetailModal";
 import { PlayerPortrait } from "../../shared/ui/PlayerPortrait";
 
 type RosterSubPage = "main" | "academy" | "contracts";
@@ -72,6 +74,12 @@ function getActiveContractedPlayerIds(team: Team, players: Player[]) {
       )
       .map((contract) => contract.playerId),
   );
+}
+
+function getActiveContractSalaryTotal(team: Team) {
+  return team.contracts
+    .filter((contract) => contract.remainingYears > 0)
+    .reduce((total, contract) => total + contract.salary, 0);
 }
 
 function getRosterBuckets(team: Team, players: Player[]) {
@@ -171,76 +179,13 @@ function getForcedEditableHint(progressStatus: SeasonProgressStatus) {
   return "프리시즌 스토브리그 기간입니다. 계약이 확정된 선수는 언제든 1군/2군 이동과 선발 조정이 가능합니다.";
 }
 
-function PlayerDetailModal({
-  player,
-  onClose,
-}: {
-  player: Player;
-  onClose: () => void;
-}) {
-  return (
-    <div className="modal-backdrop" role="presentation">
-      <section className="player-detail-modal" role="dialog" aria-modal="true">
-        <button
-          aria-label="상세 닫기"
-          className="modal-close-button"
-          onClick={onClose}
-          type="button"
-        >
-          X
-        </button>
-        <div className="player-detail-hero">
-          <PlayerPortrait
-            className="player-detail-portrait"
-            player={player}
-            size="lg"
-          />
-          <div>
-            <p className="eyebrow">{roleLabels[player.role]} 상세</p>
-            <h2>{player.name}</h2>
-            <p className="muted">
-              {player.currentTeam} · OVR {player.overall} · POT {player.potential}
-            </p>
-          </div>
-        </div>
-        <div className="player-detail-grid">
-          <Stat label="피지컬" value={player.mechanics} />
-          <Stat label="운영" value={player.macro} />
-          <Stat label="라인전" value={player.laning} />
-          <Stat label="한타" value={player.teamfight} />
-          <Stat label="멘탈" value={player.mental} />
-          <Stat label="챔프폭" value={player.championPool} />
-          <Stat label="폼" value={player.status.form} />
-          <Stat label="피로도" value={player.status.fatigue} />
-          <div className="player-detail-stat player-detail-morale-stat">
-            <span>사기</span>
-            <strong>
-              <MoraleIndicator level={player.status.morale} showLabel />
-            </strong>
-          </div>
-          <Stat label="큰 경기" value={player.mindset.clutch} />
-          <Stat label="적응력" value={player.adaptability.metaAdaptability} />
-          <Stat label="소통" value={player.mindset.communication} />
-        </div>
-        <div>
-          <p className="eyebrow">Traits</p>
-          <div className="trait-row">
-            {player.traits.map((trait) => (
-              <span key={trait}>{trait}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
+function isRosterCardActionTarget(event: SyntheticEvent<HTMLElement>) {
+  const target = event.target;
 
-function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="player-detail-stat">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
+    target instanceof HTMLElement &&
+    event.currentTarget.contains(target) &&
+    Boolean(target.closest("[data-roster-card-action]"))
   );
 }
 
@@ -329,8 +274,9 @@ function RosterPlayerCard({
       } ${
         isDragging ? "roster-management-card-dragging" : ""
       }`}
-      onClick={() => {
-        if (!overlay) {
+      aria-label={`${player.name} 선수 상세 보기`}
+      onClick={(event) => {
+        if (!overlay && !isRosterCardActionTarget(event)) {
           onViewDetail(player);
         }
       }}
@@ -341,6 +287,10 @@ function RosterPlayerCard({
       role="button"
       tabIndex={0}
       onKeyDown={(event) => {
+        if (isRosterCardActionTarget(event)) {
+          return;
+        }
+
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           onViewDetail(player);
@@ -359,8 +309,7 @@ function RosterPlayerCard({
         </div>
       </div>
       <div className="roster-management-card-meta">
-        <span className="roster-management-ovr">OVR {player.overall}</span>
-        <span>POT {player.potential}</span>
+        <EvaluationStars player={player} />
       </div>
       <div className="roster-management-card-status-strip">
         <span>폼 {player.status.form}</span>
@@ -373,6 +322,7 @@ function RosterPlayerCard({
       {action && !overlay && (
         <button
           className="button button-ghost roster-card-action-button"
+          data-roster-card-action
           disabled={action.disabled}
           onClick={(event) => {
             event.stopPropagation();
@@ -380,6 +330,7 @@ function RosterPlayerCard({
           }}
           onKeyDown={(event) => event.stopPropagation()}
           onPointerDown={(event) => event.stopPropagation()}
+          onPointerDownCapture={(event) => event.stopPropagation()}
           title={action.title}
           type="button"
         >
@@ -397,15 +348,43 @@ function EmptyRosterNotice({ message }: { message: string }) {
 function RosterMetric({
   label,
   value,
+  tone = "default",
 }: {
   label: string;
   value: string | number;
+  tone?: "default" | "good" | "danger";
 }) {
   return (
-    <article className="roster-management-metric">
+    <article className={`roster-management-metric roster-management-metric-${tone}`}>
       <span>{label}</span>
       <strong>{value}</strong>
     </article>
+  );
+}
+
+function RosterBudgetSummary({ team }: { team: Team }) {
+  const salaryTotal = getActiveContractSalaryTotal(team);
+  const remainingBudget = team.budget - salaryTotal;
+  const isOverBudget = remainingBudget < 0;
+
+  return (
+    <section
+      aria-label="로스터 예산 요약"
+      className="roster-management-budget-panel"
+    >
+      <RosterMetric label="총 예산" value={formatSalaryAmount(team.budget)} />
+      <RosterMetric label="연봉 총액" value={formatSalaryAmount(salaryTotal)} />
+      <RosterMetric
+        label="잔여 예산"
+        tone={isOverBudget ? "danger" : "good"}
+        value={formatSalaryAmount(remainingBudget)}
+      />
+      <RosterMetric
+        label="예산 상태"
+        tone={isOverBudget ? "danger" : "good"}
+        value={isOverBudget ? "초과" : "정상"}
+      />
+    </section>
   );
 }
 
@@ -477,6 +456,7 @@ function AcademyRosterView({
               label: "1군 콜업",
               onClick: () => onCallUpPlayer(player),
             }}
+            compact
             key={player.id}
             onViewDetail={onViewDetail}
             player={player}
@@ -494,12 +474,14 @@ function AcademyRosterView({
 function ContractsView({
   academyCount,
   mainCount,
+  onViewDetail,
   players,
   starterCount,
   team,
 }: {
   academyCount: number;
   mainCount: number;
+  onViewDetail: (player: Player) => void;
   players: Player[];
   starterCount: number;
   team: Team;
@@ -520,10 +502,7 @@ function ContractsView({
         (rightPlayer?.overall ?? 0) - (leftPlayer?.overall ?? 0)
       );
     });
-  const salaryTotal = activeContracts.reduce(
-    (total, contract) => total + contract.salary,
-    0,
-  );
+  const salaryTotal = getActiveContractSalaryTotal(team);
 
   return (
     <section className="bench-board">
@@ -566,17 +545,23 @@ function ContractsView({
                 : "미배정";
 
           return (
-            <article className="roster-contract-row" key={contract.playerId}>
+            <button
+              aria-label={`${player.name} 계약 상세 보기`}
+              className="roster-contract-row"
+              key={contract.playerId}
+              onClick={() => onViewDetail(player)}
+              type="button"
+            >
               <span>
                 <strong>{player.name}</strong>
-                <small>{roleLabels[player.role]} · OVR {player.overall}</small>
+                <small>{roleLabels[player.role]} · 평가 기반 공개 정보</small>
               </span>
               <span>{rosterLabel}</span>
               <span>
                 {contract.remainingYears}년 잔여 · {contract.type}
               </span>
               <span>{formatSalaryAmount(contract.salary)}</span>
-            </article>
+            </button>
           );
         })}
       </div>
@@ -624,6 +609,15 @@ export function SeasonRosterManager({
   );
   const activeDragPlayer = activeDragPlayerId
     ? playerById.get(activeDragPlayerId)
+    : undefined;
+  const detailRosterLabel = detailPlayer
+    ? starterIds.has(detailPlayer.id)
+      ? "1군 선발"
+      : mainRosterPlayers.some((player) => player.id === detailPlayer.id)
+        ? "1군 후보"
+        : academyRosterPlayers.some((player) => player.id === detailPlayer.id)
+          ? "2군"
+          : undefined
     : undefined;
 
   useEffect(() => {
@@ -729,84 +723,101 @@ export function SeasonRosterManager({
       </header>
 
       {activeSubPage === "contracts" ? (
-        <ContractsView
-          academyCount={academyRosterPlayers.length}
-          mainCount={mainRosterPlayers.length}
-          players={players}
-          starterCount={starterIds.size}
-          team={team}
-        />
+        <>
+          <RosterBudgetSummary team={team} />
+          <ContractsView
+            academyCount={academyRosterPlayers.length}
+            mainCount={mainRosterPlayers.length}
+            onViewDetail={setDetailPlayer}
+            players={players}
+            starterCount={starterIds.size}
+            team={team}
+          />
+        </>
       ) : activeSubPage === "academy" ? (
-        <AcademyRosterView
-          academyPlayers={academyRosterPlayers}
-          onCallUpPlayer={handleCallUp}
-          onViewDetail={setDetailPlayer}
-        />
+        <>
+          <RosterBudgetSummary team={team} />
+          <AcademyRosterView
+            academyPlayers={academyRosterPlayers}
+            onCallUpPlayer={handleCallUp}
+            onViewDetail={setDetailPlayer}
+          />
+        </>
       ) : (
-        <DndContext
-          sensors={sensors}
-          onDragCancel={() => setActiveDragPlayerId(null)}
-          onDragEnd={handleDragEnd}
-          onDragStart={handleDragStart}
-        >
-          <section className="lineup-board">
-            {roleOrder.map((role) => (
-              <StarterSlot
-                key={role}
-                onViewDetail={setDetailPlayer}
-                player={starterPlayers[role]}
-                role={role}
-              />
-            ))}
-          </section>
-
-          <section className="bench-board">
-            <div className="panel-title-row">
-              <div>
-                <p className="eyebrow">Main roster bench</p>
-                <h2>1군 후보</h2>
-              </div>
-              <span className="panel-note">
-                후보 카드는 선발 슬롯으로 드래그하거나 2군으로 내릴 수 있습니다.
-              </span>
-            </div>
-            <div className="bench-player-grid roster-management-main-bench-grid">
-              {mainBenchPlayers.map((player) => (
-                <RosterPlayerCard
-                  action={{
-                    label: "2군으로",
-                    onClick: () => handleSendDown(player),
-                  }}
-                  draggable={canEditLineup}
-                  key={player.id}
+        <>
+          <RosterBudgetSummary team={team} />
+          <DndContext
+            sensors={sensors}
+            onDragCancel={() => setActiveDragPlayerId(null)}
+            onDragEnd={handleDragEnd}
+            onDragStart={handleDragStart}
+          >
+            <section className="lineup-board">
+              {roleOrder.map((role) => (
+                <StarterSlot
+                  key={role}
                   onViewDetail={setDetailPlayer}
-                  player={player}
-                  rosterLabel="1군 후보"
+                  player={starterPlayers[role]}
+                  role={role}
                 />
               ))}
-              {mainBenchPlayers.length === 0 && (
-                <EmptyRosterNotice message="1군 후보가 없습니다. 2군 화면에서 선수를 콜업할 수 있습니다." />
-              )}
-            </div>
-          </section>
-          <DragOverlay className="roster-drag-overlay" dropAnimation={null}>
-            {activeDragPlayer ? (
-              <RosterPlayerCard
-                draggable={false}
-                onViewDetail={setDetailPlayer}
-                overlay
-                player={activeDragPlayer}
-                rosterLabel="1군 후보"
-              />
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+            </section>
+
+            <section className="bench-board">
+              <div className="panel-title-row">
+                <div>
+                  <p className="eyebrow">Main roster bench</p>
+                  <h2>1군 후보</h2>
+                </div>
+                <span className="panel-note">
+                  후보 카드는 선발 슬롯으로 드래그하거나 2군으로 내릴 수 있습니다.
+                </span>
+              </div>
+              <div className="bench-player-grid roster-management-main-bench-grid">
+                {mainBenchPlayers.map((player) => (
+                  <RosterPlayerCard
+                    action={{
+                      label: "2군으로",
+                      onClick: () => handleSendDown(player),
+                    }}
+                    compact
+                    draggable={canEditLineup}
+                    key={player.id}
+                    onViewDetail={setDetailPlayer}
+                    player={player}
+                    rosterLabel="1군 후보"
+                  />
+                ))}
+                {mainBenchPlayers.length === 0 && (
+                  <EmptyRosterNotice message="1군 후보가 없습니다. 2군 화면에서 선수를 콜업할 수 있습니다." />
+                )}
+              </div>
+            </section>
+            <DragOverlay className="roster-drag-overlay" dropAnimation={null}>
+              {activeDragPlayer ? (
+                <RosterPlayerCard
+                  compact
+                  draggable={false}
+                  onViewDetail={setDetailPlayer}
+                  overlay
+                  player={activeDragPlayer}
+                  rosterLabel="1군 후보"
+                />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        </>
       )}
 
       {detailPlayer && (
         <PlayerDetailModal
+          contract={team.contracts.find(
+            (entry) => entry.playerId === detailPlayer.id,
+          )}
           player={detailPlayer}
           onClose={() => setDetailPlayer(null)}
+          rosterLabel={detailRosterLabel}
+          titlePrefix="Roster Profile"
         />
       )}
     </section>

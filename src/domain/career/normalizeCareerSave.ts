@@ -1,17 +1,23 @@
 import { sampleOpponents } from "../../data/sampleOpponents";
 import { lck2026Players } from "../../data/lck2026Players";
 import { getLck2026PlayerPortrait } from "../../data/lck2026PlayerPortraits";
+import { normalizeScrimState } from "../scrim";
+import { ensurePlayerEvaluationStatus } from "../players";
 import type {
   CareerSave,
+  CareerMessage,
+  OffseasonAiRenewalPlan,
   OffseasonLogEntry,
   OffseasonOffer,
   Player,
+  ScrimState,
   SeasonOffseasonSummary,
   SeasonState,
   SeasonSummary,
   Team,
   WeeklyPlan,
 } from "../../types/game";
+import { normalizeCareerGuideState } from "./careerGuides";
 import { createInitialCareer } from "./createInitialCareer";
 import { createPreseasonStoveLeagueCareer } from "./preseasonStoveLeague";
 
@@ -31,6 +37,63 @@ function asLogEntries(value: unknown): OffseasonLogEntry[] {
 
 function asOffers(value: unknown): OffseasonOffer[] {
   return Array.isArray(value) ? (value as OffseasonOffer[]) : [];
+}
+
+function asAiRenewalPlans(value: unknown): OffseasonAiRenewalPlan[] {
+  return Array.isArray(value) ? (value as OffseasonAiRenewalPlan[]) : [];
+}
+
+function normalizeMessages(value: unknown): CareerMessage[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter(isRecord)
+    .map((message) => {
+      const dateKey =
+        typeof message.dateKey === "string" ? message.dateKey : "unknown-date";
+      const title = typeof message.title === "string" ? message.title : "알림";
+
+      return {
+        id:
+          typeof message.id === "string"
+            ? message.id
+            : `legacy-message-${dateKey}-${title}`,
+        dateKey,
+        dateLabel:
+          typeof message.dateLabel === "string" ? message.dateLabel : dateKey,
+        category:
+          typeof message.category === "string"
+            ? (message.category as CareerMessage["category"])
+            : "system",
+        priority:
+          typeof message.priority === "string"
+            ? (message.priority as CareerMessage["priority"])
+            : "normal",
+        title,
+        body: typeof message.body === "string" ? message.body : "",
+        read: Boolean(message.read),
+        createdTurn:
+          typeof message.createdTurn === "number" ? message.createdTurn : 0,
+        source:
+          typeof message.source === "string"
+            ? (message.source as CareerMessage["source"])
+            : "system",
+        relatedPlayerId:
+          typeof message.relatedPlayerId === "string"
+            ? message.relatedPlayerId
+            : undefined,
+        relatedTeamId:
+          typeof message.relatedTeamId === "string"
+            ? message.relatedTeamId
+            : undefined,
+        relatedCompetitionId:
+          typeof message.relatedCompetitionId === "string"
+            ? (message.relatedCompetitionId as CareerMessage["relatedCompetitionId"])
+            : undefined,
+      };
+    });
 }
 
 function normalizeWeeklyPlan(value: Partial<WeeklyPlan> | undefined): WeeklyPlan {
@@ -120,6 +183,13 @@ function normalizeTeamRosterBuckets(team: Team, players: Player[]): Team {
 }
 
 function normalizePlayer(player: Player): Player {
+  const baseStatus: Player["status"] = {
+    form: player.status?.form ?? 50,
+    evaluationForm: player.status?.evaluationForm,
+    evaluationStars: player.status?.evaluationStars,
+    fatigue: player.status?.fatigue ?? 0,
+    morale: player.status?.morale ?? "neutral",
+  };
   const normalized: Player = {
     ...player,
     secondaryRoles: player.secondaryRoles ?? [],
@@ -127,13 +197,7 @@ function normalizePlayer(player: Player): Player {
     militaryServiceStatus: player.militaryServiceStatus ?? "none",
     retirementCandidate: player.retirementCandidate ?? false,
     traits: player.traits ?? [],
-    status: {
-      form: player.status?.form ?? 50,
-      fatigue: player.status?.fatigue ?? 0,
-      morale: player.status?.morale ?? "neutral",
-      condition: player.status?.condition ?? 100,
-      injuryRisk: player.status?.injuryRisk ?? 5,
-    },
+    status: baseStatus,
     mindset: {
       pressureResistance: player.mindset?.pressureResistance ?? player.mental,
       clutch: player.mindset?.clutch ?? player.mental,
@@ -186,6 +250,7 @@ function normalizePlayer(player: Player): Player {
       buyoutEstimate: player.marketProfile?.buyoutEstimate,
     },
   };
+  normalized.status = ensurePlayerEvaluationStatus(normalized, normalized.status);
   const portrait = getLck2026PlayerPortrait(normalized);
 
   if (!portrait) {
@@ -239,6 +304,7 @@ function normalizeSeasonState(
   fallback: SeasonState,
 ): SeasonState {
   const offseason = value?.offseason;
+  const scrim = value?.scrim as ScrimState | undefined;
 
   return {
     ...fallback,
@@ -252,6 +318,7 @@ function normalizeSeasonState(
     matchRecords: value?.matchRecords ?? [],
     nextMatchIds: value?.nextMatchIds ?? [],
     lastMatchRecordIds: value?.lastMatchRecordIds ?? [],
+    scrim: normalizeScrimState(scrim),
     offseason: offseason
       ? {
           ...offseason,
@@ -270,6 +337,7 @@ function normalizeSeasonState(
           militaryServicePlayerIds: asStringArray(
             offseason.militaryServicePlayerIds,
           ),
+          aiRenewalPlans: asAiRenewalPlans(offseason.aiRenewalPlans),
           logEntries: asLogEntries(offseason.logEntries),
           validationErrors: asStringArray(offseason.validationErrors),
         }
@@ -301,6 +369,8 @@ export function normalizeCareerSave(value: CareerSave): CareerSave {
     weeklyPlan: normalizeWeeklyPlan(value.weeklyPlan),
     seasonState: normalizeSeasonState(value.seasonState, fallback.seasonState),
     seasonHistory,
+    messages: normalizeMessages(value.messages),
+    guideState: normalizeCareerGuideState(value.guideState),
   };
 
   if (

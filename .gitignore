@@ -17,3 +17,11 @@ vitest.config.d.ts
 playwright.config.js
 playwright.config.d.ts
 UI-Picture/
+artifacts/
+
+# Local source audio files. Commit processed public/audio versions instead.
+/diaphanous.mp3
+/synapse.mp3
+
+# Temp Data Dragon dump for scripts/generate-item-gold.mjs (only itemGold.ts is committed).
+/item.json

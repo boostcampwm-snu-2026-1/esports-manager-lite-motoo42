@@ -3,7 +3,10 @@ import type { TeamBalanceAdjustment, TeamBalanceTier } from "../types/game";
 export type LckTeamSeed = {
   id: string;
   name: string;
+  displayNameKo: string;
   shortName: string;
+  logoUrl?: string;
+  logoSourceUrl?: string;
   tier: TeamBalanceTier;
   baseElo: number;
   strength: number;
@@ -13,15 +16,26 @@ export type LckTeamSeed = {
   previousSeasonRank: number;
 };
 
+const lckTeamLogoBasePath = "/assets/logos/lck/teams/2026";
+
+export const lckLeagueLogo = {
+  logoUrl: "/assets/logos/lck/lck-logo.svg",
+  logoSourceUrl:
+    "https://commons.wikimedia.org/wiki/File:League_of_Legends_Champions_Korea_logo.svg",
+};
+
 export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "gen-g",
     name: "Gen.G",
+    displayNameKo: "젠지",
     shortName: "GEN",
+    logoUrl: `${lckTeamLogoBasePath}/gen-g.webp`,
+    logoSourceUrl: "https://lol.fandom.com/wiki/File:Gen.Glogo_std.png",
     tier: "S",
     baseElo: 1690,
     strength: 89,
-    budget: 1450,
+    budget: 880,
     salaryMultiplier: 1.12,
     appealModifier: 4,
     previousSeasonRank: 1,
@@ -29,11 +43,15 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "hanwha-life-esports",
     name: "Hanwha Life Esports",
+    displayNameKo: "한화생명e스포츠",
     shortName: "HLE",
+    logoUrl: `${lckTeamLogoBasePath}/hanwha-life-esports.webp`,
+    logoSourceUrl:
+      "https://lol.fandom.com/wiki/File:Hanwha_Life_Esportslogo_std.png",
     tier: "S",
     baseElo: 1680,
     strength: 88,
-    budget: 1450,
+    budget: 900,
     salaryMultiplier: 1.12,
     appealModifier: 4,
     previousSeasonRank: 2,
@@ -41,11 +59,14 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "t1",
     name: "T1",
+    displayNameKo: "T1",
     shortName: "T1",
+    logoUrl: `${lckTeamLogoBasePath}/t1.webp`,
+    logoSourceUrl: "https://lol.fandom.com/wiki/File:T1logo_std.png",
     tier: "S",
     baseElo: 1670,
     strength: 87,
-    budget: 1500,
+    budget: 900,
     salaryMultiplier: 1.15,
     appealModifier: 5,
     previousSeasonRank: 3,
@@ -53,11 +74,14 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "kt-rolster",
     name: "KT Rolster",
+    displayNameKo: "KT 롤스터",
     shortName: "KT",
+    logoUrl: `${lckTeamLogoBasePath}/kt-rolster.webp`,
+    logoSourceUrl: "https://lol.fandom.com/wiki/File:KT_Rolsterlogo_std.png",
     tier: "A",
     baseElo: 1615,
     strength: 82,
-    budget: 1280,
+    budget: 550,
     salaryMultiplier: 1.03,
     appealModifier: 1,
     previousSeasonRank: 4,
@@ -65,11 +89,14 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "dplus-kia",
     name: "Dplus KIA",
+    displayNameKo: "디플러스 기아",
     shortName: "DK",
+    logoUrl: `${lckTeamLogoBasePath}/dplus-kia.webp`,
+    logoSourceUrl: "https://lol.fandom.com/wiki/File:Dplus_Kialogo_std.png",
     tier: "A",
     baseElo: 1605,
     strength: 81,
-    budget: 1260,
+    budget: 480,
     salaryMultiplier: 1.02,
     appealModifier: 1,
     previousSeasonRank: 5,
@@ -77,11 +104,14 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "hanjin-brion",
     name: "Hanjin BRION",
+    displayNameKo: "한진 브리온",
     shortName: "BRO",
+    logoUrl: `${lckTeamLogoBasePath}/hanjin-brion.webp`,
+    logoSourceUrl: "https://lol.fandom.com/wiki/File:BRIONlogo_std.png",
     tier: "B",
     baseElo: 1535,
     strength: 75,
-    budget: 1050,
+    budget: 370,
     salaryMultiplier: 0.94,
     appealModifier: -1,
     previousSeasonRank: 6,
@@ -89,11 +119,14 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "bnk-fearx",
     name: "BNK FEARX",
+    displayNameKo: "BNK 피어엑스",
     shortName: "BFX",
+    logoUrl: `${lckTeamLogoBasePath}/bnk-fearx.webp`,
+    logoSourceUrl: "https://lol.fandom.com/wiki/File:FearXlogo_std.png",
     tier: "B",
     baseElo: 1515,
     strength: 73,
-    budget: 1000,
+    budget: 350,
     salaryMultiplier: 0.92,
     appealModifier: -1,
     previousSeasonRank: 7,
@@ -101,11 +134,15 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "nongshim-redforce",
     name: "Nongshim RedForce",
+    displayNameKo: "농심 레드포스",
     shortName: "NS",
+    logoUrl: `${lckTeamLogoBasePath}/nongshim-redforce.webp`,
+    logoSourceUrl:
+      "https://lol.fandom.com/wiki/File:Nongshim_RedForcelogo_std.png",
     tier: "B",
     baseElo: 1530,
     strength: 75,
-    budget: 1080,
+    budget: 430,
     salaryMultiplier: 0.96,
     appealModifier: 0,
     previousSeasonRank: 8,
@@ -113,11 +150,14 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "kiwoom-drx",
     name: "Kiwoom DRX",
+    displayNameKo: "키움 DRX",
     shortName: "DRX",
+    logoUrl: `${lckTeamLogoBasePath}/kiwoom-drx.webp`,
+    logoSourceUrl: "https://lol.fandom.com/wiki/File:Kiwoom_DRXlogo_std.png",
     tier: "C",
     baseElo: 1490,
     strength: 72,
-    budget: 960,
+    budget: 330,
     salaryMultiplier: 0.89,
     appealModifier: -2,
     previousSeasonRank: 9,
@@ -125,11 +165,14 @@ export const lck2026Teams: LckTeamSeed[] = [
   {
     id: "dn-soopers",
     name: "DN SOOPers",
+    displayNameKo: "DN 수퍼스",
     shortName: "DNF",
+    logoUrl: `${lckTeamLogoBasePath}/dn-soopers.webp`,
+    logoSourceUrl: "https://lol.fandom.com/wiki/File:DN_SOOPerslogo_std.png",
     tier: "C",
     baseElo: 1460,
     strength: 69,
-    budget: 920,
+    budget: 370,
     salaryMultiplier: 0.87,
     appealModifier: -3,
     previousSeasonRank: 10,
@@ -173,7 +216,7 @@ export function applyTeamBalanceAdjustment(
     ...team,
     baseElo: clamp(team.baseElo + adjustment.baseEloDelta, 1350, 1900),
     strength: clamp(team.strength + adjustment.strengthDelta, 60, 95),
-    budget: clamp(team.budget + adjustment.budgetDelta, 800, 1700),
+    budget: clamp(team.budget + adjustment.budgetDelta, 250, 1100),
   };
 }
 
@@ -183,9 +226,24 @@ export function findLckTeamSeed(value: string) {
   return lck2026Teams.find(
     (team) =>
       normalizeTeamName(team.name) === normalizedValue ||
+      normalizeTeamName(team.displayNameKo) === normalizedValue ||
       normalizeTeamName(team.shortName) === normalizedValue ||
       team.id === normalizedValue,
   );
+}
+
+export function getLckTeamDisplayName(
+  teamOrValue: LckTeamSeed | string | null | undefined,
+) {
+  if (!teamOrValue) {
+    return "";
+  }
+
+  if (typeof teamOrValue !== "string") {
+    return teamOrValue.displayNameKo || teamOrValue.name;
+  }
+
+  return findLckTeamSeed(teamOrValue)?.displayNameKo ?? teamOrValue;
 }
 
 export function getLckTeamProfile(
@@ -201,6 +259,7 @@ export function getLckTeamProfile(
           ...fallbackTeam,
           id: "user-team",
           name: value.trim() || "T1",
+          displayNameKo: value.trim() || "T1",
           shortName: "USER",
         }
       : undefined);
@@ -235,6 +294,7 @@ export function createPlayableLckTeams(
       ...team,
       id: "user-team",
       name: userTeamName.trim() || "T1",
+      displayNameKo: userTeamName.trim() || "T1",
       shortName: "USER",
     };
 

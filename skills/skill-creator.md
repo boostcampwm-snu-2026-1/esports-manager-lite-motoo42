@@ -11,9 +11,9 @@ Use this skill when maintaining project-local skills under `skills/`.
 
 1. Read `skills/index.md`.
 2. Read the skill being edited.
-3. Read `../CODEX_HANDOFF.md`.
-4. Read `../docs/risks-and-ai-workflow.md`.
-5. Read `../docs/development-checklist.md` when skill changes affect current workflow.
+3. Read `../docs/development-checklist.md`.
+4. Read `../IMPLEMENTATION_ORDER.md`.
+5. Read `../docs/risks-and-ai-workflow.md` when skill changes affect current workflow.
 
 ## Rules
 

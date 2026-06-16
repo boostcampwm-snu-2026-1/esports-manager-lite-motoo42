@@ -63,10 +63,10 @@ export type Player = {
 
 export type PlayerStatus = {
   form: number;
+  evaluationForm?: number;
+  evaluationStars?: number;
   fatigue: number;
   morale: MoraleLevel;
-  condition: number;
-  injuryRisk: number;
 };
 
 export type MoraleLevel = "very-high" | "high" | "neutral" | "low" | "very-low";
@@ -240,6 +240,42 @@ export type SeasonSummary = {
   nextSeasonNumber?: number;
 };
 
+export type CareerMessageCategory =
+  | "important"
+  | "schedule"
+  | "match"
+  | "training"
+  | "transfer"
+  | "system"
+  | "news";
+
+export type CareerMessagePriority = "normal" | "important" | "urgent";
+
+export type CareerMessageSource =
+  | "system"
+  | "club"
+  | "competition"
+  | "offseason"
+  | "media"
+  | "interview"
+  | "random-news";
+
+export type CareerMessage = {
+  id: string;
+  dateKey: string;
+  dateLabel: string;
+  category: CareerMessageCategory;
+  priority: CareerMessagePriority;
+  title: string;
+  body: string;
+  read: boolean;
+  createdTurn: number;
+  source: CareerMessageSource;
+  relatedPlayerId?: string;
+  relatedTeamId?: string;
+  relatedCompetitionId?: CompetitionId;
+};
+
 export type SeasonOffseasonSummary = {
   renewedPlayerIds?: string[];
   releasedPlayerIds?: string[];
@@ -283,6 +319,45 @@ export type WeeklyPlan = {
   trainingIntensity: TrainingIntensity;
 };
 
+export type ScrimRequestStatus =
+  | "pending"
+  | "accepted"
+  | "rejected"
+  | "completed";
+
+export type ScrimDecisionReason =
+  | "accepted"
+  | "user-official-match"
+  | "opponent-official-match"
+  | "chance-roll";
+
+export type ScrimSchedule = {
+  id: string;
+  requestedDateKey: string;
+  requestedDateLabel: string;
+  scheduledDateKey: string;
+  scheduledDateLabel: string;
+  opponentTeamId: string;
+  opponentTeamName: string;
+  matchCount: number;
+  acceptanceChance: number;
+  status: ScrimRequestStatus;
+  decisionReason?: ScrimDecisionReason;
+  resolvedDateKey?: string;
+  resolvedDateLabel?: string;
+  userWins?: number;
+  opponentWins?: number;
+  formDelta?: number;
+  fatigueDelta?: number;
+  completedDateKey?: string;
+  resultSummary?: string;
+};
+
+export type ScrimState = {
+  requests: ScrimSchedule[];
+  lastResultId?: string;
+};
+
 export type MatchResult = {
   winner: "user" | "opponent";
   winProbability: number;
@@ -297,7 +372,9 @@ export type MatchDraftSummary = {
   bluePicks: Partial<Record<Role, DraftPickSummary>>;
   redPicks: Partial<Record<Role, DraftPickSummary>>;
   blueBans: string[];
+  blueBanIds?: string[];
   redBans: string[];
+  redBanIds?: string[];
   blueDraftPower: number;
   redDraftPower: number;
   netDraftPower: number;
@@ -310,6 +387,22 @@ export type DraftPickSummary = {
   championName: string;
   fitScore: number;
   reasons: string[];
+};
+
+// Per-game summary of a played series, surfaced transiently so the live-match
+// replay can play each set with its real winner and banpick. Not persisted.
+export type MatchSeriesGameSummary = {
+  draft?: MatchDraftSummary;
+  gameNumber: number;
+  winnerSide: "blue" | "red";
+  // The winning side's pre-game chance (already flipped from the user-keyed
+  // value), so the replay can size dominance without a user concept.
+  winnerWinProbability: number;
+};
+
+export type MatchSeriesReplay = {
+  games: MatchSeriesGameSummary[];
+  recordId: string;
 };
 
 export type SeasonPhase = "stove-league" | "competition" | "offseason" | "completed";
@@ -623,6 +716,17 @@ export type OffseasonLogEntry = {
   type: OffseasonLogType;
   message: string;
   isUserTeamRelated?: boolean;
+  relatedTeamNames?: string[];
+};
+
+export type OffseasonAiRenewalPlan = {
+  teamName: string;
+  decisionDays: number[];
+  candidatePlayerIds: string[];
+  targetRenewalCount: number;
+  processedDays: number[];
+  renewedPlayerIds: string[];
+  releasedPlayerIds: string[];
 };
 
 export type OffseasonState = {
@@ -648,6 +752,7 @@ export type OffseasonState = {
   resolvedExpiredPlayerIds?: string[];
   retiredPlayerIds?: string[];
   militaryServicePlayerIds?: string[];
+  aiRenewalPlans?: OffseasonAiRenewalPlan[];
   logEntries?: OffseasonLogEntry[];
   validationErrors?: string[];
 };
@@ -672,8 +777,19 @@ export type SeasonState = {
   asianGames?: AsianGamesState;
   worlds?: WorldsState;
   worldsQualification?: WorldsQualificationState;
+  scrim?: ScrimState;
   offseason?: OffseasonState;
   teamBalanceAdjustments?: TeamBalanceAdjustment[];
+};
+
+export type CareerGuideId =
+  | "offseason-rules"
+  | "roster-management"
+  | "competition-dashboard"
+  | "inbox";
+
+export type CareerGuideState = {
+  seenGuideIds: CareerGuideId[];
 };
 
 export type CareerSave = {
@@ -685,4 +801,6 @@ export type CareerSave = {
   weeklyPlan: WeeklyPlan;
   seasonState: SeasonState;
   seasonHistory: SeasonSummary[];
+  messages?: CareerMessage[];
+  guideState?: CareerGuideState;
 };

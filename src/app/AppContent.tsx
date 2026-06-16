@@ -1,22 +1,30 @@
 import { AppShell } from "../shared/layout/AppShell";
+import { useLocation } from "react-router-dom";
 import { AppRouteRenderer } from "./AppRouteRenderer";
+import { LiveMatchPage } from "../pages/LiveMatchPage";
 import { useGameDispatch, useGameSelector } from "./GameProvider";
 import { useAppNavigation } from "./hooks/useAppNavigation";
 import { useAsianGamesDecision } from "./hooks/useAsianGamesDecision";
+import { useAiNewsPipeline } from "./hooks/useAiNewsPipeline";
 import { useAutoSaveController } from "./hooks/useAutoSaveController";
+import { useBackgroundMusic } from "./hooks/useBackgroundMusic";
 import { useCareerProgressController } from "./hooks/useCareerProgressController";
+import { useInteractionSoundEffects } from "./hooks/useInteractionSoundEffects";
 import { useRouteSynchronization } from "./hooks/useRouteSynchronization";
+import { useThemeMode } from "./hooks/useThemeMode";
 import { AsianGamesDecisionModal } from "./modals/AsianGamesDecisionModal";
 import { SmallScreenGuard } from "./SmallScreenGuard";
 
 export function AppContent() {
+  const location = useLocation();
   const career = useGameSelector((state) => state.career);
+  const appSettings = useGameSelector((state) => state.appSettings);
   const route = useGameSelector((state) => state.route);
   const selectedCompetitionId = useGameSelector(
     (state) => state.selectedCompetitionId,
   );
   const dispatch = useGameDispatch();
-  const { handleProgress, isProgressing, progressOverlay } =
+  const { handleProgress, isProgressing, progressNotice, progressOverlay } =
     useCareerProgressController({
       career,
       dispatch,
@@ -38,15 +46,14 @@ export function AppContent() {
   const renderedRoute = routeMatch.route;
   const renderedCompetitionId =
     renderedRoute === "competition-dashboard"
-      ? routeMatch.competitionId ??
-        selectedCompetitionId ??
-        career?.seasonState.currentCompetitionId ??
-        null
+      ? routeMatch.competitionId ?? null
       : selectedCompetitionId;
   const {
     goToRoute,
     handleCalendarSubPageChange,
     handleCompetitionSubPageChange,
+    handleInboxSubPageChange,
+    handleOffseasonSubPageChange,
   } = useAppNavigation({
     career,
     dispatch,
@@ -59,43 +66,76 @@ export function AppContent() {
     disabled: isProgressing || Boolean(asianGamesDecisionState),
     isProgressing,
   });
+  useAiNewsPipeline({
+    appSettings,
+    career,
+    dispatch,
+  });
+  useThemeMode({
+    mode: appSettings.theme?.mode ?? "dark",
+  });
+  useBackgroundMusic({
+    enabled: appSettings.audio.backgroundMusicEnabled,
+    volume: appSettings.audio.backgroundMusicVolume,
+  });
+  useInteractionSoundEffects({
+    enabled: appSettings.audio.soundEffectsEnabled,
+    volume: appSettings.audio.soundEffectsVolume,
+  });
 
   return (
-    <>
-      <AppShell
-        career={career}
-        isProgressBlocked={Boolean(asianGamesDecisionState)}
-        isProgressing={isProgressing}
-        progressOverlay={progressOverlay}
-        route={renderedRoute}
-        selectedCompetitionId={renderedCompetitionId}
-        competitionSubPage={routeMatch.competitionSubPage}
-        calendarSubPage={routeMatch.calendarSubPage}
-        rosterSubPage={routeMatch.rosterSubPage}
-        autoSaveStatus={career ? autoSaveStatus : undefined}
-        onGoTo={goToRoute}
-        onProgress={handleProgress}
-      >
-        <AppRouteRenderer
-          calendarSubPage={routeMatch.calendarSubPage}
-          competitionSubPage={routeMatch.competitionSubPage}
-          rosterSubPage={routeMatch.rosterSubPage}
-          onCalendarSubPageChange={handleCalendarSubPageChange}
-          onCompetitionSubPageChange={handleCompetitionSubPageChange}
-          onGoTo={goToRoute}
-          competitionId={renderedCompetitionId}
-          route={renderedRoute}
-          savePanel={savePanel}
-        />
-      </AppShell>
-      {asianGamesDecisionState && (
-        <AsianGamesDecisionModal
-          asianGamesState={asianGamesDecisionState}
-          onSelectAuto={handleSelectAuto}
-          onSelectManual={handleSelectManual}
-        />
-      )}
-      <SmallScreenGuard />
-    </>
+    <div className="game-viewport-frame">
+      <div className="game-viewport-stage">
+        {renderedRoute === "live-match" ? (
+          <LiveMatchPage onGoTo={goToRoute} />
+        ) : (
+          <AppShell
+            career={career}
+            isProgressBlocked={Boolean(asianGamesDecisionState)}
+            isProgressing={isProgressing}
+            progressNotice={progressNotice}
+            progressOverlay={progressOverlay}
+            route={renderedRoute}
+            selectedCompetitionId={renderedCompetitionId}
+            competitionSubPage={routeMatch.competitionSubPage}
+            calendarSubPage={routeMatch.calendarSubPage}
+            rosterSubPage={routeMatch.rosterSubPage}
+            inboxSubPage={routeMatch.inboxSubPage}
+            offseasonSubPage={routeMatch.offseasonSubPage}
+            trainingSubPage={routeMatch.trainingSubPage}
+            currentHash={location.hash}
+            autoSaveStatus={career ? autoSaveStatus : undefined}
+            onGoTo={goToRoute}
+            onProgress={handleProgress}
+          >
+            <AppRouteRenderer
+              calendarSubPage={routeMatch.calendarSubPage}
+              competitionSubPage={routeMatch.competitionSubPage}
+              inboxSubPage={routeMatch.inboxSubPage}
+              offseasonSubPage={routeMatch.offseasonSubPage}
+              rosterSubPage={routeMatch.rosterSubPage}
+              trainingSubPage={routeMatch.trainingSubPage}
+              teamId={routeMatch.teamId}
+              onCalendarSubPageChange={handleCalendarSubPageChange}
+              onCompetitionSubPageChange={handleCompetitionSubPageChange}
+              onInboxSubPageChange={handleInboxSubPageChange}
+              onOffseasonSubPageChange={handleOffseasonSubPageChange}
+              onGoTo={goToRoute}
+              competitionId={renderedCompetitionId}
+              route={renderedRoute}
+              savePanel={savePanel}
+            />
+          </AppShell>
+        )}
+        {asianGamesDecisionState && (
+          <AsianGamesDecisionModal
+            asianGamesState={asianGamesDecisionState}
+            onSelectAuto={handleSelectAuto}
+            onSelectManual={handleSelectManual}
+          />
+        )}
+        <SmallScreenGuard />
+      </div>
+    </div>
   );
 }

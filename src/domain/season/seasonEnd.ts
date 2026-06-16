@@ -518,11 +518,27 @@ export function startNextSeasonFromOffseason(career: CareerSave): CareerSave {
     }),
   );
 
+  // Training intensity only develops the user's own players, so flag which player
+  // ids belong to the user team and pass this season's intensity to just those.
+  const userPlayerIds = new Set(
+    [
+      ...Object.values(careerWithOffseasonSummary.userTeam.roster),
+      ...careerWithOffseasonSummary.userTeam.mainRosterPlayerIds,
+      ...careerWithOffseasonSummary.userTeam.academyRosterPlayerIds,
+    ].filter((id): id is string => Boolean(id)),
+  );
+  const seasonTrainingIntensity =
+    careerWithOffseasonSummary.weeklyPlan.trainingIntensity;
+
   return {
     ...careerWithOffseasonSummary,
     currentSeason: nextSeasonNumber,
-    lckPlayers: careerWithOffseasonSummary.lckPlayers.map(
-      rollPlayerIntoNextSeason,
+    lckPlayers: careerWithOffseasonSummary.lckPlayers.map((player) =>
+      rollPlayerIntoNextSeason(player, {
+        trainingIntensity: userPlayerIds.has(player.id)
+          ? seasonTrainingIntensity
+          : undefined,
+      }),
     ),
     weeklyPlan: {
       strategy: "balanced",

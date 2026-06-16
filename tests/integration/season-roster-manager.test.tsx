@@ -53,7 +53,7 @@ describe("SeasonRosterManager", () => {
       (player) => player.currentTeam === "KT Rolster" && player.rosterTier === "main",
     );
 
-    render(
+    const { container } = render(
       <SeasonRosterManager
         players={players}
         team={createTeam(players)}
@@ -67,13 +67,28 @@ describe("SeasonRosterManager", () => {
 
     expect(screen.getByRole("img", { name: "Bdd portrait" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Effort portrait" })).toBeInTheDocument();
+    expect(screen.getByLabelText("로스터 예산 요약")).toBeVisible();
+    expect(screen.getByText("총 예산")).toBeVisible();
+    expect(screen.getByText("잔여 예산")).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: /Bdd/i }));
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "커리어" })).toBeVisible();
+    expect(screen.getAllByText("KT Rolster").length).toBeGreaterThanOrEqual(2);
     expect(
       screen.getAllByRole("img", { name: "Bdd portrait" }).length,
     ).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByLabelText(/평가/).length).toBeGreaterThan(0);
+    expect(
+      screen
+        .getAllByLabelText(/평가/)
+        .some((element) => element.getAttribute("aria-label") !== "평가 5.0성"),
+    ).toBe(true);
+    expect(container.querySelector(".evaluation-star-empty")?.textContent).toBe(
+      "☆",
+    );
+    expect(screen.queryByText(/OVR|POT|오버롤|포텐셜/)).not.toBeInTheDocument();
   });
 
   it("renders academy players separately and calls up players from the academy page", () => {
@@ -101,12 +116,16 @@ describe("SeasonRosterManager", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "1군 콜업" })[0]);
 
     expect(onCallUpPlayer).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("renders contract status with roster assignments", () => {
+  it("renders contract status with roster assignments and opens player detail rows", () => {
     const players = lck2026Players.filter(
       (player) => player.currentTeam === "T1",
     );
+    const topContractPlayer = players.find((player) => player.role === "top");
+
+    expect(topContractPlayer).toBeDefined();
 
     render(
       <SeasonRosterManager
@@ -126,5 +145,17 @@ describe("SeasonRosterManager", () => {
     ).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("1군 선발").length).toBeGreaterThan(0);
     expect(screen.getAllByText("2군").length).toBeGreaterThan(0);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `${topContractPlayer?.name ?? ""} 계약 상세 보기`,
+      }),
+    );
+
+    expect(
+      screen.getByRole("dialog", {
+        name: `${topContractPlayer?.name ?? ""} 선수 상세`,
+      }),
+    ).toBeVisible();
   });
 });

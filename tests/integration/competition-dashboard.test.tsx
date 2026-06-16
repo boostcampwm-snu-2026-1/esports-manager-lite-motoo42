@@ -12,18 +12,16 @@ import {
   activateLckRounds35,
   completeLckRounds34IfFinished,
   completeLckRounds35IfFinished,
+  completeStoveLeague,
   createInitialLckStandings,
   createInitialSeasonState,
   createLckWorldsSeeds,
   createWorldsEntrants,
   firstStandStageNames,
-  lckRounds34PostseasonStageNames,
-  lckRounds35PostseasonStageNames,
   msiStageNames,
   recordCompletedMatches,
   setAsianGamesPlayMode,
   transitionFromLckRounds12ToMsi,
-  worldsStageNames,
 } from "../../src/domain/season";
 import { advanceToNextDay } from "../../src/domain/season/progressSeason";
 import { CompetitionDashboard } from "../../src/features/competition-dashboard";
@@ -54,6 +52,18 @@ function createSeasonAfterLckCupFinal(base: CareerSave): SeasonState {
           }
         : competition,
     ),
+  };
+}
+
+function createCareerWithActiveLckCup(): CareerSave {
+  const base = createInitialCareer("T1");
+
+  return {
+    ...base,
+    seasonState: {
+      ...completeStoveLeague(base.seasonState),
+      offseason: undefined,
+    },
   };
 }
 
@@ -430,35 +440,100 @@ function createCareerWithMsiUpperRound1(): CareerSave {
 }
 
 describe("CompetitionDashboard", () => {
+  it("renders a competition list hub and opens a selected competition", () => {
+    const career = createInitialCareer("T1");
+    const onSelectCompetition = vi.fn();
+
+    render(
+      <CompetitionDashboard
+        career={career}
+        competitionId={null}
+        onSelectCompetition={onSelectCompetition}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "대회 목록" })).toBeVisible();
+    expect(screen.getAllByText("LCK 10개 팀").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Baron\/Elder 그룹 배틀/)).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: /LCK Cup/ }));
+
+    expect(onSelectCompetition).toHaveBeenCalledWith("lck-cup");
+  });
+
+  it("renders LCK Cup as a grouped tabbed dashboard", () => {
+    const career = createCareerWithActiveLckCup();
+    const onViewCalendar = vi.fn();
+
+    render(
+      <CompetitionDashboard
+        career={career}
+        competitionId="lck-cup"
+        onViewCalendar={onViewCalendar}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "LCK Cup" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "시즌 캘린더" }));
+    expect(onViewCalendar).toHaveBeenCalledOnce();
+
+    expect(screen.getByRole("button", { name: "순위표" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "그룹 포인트" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "일정" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "토너먼트" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "바론 그룹" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "장로 그룹" })).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "전체 순위표" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/pts \/ diff/)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/Points/).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "그룹 포인트" }));
+    expect(
+      screen.getByRole("heading", { name: "Baron / Elder 그룹 포인트" }),
+    ).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "일정" }));
+    expect(screen.getByRole("heading", { name: "일정 / 결과" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "바론 그룹" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "토너먼트" }));
+    expect(
+      screen.getByRole("heading", { name: "LCK Cup 토너먼트" }),
+    ).toBeVisible();
+  });
+
   it("renders live First Stand standings, schedule, and tournament data", () => {
     const career = createCareerWithFirstStandFinal();
 
     render(<CompetitionDashboard career={career} competitionId="first-stand" />);
 
     expect(screen.getByRole("heading", { name: "First Stand" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Entrants" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "참가팀" })).toBeVisible();
+    expect(screen.getByText(/첫 국제전입니다/)).toBeVisible();
     expect(screen.getByText("Top Esports")).toBeVisible();
 
-    fireEvent.click(screen.getByRole("button", { name: "Groups" }));
-    expect(screen.getByRole("heading", { name: "Group Standings" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "조별 순위" }));
+    expect(screen.getByRole("heading", { name: "조별 순위" })).toBeVisible();
     expect(screen.getAllByText("T1").length).toBeGreaterThan(0);
     expect(screen.getByText("Bilibili Gaming")).toBeVisible();
 
-    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
-    expect(screen.getByRole("heading", { name: "Schedule / Results" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "일정" }));
+    expect(screen.getByRole("heading", { name: "일정 / 결과" })).toBeVisible();
     expect(screen.getByText("T1 vs Top Esports")).toBeVisible();
     expect(screen.getAllByText("1-0").length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "Tournament" }));
+    fireEvent.click(screen.getByRole("button", { name: "토너먼트" }));
     expect(
-      screen.getByRole("heading", { name: "First Stand Tournament" }),
+      screen.getByRole("heading", { name: "First Stand 토너먼트" }),
     ).toBeVisible();
-    expect(screen.getByText("Semifinal A")).toBeVisible();
-    expect(screen.getAllByText("Final").length).toBeGreaterThan(0);
+    expect(screen.getByText("준결승 A")).toBeVisible();
+    expect(screen.getAllByText("결승").length).toBeGreaterThan(0);
     expect(screen.getAllByText("T1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Gen.G").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Champion TBD").length).toBeGreaterThan(0);
-    expect(screen.getByText("Semifinal A Winner")).toBeVisible();
+    expect(screen.getAllByText("우승팀 미정").length).toBeGreaterThan(0);
+    expect(screen.getByText("준결승 A 승자")).toBeVisible();
   });
 
   it("renders MSI overview, schedule, and upper/lower bracket data", () => {
@@ -467,28 +542,29 @@ describe("CompetitionDashboard", () => {
     render(<CompetitionDashboard career={career} competitionId="msi" />);
 
     expect(screen.getByRole("heading", { name: "MSI" })).toBeVisible();
-    expect(screen.getByText("11 teams")).toBeVisible();
+    expect(screen.getByText("11팀")).toBeVisible();
     expect(
-      screen.getByRole("heading", { name: "MSI 참가팀과 진출 경로" }),
+      screen.getByRole("heading", { name: "MSI 참가팀과 토너먼트 진출" }),
     ).toBeVisible();
+    expect(screen.getAllByText(/Worlds 추가 시드/).length).toBeGreaterThan(0);
     expect(screen.getByText("Bilibili Gaming")).toBeVisible();
     expect(screen.getAllByText("Gen.G").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Bracket Stage").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Play-In").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("토너먼트 직행").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("플레이-인").length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
+    fireEvent.click(screen.getByRole("button", { name: "일정" }));
     expect(screen.getByRole("heading", { name: "MSI 일정 / 결과" })).toBeVisible();
-    expect(screen.getAllByText(/Play-In Final/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Upper Round 1/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/플레이-인 결승/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/승자조 1라운드/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/BO3/).length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "Bracket" }));
-    expect(screen.getByRole("heading", { name: "MSI Bracket Stage" })).toBeVisible();
-    expect(screen.getByText("Upper Bracket")).toBeVisible();
-    expect(screen.getByText("Lower Bracket")).toBeVisible();
-    expect(screen.getAllByText("Grand Finals").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "토너먼트" }));
+    expect(screen.getByRole("heading", { name: "MSI 토너먼트" })).toBeVisible();
+    expect(screen.getByText("승자조")).toBeVisible();
+    expect(screen.getByText("패자조")).toBeVisible();
+    expect(screen.getAllByText("최종 결승").length).toBeGreaterThan(0);
     expect(screen.getAllByText("BO5").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Champion TBD").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("우승팀 미정").length).toBeGreaterThan(0);
     expect(screen.getAllByText("T1").length).toBeGreaterThan(0);
   });
 
@@ -504,12 +580,12 @@ describe("CompetitionDashboard", () => {
     expect(screen.getAllByText("Legend").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Rise").length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "진출 경로" }));
+    fireEvent.click(screen.getByRole("button", { name: "포스트시즌" }));
     expect(
-      screen.getByRole("heading", { name: "LCK Rounds 3-4 후속 경로" }),
+      screen.getByRole("heading", { name: "LCK Rounds 3-4 포스트시즌" }),
     ).toBeVisible();
-    expect(screen.getByText("Round 2 직행")).toBeVisible();
-    expect(screen.getByText("Season Play-In")).toBeVisible();
+    expect(screen.getByText("2라운드 직행")).toBeVisible();
+    expect(screen.getByText("시즌 플레이-인")).toBeVisible();
   });
 
   it("renders live LCK Rounds 3-4 Season Play-In and Worlds path candidates", () => {
@@ -517,17 +593,13 @@ describe("CompetitionDashboard", () => {
 
     render(<CompetitionDashboard career={career} competitionId="lck-rounds-3-4" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "진출 경로" }));
+    fireEvent.click(screen.getByRole("button", { name: "포스트시즌" }));
 
     expect(screen.getByText("실제 경기 진행 중 · 전 경기 BO5 Fearless")).toBeVisible();
-    expect(screen.getByText("Qualifier 1")).toBeVisible();
-    expect(screen.getByText("Elimination")).toBeVisible();
+    expect(screen.getByText("진출전 1")).toBeVisible();
+    expect(screen.getByText("탈락전")).toBeVisible();
     expect(screen.getByText("최종 1-4위")).toBeVisible();
     expect(screen.getByText("MSI 추가 시드 조건부 4시드")).toBeVisible();
-    expect(
-      screen.getAllByText(lckRounds34PostseasonStageNames.seasonPlayInRound1)
-        .length,
-    ).toBeGreaterThan(0);
   });
 
   it("renders LCK Rounds 3-5 groups and postseason path", () => {
@@ -542,12 +614,12 @@ describe("CompetitionDashboard", () => {
     expect(screen.getAllByText("Legend").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Rise").length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "진출 경로" }));
+    fireEvent.click(screen.getByRole("button", { name: "포스트시즌" }));
     expect(
-      screen.getByRole("heading", { name: "LCK Rounds 3-5 후속 경로" }),
+      screen.getByRole("heading", { name: "LCK Rounds 3-5 포스트시즌" }),
     ).toBeVisible();
-    expect(screen.getByText("Round 2 직행")).toBeVisible();
-    expect(screen.getByText("Season Play-In")).toBeVisible();
+    expect(screen.getByText("2라운드 직행")).toBeVisible();
+    expect(screen.getByText("시즌 플레이-인")).toBeVisible();
   });
 
   it("renders live LCK Rounds 3-5 Season Play-In and Worlds path candidates", () => {
@@ -555,17 +627,13 @@ describe("CompetitionDashboard", () => {
 
     render(<CompetitionDashboard career={career} competitionId="lck-rounds-3-5" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "진출 경로" }));
+    fireEvent.click(screen.getByRole("button", { name: "포스트시즌" }));
 
     expect(screen.getByText("실제 경기 진행 중 · 전 경기 BO5 Fearless")).toBeVisible();
-    expect(screen.getByText("Qualifier 1")).toBeVisible();
-    expect(screen.getByText("Elimination")).toBeVisible();
+    expect(screen.getByText("진출전 1")).toBeVisible();
+    expect(screen.getByText("탈락전")).toBeVisible();
     expect(screen.getByText("최종 1-4위")).toBeVisible();
     expect(screen.getByText("MSI 추가 시드 조건부 4시드")).toBeVisible();
-    expect(
-      screen.getAllByText(lckRounds35PostseasonStageNames.seasonPlayInRound1)
-        .length,
-    ).toBeGreaterThan(0);
   });
 
   it("renders LCK fourth seed as Worlds-qualified when MSI grants the LCK bonus", () => {
@@ -573,7 +641,7 @@ describe("CompetitionDashboard", () => {
 
     render(<CompetitionDashboard career={career} competitionId="lck-rounds-3-4" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "진출 경로" }));
+    fireEvent.click(screen.getByRole("button", { name: "포스트시즌" }));
 
     expect(screen.getByText("Worlds 4시드 확정")).toBeVisible();
     expect(screen.getByText("1-3위 기본 진출 · 4위 MSI 추가 시드 확보")).toBeVisible();
@@ -586,7 +654,7 @@ describe("CompetitionDashboard", () => {
 
     expect(screen.getByRole("heading", { name: "Worlds" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Worlds 참가 풀" })).toBeVisible();
-    expect(screen.getByText("20 teams")).toBeVisible();
+    expect(screen.getByText("20팀")).toBeVisible();
     expect(screen.getByText("LCK 4시드 포함")).toBeVisible();
   });
 
@@ -601,7 +669,7 @@ describe("CompetitionDashboard", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Worlds 일정 / 결과" })).toBeVisible();
-    expect(screen.getAllByText(/Play-In Group A/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/플레이-인 A조/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/BO1/).length).toBeGreaterThan(0);
     scheduleView.unmount();
 
@@ -614,8 +682,8 @@ describe("CompetitionDashboard", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Worlds 조별 순위" })).toBeVisible();
-    expect(screen.getByText("Play-In Group A")).toBeVisible();
-    expect(screen.getByText("Play-In Group B")).toBeVisible();
+    expect(screen.getByText("플레이-인 A")).toBeVisible();
+    expect(screen.getByText("플레이-인 B")).toBeVisible();
     groupsView.unmount();
 
     render(
@@ -626,10 +694,10 @@ describe("CompetitionDashboard", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Worlds Knockout" })).toBeVisible();
-    expect(screen.getByText(worldsStageNames.quarterfinals)).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Worlds 토너먼트" })).toBeVisible();
+    expect(screen.getAllByText("8강").length).toBeGreaterThan(0);
     expect(screen.getByText("A1 vs B2")).toBeVisible();
-    expect(screen.getByText("Worlds Champion")).toBeVisible();
+    expect(screen.getByText("Worlds 우승팀")).toBeVisible();
   });
 
   it("renders Asian Games roster, schedule, and bracket tabs", () => {
@@ -642,17 +710,17 @@ describe("CompetitionDashboard", () => {
     expect(screen.getByText("Zeus")).toBeVisible();
     expect(screen.getAllByText("직접 플레이").length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
+    fireEvent.click(screen.getByRole("button", { name: "일정" }));
     expect(
       screen.getByRole("heading", { name: "Asian Games 일정 / 결과" }),
     ).toBeVisible();
     expect(screen.getByText("대한민국 vs 마카오")).toBeVisible();
     expect(screen.getAllByText(/BO3/).length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "Bracket" }));
-    expect(screen.getByRole("heading", { name: "Asian Games 브래킷" })).toBeVisible();
-    expect(screen.getByText("8강")).toBeVisible();
-    expect(screen.getByText("4강")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "토너먼트" }));
+    expect(screen.getByRole("heading", { name: "Asian Games 토너먼트" })).toBeVisible();
+    expect(screen.getAllByText("8강").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("4강").length).toBeGreaterThan(0);
     expect(screen.getByText("결승 / 동메달전")).toBeVisible();
     expect(screen.getAllByText("미정").length).toBeGreaterThan(0);
   });
@@ -666,7 +734,7 @@ describe("CompetitionDashboard", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "MSI Bracket Stage" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "MSI 토너먼트" })).toBeVisible();
     msiView.unmount();
 
     const firstStandView = render(
@@ -677,7 +745,7 @@ describe("CompetitionDashboard", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Group Standings" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "조별 순위" })).toBeVisible();
     firstStandView.unmount();
 
     const lckView = render(
@@ -691,6 +759,17 @@ describe("CompetitionDashboard", () => {
     expect(screen.getByRole("heading", { name: "일정 / 결과" })).toBeVisible();
     lckView.unmount();
 
+    const lckCupView = render(
+      <CompetitionDashboard
+        career={createCareerWithActiveLckCup()}
+        competitionId="lck-cup"
+        subPage="schedule"
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "일정 / 결과" })).toBeVisible();
+    lckCupView.unmount();
+
     const asianGamesView = render(
       <CompetitionDashboard
         career={createCareerWithAsianGames()}
@@ -699,7 +778,7 @@ describe("CompetitionDashboard", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Asian Games 브래킷" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Asian Games 토너먼트" })).toBeVisible();
     asianGamesView.unmount();
 
     render(
@@ -710,7 +789,7 @@ describe("CompetitionDashboard", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Worlds Knockout" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Worlds 토너먼트" })).toBeVisible();
   });
 
   it("emits subpage changes instead of mutating internal tabs when controlled", () => {
@@ -725,7 +804,7 @@ describe("CompetitionDashboard", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
+    fireEvent.click(screen.getByRole("button", { name: "일정" }));
 
     expect(onSubPageChange).toHaveBeenCalledWith("schedule");
     expect(screen.getByRole("heading", { name: "대한민국 대표 6인" })).toBeVisible();

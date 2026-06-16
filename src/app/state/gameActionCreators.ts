@@ -1,11 +1,18 @@
 import type { ContractTypeSelections } from "../../domain/roster";
+import type { CareerStartMode } from "../../domain/career/createInitialCareer";
 import type {
   CareerProgressResult,
 } from "../../domain/game-progress/progressCareer";
 import type { OffseasonContractOfferInput } from "../../domain/season";
+import type { ScrimRequestInput } from "../../domain/scrim";
+import type {
+  MessageNewsFrequency,
+  ThemeMode,
+} from "../../domain/settings/appSettings";
 import type {
   AsianGamesPlayMode,
   CareerSave,
+  CareerGuideId,
   CompetitionId,
   Player,
   Role,
@@ -16,8 +23,8 @@ import type { AppRoute } from "../routes";
 import type { GameAction } from "./gameActions";
 
 export const gameActions = {
-  startCareer(teamName: string): GameAction {
-    return { type: "start-career", teamName };
+  startCareer(teamName: string, startMode?: CareerStartMode): GameAction {
+    return { type: "start-career", teamName, startMode };
   },
   loadCareer(career: CareerSave): GameAction {
     return { type: "load-career", career };
@@ -78,11 +85,61 @@ export const gameActions = {
   startNextSeason(): GameAction {
     return { type: "start-next-season" };
   },
+  setThemeMode(mode: ThemeMode): GameAction {
+    return { type: "set-theme-mode", mode };
+  },
+  setBackgroundMusicEnabled(enabled: boolean): GameAction {
+    return { type: "set-background-music-enabled", enabled };
+  },
+  setBackgroundMusicVolume(volume: number): GameAction {
+    return { type: "set-background-music-volume", volume };
+  },
+  setSoundEffectsEnabled(enabled: boolean): GameAction {
+    return { type: "set-sound-effects-enabled", enabled };
+  },
+  setSoundEffectsVolume(volume: number): GameAction {
+    return { type: "set-sound-effects-volume", volume };
+  },
+  setFirstEntryGuidesEnabled(enabled: boolean): GameAction {
+    return { type: "set-first-entry-guides-enabled", enabled };
+  },
+  setAiNewsEnabled(enabled: boolean): GameAction {
+    return { type: "set-ai-news-enabled", enabled };
+  },
+  setMessageNewsFrequency(frequency: MessageNewsFrequency): GameAction {
+    return { type: "set-message-news-frequency", frequency };
+  },
+  markCareerGuideSeen(guideId: CareerGuideId): GameAction {
+    return { type: "mark-career-guide-seen", guideId };
+  },
+  markMessageRead(messageId: string): GameAction {
+    return { type: "mark-message-read", messageId };
+  },
+  markAllMessagesRead(): GameAction {
+    return { type: "mark-all-messages-read" };
+  },
+  applyAiNewsMessage({
+    body,
+    messageId,
+    title,
+  }: {
+    body: string;
+    messageId: string;
+    title: string;
+  }): GameAction {
+    return { type: "apply-ai-news-message", messageId, news: { body, title } };
+  },
   setStrategy(strategy: StrategyId): GameAction {
     return { type: "set-strategy", strategy };
   },
   setTrainingIntensity(trainingIntensity: TrainingIntensity): GameAction {
     return { type: "set-training-intensity", trainingIntensity };
+  },
+  requestScrim(request: ScrimRequestInput): GameAction {
+    return { type: "request-scrim", request };
+  },
+  runTodayScrim(): GameAction {
+    return { type: "run-today-scrim" };
   },
   setAsianGamesPlayMode(
     playMode: Exclude<AsianGamesPlayMode, "undecided">,

@@ -1,54 +1,45 @@
-import {
-  strategyOptions,
-  trainingIntensityOptions,
-} from "../../domain/weekly-plan";
-import type { StrategyId, TrainingIntensity, WeeklyPlan } from "../../types/game";
+import type { TrainingSubPage } from "../../app/routes";
+import type { CareerSave, StrategyId, WeeklyPlan } from "../../types/game";
+import type { ScrimRequestInput } from "../../domain/scrim";
+import { ScrimView } from "./ScrimView";
+import { StrategySelectionView } from "./StrategySelectionView";
+import { WeeklyPlanView } from "./WeeklyPlanView";
 
 type StrategyPanelProps = {
+  subPage?: TrainingSubPage | null;
+  career: CareerSave;
   weeklyPlan: WeeklyPlan;
   onStrategyChange: (strategy: StrategyId) => void;
-  onTrainingIntensityChange: (trainingIntensity: TrainingIntensity) => void;
+  onRequestScrim: (request: ScrimRequestInput) => void;
+  onRunTodayScrim: () => void;
 };
 
 export function StrategyPanel({
+  subPage,
+  career,
   weeklyPlan,
   onStrategyChange,
-  onTrainingIntensityChange,
+  onRequestScrim,
+  onRunTodayScrim,
 }: StrategyPanelProps) {
-  return (
-    <div className="strategy-panel">
-      <h3>Weekly plan</h3>
-      <div className="option-grid">
-        {strategyOptions.map((option) => (
-          <button
-            className={`option-card ${
-              weeklyPlan.strategy === option.id ? "option-card-active" : ""
-            }`}
-            key={option.id}
-            onClick={() => onStrategyChange(option.id)}
-            type="button"
-          >
-            <strong>{option.label}</strong>
-            <span>{option.description}</span>
-          </button>
-        ))}
-      </div>
-      <h3>Training intensity</h3>
-      <div className="option-grid option-grid-compact">
-        {trainingIntensityOptions.map((option) => (
-          <button
-            className={`option-card ${
-              weeklyPlan.trainingIntensity === option.id ? "option-card-active" : ""
-            }`}
-            key={option.id}
-            onClick={() => onTrainingIntensityChange(option.id)}
-            type="button"
-          >
-            <strong>{option.label}</strong>
-            <span>{option.description}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+  if (subPage === "strategy") {
+    return (
+      <StrategySelectionView
+        weeklyPlan={weeklyPlan}
+        onStrategyChange={onStrategyChange}
+      />
+    );
+  }
+
+  if (subPage === "scrim") {
+    return (
+      <ScrimView
+        career={career}
+        onRequestScrim={onRequestScrim}
+        onRunTodayScrim={onRunTodayScrim}
+      />
+    );
+  }
+
+  return <WeeklyPlanView career={career} weeklyPlan={weeklyPlan} />;
 }

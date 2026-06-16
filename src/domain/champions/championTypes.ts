@@ -1,6 +1,8 @@
 import type { Role } from "../../types/game";
 
 export type Champion = {
+  dataDragonId: string;
+  iconUrl: string;
   id: string;
   name: string;
   roles: Role[];

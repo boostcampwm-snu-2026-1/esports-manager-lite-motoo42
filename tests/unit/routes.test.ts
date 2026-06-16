@@ -59,8 +59,31 @@ describe("app routes", () => {
   it("parses and creates the offseason route", () => {
     expect(getRouteMatchFromPath("/offseason")).toEqual({
       route: "offseason",
+      offseasonSubPage: null,
     });
     expect(getPathForRoute("offseason")).toBe("/offseason");
+    expect(getRouteMatchFromPath("/offseason/free-agents")).toEqual({
+      route: "offseason",
+      offseasonSubPage: "free-agents",
+    });
+    expect(getRouteMatchFromPath("/offseason/schedule")).toEqual({
+      route: "offseason",
+      offseasonSubPage: "schedule",
+    });
+    expect(getRouteMatchFromPath("/offseason/log")).toEqual({
+      route: "offseason",
+      offseasonSubPage: "log",
+    });
+    expect(getRouteMatchFromPath("/offseason/unknown")).toEqual({
+      route: "offseason",
+      offseasonSubPage: null,
+    });
+    expect(getPathForRoute("offseason", null, "overview")).toBe(
+      "/offseason/overview",
+    );
+    expect(getPathForRoute("offseason", null, "free-agents")).toBe(
+      "/offseason/free-agents",
+    );
   });
 
   it("parses and creates the save manager route", () => {
@@ -68,6 +91,72 @@ describe("app routes", () => {
       route: "save-manager",
     });
     expect(getPathForRoute("save-manager")).toBe("/saves");
+  });
+
+  it("parses and creates the inbox route", () => {
+    expect(getRouteMatchFromPath("/inbox")).toEqual({
+      route: "inbox",
+      inboxSubPage: null,
+    });
+    expect(getPathForRoute("inbox")).toBe("/inbox");
+    expect(getRouteMatchFromPath("/inbox/important")).toEqual({
+      route: "inbox",
+      inboxSubPage: "important",
+    });
+    expect(getRouteMatchFromPath("/inbox/schedule")).toEqual({
+      route: "inbox",
+      inboxSubPage: "schedule",
+    });
+    expect(getRouteMatchFromPath("/inbox/transfer")).toEqual({
+      route: "inbox",
+      inboxSubPage: "transfer",
+    });
+    expect(getRouteMatchFromPath("/inbox/unknown")).toEqual({
+      route: "inbox",
+      inboxSubPage: null,
+    });
+    expect(getPathForRoute("inbox", null, "important")).toBe(
+      "/inbox/important",
+    );
+  });
+
+  it("parses and creates the settings route", () => {
+    expect(getRouteMatchFromPath("/settings")).toEqual({
+      route: "settings",
+    });
+    expect(getPathForRoute("settings")).toBe("/settings");
+  });
+
+  it("parses and creates training subpage routes", () => {
+    expect(getRouteMatchFromPath("/match")).toEqual({
+      route: "match-week",
+      trainingSubPage: null,
+    });
+    expect(getRouteMatchFromPath("/match/report")).toEqual({
+      route: "match-week",
+      trainingSubPage: "report",
+    });
+    expect(getRouteMatchFromPath("/match/strategy")).toEqual({
+      route: "match-week",
+      trainingSubPage: "strategy",
+    });
+    expect(getRouteMatchFromPath("/match/scrim")).toEqual({
+      route: "match-week",
+      trainingSubPage: "scrim",
+    });
+    expect(getRouteMatchFromPath("/match/unknown")).toEqual({
+      route: "match-week",
+      trainingSubPage: null,
+    });
+    expect(getPathForRoute("match-week", null, "strategy")).toBe(
+      "/match/strategy",
+    );
+    expect(getPathForRoute("match-week", null, "report")).toBe(
+      "/match/report",
+    );
+    expect(getPathForRoute("match-week", null, "scrim")).toBe(
+      "/match/scrim",
+    );
   });
 
   it("parses and creates roster subpage routes", () => {
@@ -94,5 +183,26 @@ describe("app routes", () => {
     expect(getPathForRoute("roster-builder", null, "academy")).toBe(
       "/roster/academy",
     );
+  });
+
+  it("parses and creates LCK team info routes", () => {
+    expect(getRouteMatchFromPath("/teams")).toEqual({
+      route: "lck-team-info",
+      teamId: null,
+    });
+    expect(getRouteMatchFromPath("/teams/gen-g")).toEqual({
+      route: "lck-team-info",
+      teamId: "gen-g",
+    });
+    expect(getRouteMatchFromPath("/teams/t1")).toEqual({
+      route: "lck-team-info",
+      teamId: "t1",
+    });
+    expect(getRouteMatchFromPath("/teams/unknown")).toEqual({
+      route: "lck-team-info",
+      teamId: "unknown",
+    });
+    expect(getPathForRoute("lck-team-info")).toBe("/teams");
+    expect(getPathForRoute("lck-team-info", "gen-g")).toBe("/teams/gen-g");
   });
 });

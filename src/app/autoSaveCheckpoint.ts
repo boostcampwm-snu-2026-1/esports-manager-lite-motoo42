@@ -121,6 +121,12 @@ export function getCareerAutoSaveCheckpoint(career: CareerSave) {
         seasonState.worlds.runnerUpTeamId ?? "no-runner-up",
       ].join(":")
     : "no-worlds";
+  const messagesFingerprint = (career.messages ?? [])
+    .map(
+      (message) =>
+        `${message.id}:${message.read ? "read" : "unread"}:${message.priority}:${message.title}:${message.body.slice(0, 160)}`,
+    )
+    .join("|");
 
   return [
     career.currentSeason,
@@ -140,5 +146,6 @@ export function getCareerAutoSaveCheckpoint(career: CareerSave) {
     asianGamesFingerprint,
     worldsFingerprint,
     offseasonFingerprint,
+    messagesFingerprint,
   ].join("::");
 }

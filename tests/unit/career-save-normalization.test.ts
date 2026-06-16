@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createInitialCareer } from "../../src/domain/career/createInitialCareer";
+import {
+  INBOX_GUIDE_ID,
+  OFFSEASON_RULES_GUIDE_ID,
+  ROSTER_MANAGEMENT_GUIDE_ID,
+} from "../../src/domain/career/careerGuides";
 import { normalizeCareerSave } from "../../src/domain/career/normalizeCareerSave";
 import type { CareerSave } from "../../src/types/game";
 
@@ -65,12 +70,15 @@ describe("career save normalization", () => {
     expect(normalizedPlayer.militaryServiceStatus).toBe("none");
     expect(normalizedPlayer.retirementCandidate).toBe(false);
     expect(normalizedPlayer.status.morale).toBe("neutral");
+    expect(normalizedPlayer.status.evaluationForm).toBe(normalizedPlayer.status.form);
+    expect(normalizedPlayer.status.evaluationStars).toBeGreaterThanOrEqual(0.5);
     expect(normalized.seasonHistory[0].competitionResults).toEqual([]);
     expect(normalized.seasonHistory[0].expiredContractPlayerIds).toEqual([]);
     expect(normalized.seasonState.offseason?.pendingOffers).toEqual([]);
     expect(normalized.seasonState.offseason?.resolvedOffers).toEqual([]);
     expect(normalized.seasonState.offseason?.retiredPlayerIds).toEqual([]);
     expect(normalized.seasonState.offseason?.militaryServicePlayerIds).toEqual([]);
+    expect(normalized.guideState?.seenGuideIds).toEqual([]);
   });
 
   it("rehydrates current 2026 LCK main roster portraits for legacy saves", () => {
@@ -90,7 +98,32 @@ describe("career save normalization", () => {
     const normalized = normalizeCareerSave(legacyCareer);
     const faker = normalized.lckPlayers.find((player) => player.name === "Faker");
 
-    expect(faker?.portraitUrl).toBe("/assets/players/lck/2026/main/t1-faker.webp");
-    expect(faker?.portraitSourceUrl).toBe("https://lol.fandom.com/wiki/Faker");
+    expect(faker?.portraitUrl).toBe("/assets/players/lck/2026/main/t1-faker.png");
+    expect(faker?.portraitSourceUrl).toBe(
+      "https://lol.fandom.com/wiki/File:T1_Faker_2026_LCK_Cup.png",
+    );
+  });
+
+  it("keeps known career guide ids and drops stale values", () => {
+    const career = createInitialCareer("T1");
+    const legacyCareer = {
+      ...career,
+      guideState: {
+        seenGuideIds: [
+          OFFSEASON_RULES_GUIDE_ID,
+          ROSTER_MANAGEMENT_GUIDE_ID,
+          "legacy-data-save-guide",
+          INBOX_GUIDE_ID,
+        ],
+      },
+    } as unknown as CareerSave;
+
+    const normalized = normalizeCareerSave(legacyCareer);
+
+    expect(normalized.guideState?.seenGuideIds).toEqual([
+      OFFSEASON_RULES_GUIDE_ID,
+      ROSTER_MANAGEMENT_GUIDE_ID,
+      INBOX_GUIDE_ID,
+    ]);
   });
 });

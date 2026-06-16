@@ -10,8 +10,8 @@ Use this skill before finalizing a substantial task.
 ## Inputs
 
 1. Read `../README.md`.
-2. Read `../CODEX_HANDOFF.md`.
-3. Read `../docs/development-checklist.md`.
+2. Read `../docs/development-checklist.md`.
+3. Read `../IMPLEMENTATION_ORDER.md`.
 4. Read the docs or source files changed in the task.
 5. Inspect `git status`.
 6. Run available build/tests when code changed.

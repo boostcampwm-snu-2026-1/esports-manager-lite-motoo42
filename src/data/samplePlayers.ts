@@ -32,8 +32,6 @@ function createPlayer(input: PlayerInput): Player {
       form: 70,
       fatigue: 20,
       morale: "neutral",
-      condition: 86,
-      injuryRisk: 12,
     },
     mindset: {
       pressureResistance: input.mental,

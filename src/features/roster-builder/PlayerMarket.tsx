@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { formatSalaryAmount } from "../../shared/format/money";
 import { Card } from "../../shared/ui/Card";
-import { PlayerPortrait } from "../../shared/ui/PlayerPortrait";
+import { PlayerCard } from "../../shared/ui/PlayerCard";
 import { StatPill } from "../../shared/ui/StatPill";
 import type { Player, Role } from "../../types/game";
 
@@ -137,50 +137,43 @@ export function PlayerMarket({
           const isStarter = starterIds.has(player.id);
 
           return (
-            <article className="player-card" key={player.id}>
-              <div className="player-card-identity">
-                <PlayerPortrait
-                  className="player-card-portrait"
-                  player={player}
-                  size="md"
-                />
-                <span className="player-card-header">
-                  <strong>{player.name}</strong>
-                  <span>{player.role}</span>
-                  <small className="muted">
-                    {player.currentTeam} · {player.rosterTier ?? "main"}
-                  </small>
+            <PlayerCard
+              actions={
+                <span className="player-card-actions">
+                  <button
+                    aria-label={`${isSigned ? "Signed" : "Sign"} ${player.name}`}
+                    className="button button-ghost"
+                    disabled={isSigned}
+                    onClick={() => onSignPlayer(player)}
+                    type="button"
+                  >
+                    {isSigned ? "Signed" : "Sign"}
+                  </button>
+                  <button
+                    aria-label={`${isStarter ? "Starter" : "Start"} ${player.name}`}
+                    className="button button-primary"
+                    disabled={!isSigned || isStarter}
+                    onClick={() => onSelectStarter(player.role, player)}
+                    type="button"
+                  >
+                    {isStarter ? "Starter" : "Start"}
+                  </button>
                 </span>
-              </div>
-              <span className="pill-row">
-                <StatPill label="OVR" value={player.overall} />
-                <StatPill label="POT" value={player.potential} />
-                <StatPill
-                  label="Salary"
-                  value={formatSalaryAmount(player.salaryExpectation)}
-                />
-              </span>
-              <span className="player-card-actions">
-                <button
-                  aria-label={`${isSigned ? "Signed" : "Sign"} ${player.name}`}
-                  className="button button-ghost"
-                  disabled={isSigned}
-                  onClick={() => onSignPlayer(player)}
-                  type="button"
-                >
-                  {isSigned ? "Signed" : "Sign"}
-                </button>
-                <button
-                  aria-label={`${isStarter ? "Starter" : "Start"} ${player.name}`}
-                  className="button button-primary"
-                  disabled={!isSigned || isStarter}
-                  onClick={() => onSelectStarter(player.role, player)}
-                  type="button"
-                >
-                  {isStarter ? "Starter" : "Start"}
-                </button>
-              </span>
-            </article>
+              }
+              className="player-card"
+              key={player.id}
+              meta={
+                <span className="pill-row">
+                  <StatPill
+                    label="Salary"
+                    value={formatSalaryAmount(player.salaryExpectation)}
+                  />
+                </span>
+              }
+              player={player}
+              rosterLabel={`${player.currentTeam} · ${player.rosterTier ?? "main"}`}
+              variant="standard"
+            />
           );
         })}
       </div>

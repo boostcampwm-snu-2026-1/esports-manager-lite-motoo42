@@ -4,6 +4,7 @@ import type {
   Role,
   TrainingIntensity,
 } from "../../types/game";
+import { createNextEvaluationStatus } from "./playerEvaluation";
 
 export const moraleLevels: MoraleLevel[] = [
   "very-low",
@@ -141,22 +142,24 @@ export function applyWeeklyPlayerStatusChanges({
         : decreaseMorale(player.status.morale)
       : player.status.morale;
 
+    const nextStatus = {
+      ...player.status,
+      form: clampStatusValue(
+        player.status.form + resultForm + trainingEffect.form,
+      ),
+      fatigue: clampStatusValue(
+        player.status.fatigue +
+          resultFatigue +
+          (isStarter
+            ? trainingEffect.starterFatigue
+            : trainingEffect.benchFatigue),
+      ),
+      morale: nextMorale,
+    };
+
     return {
       ...player,
-      status: {
-        ...player.status,
-        form: clampStatusValue(
-          player.status.form + resultForm + trainingEffect.form,
-        ),
-        fatigue: clampStatusValue(
-          player.status.fatigue +
-            resultFatigue +
-            (isStarter
-              ? trainingEffect.starterFatigue
-              : trainingEffect.benchFatigue),
-        ),
-        morale: nextMorale,
-      },
+      status: createNextEvaluationStatus(player, nextStatus),
     };
   });
 }

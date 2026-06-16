@@ -26,6 +26,7 @@ import {
 } from "./lckRounds35Format";
 import { createMsiSetup, msiStageNames } from "./msiFormat";
 import {
+  addDaysToDateKey,
   formatSeasonDateLabel,
   getFirstScheduledDateKey,
 } from "./seasonScheduleDates";
@@ -167,7 +168,10 @@ function hasUserMatchOnDate(
   );
 }
 
-export function completeStoveLeague(seasonState: SeasonState): SeasonState {
+export function completeStoveLeague(
+  seasonState: SeasonState,
+  options: { leadInDays?: number } = {},
+): SeasonState {
   const firstCompetitionId: CompetitionId = "lck-cup";
   const lckCup = seasonState.competitions.find(
     (competition) => competition.competitionId === firstCompetitionId,
@@ -191,15 +195,27 @@ export function completeStoveLeague(seasonState: SeasonState): SeasonState {
     lckCupSetup.schedule.find((match) => match.scheduledDate === openingDateKey)
       ?.week ?? 1;
 
+  // The skip path can start the user a short prep week BEFORE the opener (so they get
+  // training/scrims before the first match), then advance into it. leadInDays = 0 keeps
+  // the original "land on the opener" behaviour used by the played-preseason completion.
+  const leadInDays = Math.max(0, options.leadInDays ?? 0);
+  const startDateKey =
+    leadInDays > 0
+      ? addDaysToDateKey(openingDateKey, -leadInDays)
+      : openingDateKey;
+  const startProgressStatus =
+    leadInDays === 0 && openingMatchIds.length > 0 ? "match-preview" : "idle";
+  const startNextMatchIds = leadInDays > 0 ? [] : openingMatchIds;
+
   return {
     ...seasonState,
     phase: "competition",
     currentCompetitionId: firstCompetitionId,
     currentWeek: openingWeek,
     currentTurn: seasonState.currentTurn + 1,
-    currentDateKey: openingDateKey,
-    currentDateLabel: formatSeasonDateLabel(openingDateKey),
-    progressStatus: openingMatchIds.length > 0 ? "match-preview" : "idle",
+    currentDateKey: startDateKey,
+    currentDateLabel: formatSeasonDateLabel(startDateKey),
+    progressStatus: startProgressStatus,
     stoveLeague: {
       ...seasonState.stoveLeague,
       status: "completed",
@@ -219,7 +235,7 @@ export function completeStoveLeague(seasonState: SeasonState): SeasonState {
         : competition,
     ),
     scheduledMatches: lckCupSetup.schedule,
-    nextMatchIds: openingMatchIds,
+    nextMatchIds: startNextMatchIds,
     lastMatchRecordIds: [],
   };
 }

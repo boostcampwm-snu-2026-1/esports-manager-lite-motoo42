@@ -132,5 +132,7 @@ describe("RosterBuilder", () => {
     expect(
       screen.getAllByRole("img", { name: "Faker portrait" }).length,
     ).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByLabelText(/평가/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/OVR|POT|오버롤|포텐셜/)).not.toBeInTheDocument();
   });
 });
