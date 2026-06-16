@@ -11852,6 +11852,10 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .live-objective-strip {
+  /* Lift the strip above the rows below so the objective hover tooltips, which drop
+     down past the strip, render over the main area instead of being covered by it. */
+  position: relative;
+  z-index: 30;
   justify-content: space-between;
   padding: 3px 10px;
 }
@@ -11937,6 +11941,33 @@ button.opponent-analysis-panel:focus-visible {
   border: 5px solid transparent;
   border-bottom-color: var(--live-panel-strong);
   transform: translateX(-50%);
+}
+
+/* The dragons sit at the OUTER end of each row, so a centred tooltip would spill into
+   the side letterbox and get clipped by the stage's overflow. Anchor the tooltip (and
+   its arrow) to the inner edge so it always opens toward the screen centre. */
+.live-objective-row-blue .live-objective-tip {
+  left: 0;
+  right: auto;
+  transform: none;
+}
+
+.live-objective-row-blue .live-objective-tip::after {
+  left: 18px;
+  right: auto;
+  transform: none;
+}
+
+.live-objective-row-red .live-objective-tip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.live-objective-row-red .live-objective-tip::after {
+  left: auto;
+  right: 18px;
+  transform: none;
 }
 
 .live-objective-has-tip:hover .live-objective-tip,
@@ -12732,13 +12763,20 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .live-commentary-feed {
-  display: grid;
-  align-content: end;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-gutter: stable;
+}
+
+/* Keep the feed pinned to the bottom when short, but stay scrollable up to the top
+   when the log overflows. A flex auto-margin avoids grid align-content:end, which
+   pushes overflowing entries off the top where the scrollbar can't reach them. */
+.live-commentary-feed > :first-child {
+  margin-top: auto;
 }
 
 .live-commentary-event {
