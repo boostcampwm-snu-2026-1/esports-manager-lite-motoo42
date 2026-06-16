@@ -176,6 +176,4 @@ main
 - [docs/players-contracts.md](docs/players-contracts.md) — 선수 능력치와 계약/스토브리그 모델
 - [docs/design-guidelines.md](docs/design-guidelines.md) — UI 디자인 가이드라인과 토큰 사용 규칙
 - [docs/development-checklist.md](docs/development-checklist.md) — 단계별 개발 체크리스트
-- [docs/beta-deploy-guide.md](docs/beta-deploy-guide.md) — Render 베타 배포 가이드
 - [IMPLEMENTATION_ORDER.md](IMPLEMENTATION_ORDER.md) — 기능 구현 순서 정리
-- [AGENT_COLLABORATION.md](AGENT_COLLABORATION.md) — AI 에이전트 협업 운영 규칙
