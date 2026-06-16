@@ -11497,7 +11497,7 @@ button.opponent-analysis-panel:focus-visible {
 
   position: relative;
   display: grid;
-  grid-template-rows: 84px 30px minmax(0, 1fr) auto 180px;
+  grid-template-rows: 84px 30px minmax(0, 1fr) 180px;
   gap: 6px;
   height: 100%;
   min-height: 0;
@@ -11512,6 +11512,12 @@ button.opponent-analysis-panel:focus-visible {
 
 .live-match-prototype-draft {
   grid-template-rows: 84px minmax(0, 1fr);
+}
+
+/* Broadcast draft reuses the game frame (topbar / strip / main / bottom) so the
+   player-portrait rails sit exactly where they will during play. */
+.live-match-prototype-draft-broadcast {
+  grid-template-rows: 84px 30px minmax(0, 1fr) 180px;
 }
 
 .live-match-topbar,
@@ -11883,6 +11889,12 @@ button.opponent-analysis-panel:focus-visible {
   letter-spacing: 0.08em;
 }
 
+/* Series tags now sit in the objective strip's centre (replacing the old label). */
+.live-objective-tags {
+  display: flex;
+  justify-content: center;
+}
+
 .live-objective-has-tip {
   position: relative;
   cursor: help;
@@ -12091,25 +12103,29 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .live-ban-card-strip {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px;
+  display: flex;
   align-items: center;
+  gap: 8px;
   border: 1px solid rgb(78 162 255 / 18%);
   border-radius: 8px;
   padding: 6px 8px;
   background: linear-gradient(90deg, var(--live-blue-soft), rgb(2 6 23 / 32%));
 }
 
+.live-ban-card-strip > div:first-child {
+  flex: 0 0 auto;
+}
+
+.live-ban-card-strip .live-ban-card-list {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .live-ban-card-strip-red {
-  grid-template-columns: minmax(0, 1fr) auto;
+  flex-direction: row-reverse;
   border-color: rgb(255 95 127 / 20%);
   background: linear-gradient(270deg, var(--live-red-soft), rgb(2 6 23 / 32%));
   text-align: right;
-}
-
-.live-ban-card-strip-red > div:first-child {
-  order: 2;
 }
 
 .live-ban-card-strip span {
@@ -12125,6 +12141,33 @@ button.opponent-analysis-panel:focus-visible {
   font-size: 0.76rem;
 }
 
+/* Draft reveal: each ban / pick pops in as the staggered sequence reaches it. */
+@keyframes liveDraftReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.74) translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.live-draft-revealing {
+  animation: liveDraftReveal 0.34s ease both;
+}
+
+.live-champion-mark.live-draft-pending {
+  background: rgb(148 163 184 / 8%);
+  border: 1px dashed rgb(148 163 184 / 26%);
+  box-shadow: none;
+}
+
+.live-draft-pick-pending {
+  opacity: 0.5;
+}
+
 .live-ban-card-list {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -12132,8 +12175,7 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .live-ban-card-list span {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
+  display: flex;
   gap: 4px;
   align-items: center;
   min-width: 0;
@@ -12145,14 +12187,11 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .live-ban-card-strip-red .live-ban-card-list span {
-  grid-template-columns: minmax(0, 1fr) 24px;
-}
-
-.live-ban-card-strip-red .live-ban-card-list .live-champion-mark {
-  order: 2;
+  flex-direction: row-reverse;
 }
 
 .live-ban-card-list b {
+  flex: 1 1 auto;
   overflow: hidden;
   color: #cbd5e1;
   font-size: 0.58rem;
@@ -12161,6 +12200,7 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .live-ban-card-list .live-champion-mark {
+  flex: 0 0 auto;
   width: 22px;
   height: 22px;
   font-size: 0.42rem;
@@ -12297,31 +12337,40 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .live-draft-screen .live-draft-picks article {
-  grid-template-columns: 42px 52px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-rows: 1fr 1fr;
   justify-items: start;
-  min-height: 56px;
+  min-height: 60px;
   align-items: center;
   text-align: left;
 }
 
+/* Champion portrait: square (ratio kept), filling the box height, far right. */
 .live-draft-screen .live-draft-picks .live-champion-mark {
-  grid-row: 1 / span 2;
-}
-
-.live-draft-screen .live-draft-picks article > span:not(.live-champion-mark) {
-  grid-row: 1 / span 2;
-  font-size: 0.66rem;
-}
-
-.live-draft-screen .live-draft-picks strong {
   grid-column: 3;
+  grid-row: 1 / span 2;
+  justify-self: end;
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
+}
+
+/* Position label: kept on the left, slightly larger text. */
+.live-draft-screen .live-draft-picks article > span:not(.live-champion-mark) {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  font-size: 0.78rem;
+}
+
+/* Champion name: directly left of the portrait. */
+.live-draft-screen .live-draft-picks strong {
+  grid-column: 2;
   grid-row: 1;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
 }
 
 .live-draft-picks em {
-  grid-column: 3;
+  grid-column: 2;
   grid-row: 2;
   overflow: hidden;
   max-width: 100%;
@@ -12334,25 +12383,24 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .live-draft-side-red .live-draft-picks article {
-  grid-template-columns: minmax(0, 1fr) 52px 42px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   justify-items: end;
   text-align: right;
 }
 
+/* Mirror of blue: portrait to the far left, position label to the far right. */
 .live-draft-side-red .live-draft-picks .live-champion-mark {
-  grid-column: 3;
-  grid-row: 1 / span 2;
-  order: 3;
+  grid-column: 1;
+  justify-self: start;
 }
 
 .live-draft-side-red .live-draft-picks article > span:not(.live-champion-mark) {
-  grid-column: 2;
-  order: 2;
+  grid-column: 3;
 }
 
 .live-draft-side-red .live-draft-picks strong,
 .live-draft-side-red .live-draft-picks em {
-  grid-column: 1;
+  grid-column: 2;
 }
 
 .live-draft-side-red .live-draft-picks strong {
@@ -12375,6 +12423,266 @@ button.opponent-analysis-panel:focus-visible {
   background: rgb(248 193 92 / 9%);
 }
 
+/* ---- Broadcast draft (game-frame layout) ---- */
+.live-broadcast-draft-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--live-line);
+  border-radius: 8px;
+  padding: 2px 12px;
+  background: var(--live-panel);
+}
+
+.live-broadcast-draft-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.live-broadcast-draft-tags {
+  display: flex;
+  justify-content: center;
+}
+
+.live-broadcast-draft-phase {
+  color: var(--live-gold);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.live-broadcast-draft-counter {
+  color: var(--live-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.live-broadcast-draft-actions {
+  display: flex;
+  gap: 6px;
+  justify-self: end;
+}
+
+.live-broadcast-draft-actions button {
+  border: 1px solid var(--live-line);
+  border-radius: 6px;
+  padding: 3px 10px;
+  background: rgb(15 23 42 / 55%);
+  color: var(--live-text);
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.live-broadcast-draft-actions button:hover {
+  border-color: var(--live-blue);
+}
+
+.live-broadcast-draft-bans {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--live-line);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--live-panel);
+}
+
+/* Ban cards sit at the bottom of the centre column (just above the pick row,
+   between the two support faces); the fearless box floats at the top centre. */
+.live-broadcast-bans-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin-top: auto;
+}
+
+.live-broadcast-bans-label {
+  color: var(--live-muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.live-broadcast-ban-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.live-broadcast-ban-row-red {
+  justify-content: flex-start;
+}
+
+.live-broadcast-ban-row .live-champion-mark {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 7px;
+  font-size: 0.6rem;
+}
+
+.live-broadcast-fearless {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-broadcast-fearless-title {
+  color: var(--live-muted);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+}
+
+.live-broadcast-fearless-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.live-broadcast-fearless-row {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.live-broadcast-fearless-row > span {
+  color: var(--live-muted);
+  font-size: 0.6rem;
+  font-weight: 850;
+}
+
+.live-broadcast-fearless-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.live-broadcast-fearless-slots .live-champion-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  font-size: 0.46rem;
+}
+
+.live-broadcast-draft-picks {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 116px minmax(0, 1fr);
+  gap: 8px;
+  min-height: 0;
+  border: 1px solid var(--live-line);
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--live-panel);
+}
+
+.live-broadcast-picks-col {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+.live-broadcast-picks-center {
+  display: grid;
+  place-items: center;
+  border-inline: 1px solid rgb(148 163 184 / 14%);
+  text-align: center;
+}
+
+.live-broadcast-picks-center strong {
+  color: var(--live-gold);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.live-broadcast-picks-center span {
+  color: var(--live-muted);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.live-broadcast-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid rgb(148 163 184 / 14%);
+  border-radius: 6px;
+  padding: 5px 4px;
+  /* Opaque so cards don't bleed through one another while they slide/cross from
+     their pick-order slot into their role slot on settle. */
+  background: rgb(8 12 28);
+  text-align: center;
+  /* The whole card slides (label + portrait) so the jumbled pick order is visible. */
+  position: relative;
+  will-change: transform;
+}
+
+.live-broadcast-pick-portrait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.live-broadcast-pick-portrait .live-champion-mark {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+}
+
+.live-broadcast-pick-name-hidden {
+  visibility: hidden;
+}
+
+.live-broadcast-pick-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.15;
+}
+
+.live-broadcast-pick-meta span {
+  color: var(--live-muted);
+  font-size: 0.5rem;
+  font-weight: 900;
+}
+
+.live-broadcast-pick-meta strong {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--live-text);
+  font-size: 0.6rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-broadcast-pick-meta em {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--live-muted);
+  font-size: 0.56rem;
+  font-style: normal;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .live-draft-clock span {
   color: #e2e8f0;
   font-size: 0.72rem;
@@ -12388,7 +12696,7 @@ button.opponent-analysis-panel:focus-visible {
 
 .live-commentary-stage {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 8px;
   min-height: 0;
   padding: 12px;
@@ -12676,11 +12984,21 @@ button.opponent-analysis-panel:focus-visible {
 
 .live-player-portrait-rail-compact .live-player-portrait-card {
   grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr) auto;
   justify-items: center;
   position: relative;
-  gap: 0;
-  padding: 0;
+  gap: 2px;
+  padding: 0 0 3px;
   text-align: center;
+}
+
+.live-player-portrait-rail-compact .live-player-portrait-card > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.05;
 }
 
 .live-player-portrait-rail-compact.live-player-portrait-rail-red .live-player-portrait-card {
@@ -12706,7 +13024,7 @@ button.opponent-analysis-panel:focus-visible {
 
 .live-player-portrait-rail-compact .live-portrait-frame {
   height: 100%;
-  min-height: 52px;
+  min-height: 40px;
 }
 
 .live-portrait-frame img {
@@ -12742,19 +13060,17 @@ button.opponent-analysis-panel:focus-visible {
 }
 
 .live-player-portrait-rail-compact .live-player-portrait-card span {
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  border: 1px solid rgb(2 6 23 / 52%);
-  border-radius: 999px;
-  padding: 1px 5px;
-  background: rgb(2 6 23 / 72%);
-  font-size: 0.48rem;
-  transform: translateX(-50%);
+  font-size: 0.44rem;
+  letter-spacing: 0.04em;
 }
 
 .live-player-portrait-rail-compact .live-player-portrait-card strong {
-  display: none;
+  display: block;
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 0.56rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .live-control-panel {

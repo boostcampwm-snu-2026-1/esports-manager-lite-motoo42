@@ -1,15 +1,28 @@
 import { describe, expect, it } from "vitest";
+import { championPool } from "../../src/domain/champions";
 import {
   applyDraftToLiveMatchTeams,
   createLiveMatchDraftFromSummary,
 } from "../../src/domain/live-match/draftAdapter";
-import { getLiveMatchChampionSummary } from "../../src/domain/live-match/mockDraft";
+import type { DraftPickOrder } from "../../src/domain/live-match/draftPickOrder";
+import {
+  getLiveMatchChampionSummary,
+  liveMatchRoles,
+} from "../../src/domain/live-match/mockDraft";
 import type {
   LiveMatchTeamPresentation,
 } from "../../src/domain/live-match/types";
 import type { MatchDraftSummary, Role } from "../../src/types/game";
 
 const roles: Role[] = ["top", "jungle", "mid", "bot", "support"];
+
+// ordinal -> roleIndex. Ordinals 3 and 4 are the second-phase picks — the two roles
+// still hidden at the second ban phase, which decide what the opponent bans against.
+// blue's open roles = support(4), top(0); red's open roles = jungle(1), mid(2).
+const pickOrder: DraftPickOrder = {
+  blue: [1, 2, 3, 4, 0],
+  red: [3, 4, 0, 1, 2],
+};
 
 function createTeam(name: string): LiveMatchTeamPresentation {
   return {
@@ -72,6 +85,7 @@ describe("live match draft adapter", () => {
     const liveDraft = createLiveMatchDraftFromSummary({
       draft,
       format: "bo3",
+      pickOrder,
       usedChampionIdsByGame: [
         ["aatrox", "rumble", "vi", "lee-sin", "ahri", "corki", "ashe", "senna", "rell", "lulu"],
       ],
@@ -101,5 +115,70 @@ describe("live match draft adapter", () => {
       "senna",
       "lulu",
     ]);
+  });
+
+  it("aims second-phase bans at the opponent's two still-hidden roles", () => {
+    const liveDraft = createLiveMatchDraftFromSummary({
+      draft,
+      format: "bo3",
+      pickOrder,
+      usedChampionIdsByGame: [],
+    });
+
+    const championById = new Map(
+      championPool.map((champion) => [champion.id, champion]),
+    );
+    const redOpenRoles = [
+      liveMatchRoles[pickOrder.red[3]],
+      liveMatchRoles[pickOrder.red[4]],
+    ]; // jungle, mid
+    const blueOpenRoles = [
+      liveMatchRoles[pickOrder.blue[3]],
+      liveMatchRoles[pickOrder.blue[4]],
+    ]; // support, top
+
+    // First-phase bans (slots 0-2) stay exactly as the draft decided them.
+    expect(liveDraft.blueBans.slice(0, 3).map((ban) => ban.id)).toEqual([
+      "ksante",
+      "varus",
+      "xayah",
+    ]);
+    expect(liveDraft.redBans.slice(0, 3).map((ban) => ban.id)).toEqual([
+      "orianna",
+      "azir",
+      "jinx",
+    ]);
+
+    const bluePhase2 = liveDraft.blueBans.slice(3);
+    const redPhase2 = liveDraft.redBans.slice(3);
+
+    expect(bluePhase2).toHaveLength(2);
+    expect(redPhase2).toHaveLength(2);
+
+    // Blue's second-phase bans come from red's open-role pool; red's from blue's.
+    for (const ban of bluePhase2) {
+      const champion = championById.get(ban.id);
+      expect(champion?.roles.some((role) => redOpenRoles.includes(role))).toBe(
+        true,
+      );
+    }
+    for (const ban of redPhase2) {
+      const champion = championById.get(ban.id);
+      expect(champion?.roles.some((role) => blueOpenRoles.includes(role))).toBe(
+        true,
+      );
+    }
+
+    // Never ban a picked champion, and never the same champion twice.
+    const pickIds = [
+      ...Object.values(draft.bluePicks),
+      ...Object.values(draft.redPicks),
+    ].map((pick) => pick.championId);
+    const phase2Ids = [...bluePhase2, ...redPhase2].map((ban) => ban.id);
+
+    for (const id of phase2Ids) {
+      expect(pickIds).not.toContain(id);
+    }
+    expect(new Set(phase2Ids).size).toBe(phase2Ids.length);
   });
 });

@@ -7,10 +7,7 @@ import type {
 import { TeamLogo } from "../../../shared/ui/TeamLogo";
 
 type LiveMatchTopbarProps = {
-  blueSetWins: number;
   presentation: LiveMatchPresentation;
-  redSetWins: number;
-  setCount: number;
 };
 
 function TeamHeader({ side, team }: { side: LiveMatchSide; team: LiveMatchTeamPresentation }) {
@@ -27,13 +24,8 @@ function TeamHeader({ side, team }: { side: LiveMatchSide; team: LiveMatchTeamPr
   );
 }
 
-export function LiveMatchTopbar({
-  blueSetWins,
-  presentation,
-  redSetWins,
-  setCount,
-}: LiveMatchTopbarProps) {
-  const { blueTeam, gameNumber, gameTime, redTeam, stageName } = presentation.currentSet;
+export function LiveMatchTopbar({ presentation }: LiveMatchTopbarProps) {
+  const { blueTeam, gameTime, redTeam } = presentation.currentSet;
 
   return (
     <header className="live-match-topbar">
@@ -46,16 +38,6 @@ export function LiveMatchTopbar({
           <b>{gameTime}</b>
           <span>{redTeam.kills}</span>
           <strong>{redTeam.gold}</strong>
-        </div>
-        <div className="live-series-row">
-          <span>{presentation.formatLabel}</span>
-          <span>Game {gameNumber}</span>
-          {setCount > 1 ? (
-            <span>
-              세트 {blueSetWins} - {redSetWins}
-            </span>
-          ) : null}
-          <span>{stageName}</span>
         </div>
       </div>
       <TeamHeader side="red" team={redTeam} />

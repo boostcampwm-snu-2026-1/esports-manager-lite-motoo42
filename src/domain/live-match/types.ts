@@ -1,6 +1,7 @@
 import type { Role } from "../../types/game";
 import type { Champion } from "../champions";
 import type { MatchItem } from "../items";
+import type { DraftPickOrder } from "./draftPickOrder";
 import type { DragonType, GeneratedMatchTimeline } from "./matchTimeline";
 
 export type LiveMatchSide = "blue" | "red";
@@ -83,6 +84,9 @@ export type LiveMatchSetPresentation = {
   draft: LiveMatchDraftPresentation;
   gameNumber: number;
   gameTime: string;
+  // Per-side pick order (which role at the 1st..5th pick). Drives both the reveal and
+  // the second-phase ban targeting, so they stay consistent.
+  pickOrder: DraftPickOrder;
   redTeam: LiveMatchTeamPresentation;
   stageName: string;
   timeline: GeneratedMatchTimeline;

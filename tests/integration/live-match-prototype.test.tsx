@@ -27,14 +27,16 @@ describe("LiveMatchPrototype", () => {
       <LiveMatchPrototype career={null} onExit={() => {}} />,
     );
 
-    expect(container.querySelector(".live-draft-screen")).toBeTruthy();
-    expect(container.querySelector(".live-match-main")).toBeNull();
+    // The broadcast draft reuses .live-match-main, so distinguish by its own picks
+    // panel vs the match's commentary stage.
+    expect(container.querySelector(".live-broadcast-draft-picks")).toBeTruthy();
+    expect(container.querySelector(".live-commentary-stage")).toBeNull();
 
     act(() => {
       fireEvent.click(screen.getByText("경기 시작"));
     });
 
-    expect(container.querySelector(".live-match-main")).toBeTruthy();
+    expect(container.querySelector(".live-commentary-stage")).toBeTruthy();
   });
 
   it("plays an engine-driven match and reveals commentary over time", () => {

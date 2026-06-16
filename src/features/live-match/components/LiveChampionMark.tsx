@@ -1,11 +1,16 @@
 import { useState } from "react";
 
 type LiveChampionMarkProps = {
+  className?: string;
   iconUrl?: string;
   name: string;
 };
 
-export function LiveChampionMark({ iconUrl, name }: LiveChampionMarkProps) {
+export function LiveChampionMark({
+  className,
+  iconUrl,
+  name,
+}: LiveChampionMarkProps) {
   const [failed, setFailed] = useState(false);
   const initials = name
     .replace(/[^a-zA-Z가-힣]/g, "")
@@ -14,7 +19,11 @@ export function LiveChampionMark({ iconUrl, name }: LiveChampionMarkProps) {
   const shouldShowIcon = iconUrl && !failed;
 
   return (
-    <span className="live-champion-mark" aria-label={name} title={name}>
+    <span
+      className={`live-champion-mark${className ? ` ${className}` : ""}`}
+      aria-label={name}
+      title={name}
+    >
       {shouldShowIcon ? (
         <img alt="" onError={() => setFailed(true)} src={iconUrl} />
       ) : (

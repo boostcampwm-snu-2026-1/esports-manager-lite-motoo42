@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import {
   applyStatSnapshotToTeams,
@@ -7,9 +7,10 @@ import {
   getLiveMatchSetId,
 } from "../../domain/live-match";
 import type { CareerSave, MatchSeriesReplay } from "../../types/game";
-import { LiveDraftScreen } from "./components/LiveDraftScreen";
+import { LiveDraftBroadcastScreen } from "./components/LiveDraftBroadcastScreen";
 import { LiveMatchScreen } from "./components/LiveMatchScreen";
 import { LiveMatchTopbar } from "./components/LiveMatchTopbar";
+import { LiveSeriesTags } from "./components/LiveSeriesTags";
 import { buildCommentaryEntries, formatClock } from "./liveCommentaryView";
 import { useMatchPlayback } from "./useMatchPlayback";
 
@@ -28,6 +29,9 @@ export function LiveMatchPrototype({
   // hits 경기 시작, so the draft is always seen first.
   const [screen, setScreen] = useState<"match" | "draft">("draft");
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  // Sets whose banpick has already been watched — re-entering one shows it fully
+  // revealed instead of re-running (and re-shuffling) the reveal animation.
+  const seenDraftsRef = useRef(new Set<number>());
   const setId = getLiveMatchSetId(career);
   const presentation = useMemo(
     () => createMockLiveMatchPresentation(career, series),
@@ -53,9 +57,10 @@ export function LiveMatchPrototype({
   });
 
   const startSet = useCallback(() => {
+    seenDraftsRef.current.add(safeIndex);
     setScreen("match");
     playback.play();
-  }, [playback]);
+  }, [playback, safeIndex]);
 
   const liveTeams = useMemo(
     () =>
@@ -116,25 +121,39 @@ export function LiveMatchPrototype({
     [presentation, liveSet],
   );
 
+  const seriesTags = (
+    <LiveSeriesTags
+      blueSetWins={blueSetWins}
+      formatLabel={livePresentation.formatLabel}
+      gameNumber={liveSet.gameNumber}
+      redSetWins={redSetWins}
+      setCount={sets.length}
+      stageName={liveSet.stageName}
+    />
+  );
+
   return (
     <section
       aria-label="매치엔진 UI 프로토타입"
-      className={`live-match-prototype live-match-prototype-${screen}`}
+      className={`live-match-prototype live-match-prototype-${screen}${
+        screen === "draft" ? " live-match-prototype-draft-broadcast" : ""
+      }`}
     >
-      <LiveMatchTopbar
-        blueSetWins={blueSetWins}
-        presentation={livePresentation}
-        redSetWins={redSetWins}
-        setCount={sets.length}
-      />
+      <LiveMatchTopbar presentation={livePresentation} />
       {screen === "draft" ? (
-        <LiveDraftScreen onShowMatch={startSet} set={liveSet} />
+        <LiveDraftBroadcastScreen
+          instant={seenDraftsRef.current.has(safeIndex)}
+          onShowMatch={startSet}
+          seriesTags={seriesTags}
+          set={liveSet}
+        />
       ) : (
         <LiveMatchScreen
           commentary={commentary}
           onExit={onExit}
           onShowDraft={() => setScreen("draft")}
           playback={playback}
+          seriesTags={seriesTags}
           set={liveSet}
         />
       )}

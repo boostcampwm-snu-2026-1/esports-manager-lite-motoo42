@@ -1,5 +1,11 @@
 export { createMockLiveMatchPresentation } from "./mockPresentation";
 export { getLiveMatchSetId } from "./presentationFactory";
+export {
+  createDraftPickOrder,
+  ordinalByRoleFromPickOrder,
+  secondPhasePickRoleIndices,
+} from "./draftPickOrder";
+export type { DraftPickOrder } from "./draftPickOrder";
 export { liveMatchRoleLabels, liveMatchRoles } from "./mockDraft";
 export { getLiveMatchUserTeamId } from "./playerSelection";
 export {

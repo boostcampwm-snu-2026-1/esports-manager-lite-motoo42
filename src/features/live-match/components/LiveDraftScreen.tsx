@@ -1,3 +1,6 @@
+// LEGACY: the standalone banpick board. The live screen now always uses the
+// broadcast layout (LiveDraftBroadcastScreen), so this is no longer rendered. Kept
+// intact so it can be restored by re-wiring it in LiveMatchPrototype.
 import { liveMatchRoleLabels } from "../../../domain/live-match";
 import type {
   LiveMatchDraftPresentation,
@@ -5,29 +8,52 @@ import type {
   LiveMatchSide,
   LiveMatchTeamPresentation,
 } from "../../../domain/live-match";
+import {
+  type DraftRevealState,
+  draftRevealTotal,
+  useDraftReveal,
+} from "./draftReveal";
 import { LiveChampionMark } from "./LiveChampionMark";
 import { LivePlayerPortraitRail } from "./LivePlayerPortraitRail";
 
 type LiveDraftScreenProps = {
   onShowMatch: () => void;
+  onToggleVariant: () => void;
   set: LiveMatchSetPresentation;
 };
 
-function DraftSide({ side, team }: { side: LiveMatchSide; team: LiveMatchTeamPresentation }) {
+function DraftSide({
+  isRevealed,
+  side,
+  team,
+}: {
+  isRevealed: DraftRevealState["isRevealed"];
+  side: LiveMatchSide;
+  team: LiveMatchTeamPresentation;
+}) {
   const portraitRail = <LivePlayerPortraitRail compact side={side} team={team} />;
   const pickList = (
     <div className="live-draft-picks">
-      {team.players.map((player) => (
-        <article key={player.role}>
-          <LiveChampionMark
-            iconUrl={player.champion.iconUrl}
-            name={player.champion.name}
-          />
-          <span>{liveMatchRoleLabels[player.role]}</span>
-          <strong>{player.champion.name}</strong>
-          <em>{player.name}</em>
-        </article>
-      ))}
+      {team.players.map((player, index) => {
+        const shown = isRevealed("pick", side, index);
+
+        return (
+          <article className={shown ? "" : "live-draft-pick-pending"} key={player.role}>
+            {shown ? (
+              <LiveChampionMark
+                className="live-draft-revealing"
+                iconUrl={player.champion.iconUrl}
+                name={player.champion.name}
+              />
+            ) : (
+              <span className="live-champion-mark live-draft-pending" aria-hidden="true" />
+            )}
+            <span>{liveMatchRoleLabels[player.role]}</span>
+            <strong>{shown ? player.champion.name : "밴픽 대기"}</strong>
+            <em>{player.name}</em>
+          </article>
+        );
+      })}
     </div>
   );
 
@@ -56,10 +82,12 @@ function DraftSide({ side, team }: { side: LiveMatchSide; team: LiveMatchTeamPre
 
 function BanCardStrip({
   bans,
+  isRevealed,
   side,
   team,
 }: {
   bans: LiveMatchDraftPresentation["blueBans"];
+  isRevealed: DraftRevealState["isRevealed"];
   side: LiveMatchSide;
   team: LiveMatchTeamPresentation;
 }) {
@@ -70,12 +98,24 @@ function BanCardStrip({
         <strong>밴 카드</strong>
       </div>
       <div className="live-ban-card-list" aria-label={`${team.name} bans`}>
-        {bans.map((ban) => (
-          <span key={ban.id}>
-            <LiveChampionMark iconUrl={ban.iconUrl} name={ban.name} />
-            <b>{ban.name}</b>
-          </span>
-        ))}
+        {bans.map((ban, index) => {
+          const shown = isRevealed("ban", side, index);
+
+          return (
+            <span key={ban.id}>
+              {shown ? (
+                <LiveChampionMark
+                  className="live-draft-revealing"
+                  iconUrl={ban.iconUrl}
+                  name={ban.name}
+                />
+              ) : (
+                <span className="live-champion-mark live-draft-pending" aria-hidden="true" />
+              )}
+              <b>{shown ? ban.name : "—"}</b>
+            </span>
+          );
+        })}
       </div>
     </section>
   );
@@ -111,7 +151,17 @@ function FearlessPool({ draft }: { draft: LiveMatchDraftPresentation }) {
   );
 }
 
-export function LiveDraftScreen({ onShowMatch, set }: LiveDraftScreenProps) {
+export function LiveDraftScreen({
+  onShowMatch,
+  onToggleVariant,
+  set,
+}: LiveDraftScreenProps) {
+  const revealKey = `${set.gameNumber}:${set.draft.blueBans
+    .map((ban) => ban.id)
+    .join("-")}`;
+  const { isRevealed, revealAll, revealed } = useDraftReveal(revealKey);
+  const isRevealing = revealed < draftRevealTotal;
+
   return (
     <main className="live-draft-screen">
       <header className="live-draft-screen-header">
@@ -120,27 +170,47 @@ export function LiveDraftScreen({ onShowMatch, set }: LiveDraftScreenProps) {
           <h1>밴픽 화면</h1>
         </div>
         <div className="live-draft-screen-clock">
-          <span>고정 재생</span>
-          <strong>12s</strong>
+          <span>밴픽 진행</span>
+          <strong>
+            {Math.min(revealed, draftRevealTotal)} / {draftRevealTotal}
+          </strong>
         </div>
+        <button type="button" onClick={onToggleVariant}>
+          레이아웃 전환
+        </button>
+        {isRevealing ? (
+          <button type="button" onClick={revealAll}>
+            건너뛰기
+          </button>
+        ) : null}
         <button type="button" onClick={onShowMatch}>
           경기 시작
         </button>
       </header>
       <FearlessPool draft={set.draft} />
       <section className="live-draft-ban-row">
-        <BanCardStrip bans={set.draft.blueBans} side="blue" team={set.blueTeam} />
+        <BanCardStrip
+          bans={set.draft.blueBans}
+          isRevealed={isRevealed}
+          side="blue"
+          team={set.blueTeam}
+        />
         <span>현재 세트 밴 카드</span>
-        <BanCardStrip bans={set.draft.redBans} side="red" team={set.redTeam} />
+        <BanCardStrip
+          bans={set.draft.redBans}
+          isRevealed={isRevealed}
+          side="red"
+          team={set.redTeam}
+        />
       </section>
       <section className="live-draft-board">
-        <DraftSide side="blue" team={set.blueTeam} />
+        <DraftSide isRevealed={isRevealed} side="blue" team={set.blueTeam} />
         <div className="live-draft-vs">
           <span>FEARLESS READY</span>
           <strong>VS</strong>
           <span>GAME {set.gameNumber}</span>
         </div>
-        <DraftSide side="red" team={set.redTeam} />
+        <DraftSide isRevealed={isRevealed} side="red" team={set.redTeam} />
       </section>
     </main>
   );

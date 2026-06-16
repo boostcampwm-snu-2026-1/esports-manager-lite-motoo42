@@ -17,6 +17,7 @@ import {
   createLiveMatchDraftFromSummary,
   getDraftPickChampionIds,
 } from "./draftAdapter";
+import { createDraftPickOrder } from "./draftPickOrder";
 import {
   createSetTimeline,
   liveMatchOutcomeFromRecord,
@@ -253,6 +254,7 @@ function buildLiveMatchSet({
   gameNumber,
   outcome,
   stageName,
+  usedChampionIdsByGame,
 }: {
   baseBlueTeam: LiveMatchTeamPresentation;
   baseRedTeam: LiveMatchTeamPresentation;
@@ -261,10 +263,16 @@ function buildLiveMatchSet({
   gameNumber: number;
   outcome: LiveMatchOutcome;
   stageName: string;
+  // Picks from the PREVIOUS sets only — the current set's picks must stay out of
+  // the fearless pool or the banpick is spoiled before it plays out.
+  usedChampionIdsByGame: string[][];
 }): LiveMatchSetPresentation {
   let blueTeam = baseBlueTeam;
   let redTeam = baseRedTeam;
   let draft = mockLiveMatchDraft;
+  // One stable pick order for the set, seeded off the outcome seed (independent of the
+  // bans). Drives the reveal AND the second-phase ban targeting in lockstep.
+  const pickOrder = createDraftPickOrder(outcome.seed);
 
   if (draftSummary) {
     const draftedTeams = applyDraftToLiveMatchTeams({
@@ -278,7 +286,8 @@ function buildLiveMatchSet({
     draft = createLiveMatchDraftFromSummary({
       draft: draftSummary,
       format,
-      usedChampionIdsByGame: [getDraftPickChampionIds(draftSummary)],
+      pickOrder,
+      usedChampionIdsByGame,
     });
   }
 
@@ -287,6 +296,7 @@ function buildLiveMatchSet({
     draft,
     gameNumber,
     gameTime: "00:00",
+    pickOrder,
     redTeam,
     stageName,
     timeline: createSetTimeline(outcome, {
@@ -321,8 +331,16 @@ export function createLiveMatchPresentationFromCareer(
     draftSummary?: MatchDraftSummary;
     gameNumber: number;
     outcome: LiveMatchOutcome;
+    usedChampionIdsByGame?: string[][];
   }) =>
-    buildLiveMatchSet({ baseBlueTeam, baseRedTeam, format, stageName, ...config });
+    buildLiveMatchSet({
+      baseBlueTeam,
+      baseRedTeam,
+      format,
+      stageName,
+      ...config,
+      usedChampionIdsByGame: config.usedChampionIdsByGame ?? [],
+    });
 
   let id: string;
   let sets: LiveMatchSetPresentation[];
@@ -334,8 +352,13 @@ export function createLiveMatchPresentationFromCareer(
     series.games.length > 0
   ) {
     // Faithful per-set replay from the played series (each set's real banpick).
+    // The fearless pool for game N only carries games 1..N-1's picks; game N's own
+    // row stays empty so the live banpick is not spoiled.
     id = reviewResult.record.id;
-    sets = series.games.map((game) =>
+    const gamePickIds = series.games.map((game) =>
+      game.draft ? getDraftPickChampionIds(game.draft) : [],
+    );
+    sets = series.games.map((game, index) =>
       buildSet({
         draftSummary: game.draft,
         gameNumber: game.gameNumber,
@@ -344,6 +367,7 @@ export function createLiveMatchPresentationFromCareer(
           winnerWinProbability: game.winnerWinProbability,
           winningSide: game.winnerSide,
         },
+        usedChampionIdsByGame: gamePickIds.slice(0, index),
       }),
     );
   } else if (reviewResult) {

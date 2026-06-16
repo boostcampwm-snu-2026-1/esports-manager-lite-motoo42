@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 import type {
   DragonType,
@@ -20,6 +20,7 @@ type LiveMatchScreenProps = {
   onExit: () => void;
   onShowDraft: () => void;
   playback: MatchPlayback;
+  seriesTags: ReactNode;
   set: LiveMatchSetPresentation;
 };
 
@@ -122,6 +123,7 @@ export function LiveMatchScreen({
   onExit,
   onShowDraft,
   playback,
+  seriesTags,
   set,
 }: LiveMatchScreenProps) {
   const feedRef = useRef<HTMLDivElement>(null);
@@ -150,7 +152,7 @@ export function LiveMatchScreen({
     <>
       <div className="live-objective-strip">
         <ObjectiveRow side="blue" team={set.blueTeam} />
-        <span className="live-objective-center">오브젝트</span>
+        <div className="live-objective-tags">{seriesTags}</div>
         <ObjectiveRow side="red" team={set.redTeam} />
       </div>
 
@@ -218,12 +220,12 @@ export function LiveMatchScreen({
               </article>
             ))}
           </div>
+
+          <LiveMomentumGraph gameTimeSec={playback.gameTimeSec} set={set} />
         </section>
 
         <LivePlayerPortraitRail side="red" team={set.redTeam} />
       </main>
-
-      <LiveMomentumGraph gameTimeSec={playback.gameTimeSec} set={set} />
 
       <LiveStatsBoard set={set} />
     </>
