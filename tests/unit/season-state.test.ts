@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createInitialCareer } from "../../src/domain/career/createInitialCareer";
 import { progressCareer } from "../../src/domain/game-progress/progressCareer";
 import {
+  advanceToNextMatchWeek,
   completeStoveLeague,
   createInitialSeasonState,
   getSeasonProfile,
@@ -174,6 +175,47 @@ describe("createInitialSeasonState", () => {
     expect(activeSeason.nextMatchIds).toHaveLength(2);
     expect(activeLckCup?.standings.filter((entry) => entry.lckCupGroup === "baron")).toHaveLength(5);
     expect(activeLckCup?.standings.filter((entry) => entry.lckCupGroup === "elder")).toHaveLength(5);
+  });
+
+  it("starts the skip path a week before the opener as an idle prep window", () => {
+    const seasonState = createInitialSeasonState({
+      seasonNumber: 1,
+      userTeamName: "T1",
+    });
+
+    const prepSeason = completeStoveLeague(seasonState, { leadInDays: 7 });
+
+    // Lands a week before the 2026-01-14 opener, idle (no match that day).
+    expect(prepSeason.phase).toBe("competition");
+    expect(prepSeason.currentCompetitionId).toBe("lck-cup");
+    expect(prepSeason.currentDateKey).toBe("2026-01-07");
+    expect(prepSeason.progressStatus).toBe("idle");
+    expect(prepSeason.nextMatchIds).toEqual([]);
+
+    // The schedule itself is unchanged — the opener is still 2026-01-14.
+    const prepLckCup = prepSeason.competitions.find(
+      (competition) => competition.competitionId === "lck-cup",
+    );
+    expect(prepLckCup?.schedule[0].scheduledDate).toBe("2026-01-14");
+
+    // Advancing once jumps straight to the opener (date-driven), now match-preview.
+    const opener = advanceToNextMatchWeek(prepSeason);
+    expect(opener.currentDateKey).toBe("2026-01-14");
+    expect(opener.progressStatus).toBe("match-preview");
+    expect(opener.nextMatchIds).toHaveLength(2);
+  });
+
+  it("keeps the default stove-league completion landing on the opener", () => {
+    const seasonState = createInitialSeasonState({
+      seasonNumber: 1,
+      userTeamName: "T1",
+    });
+
+    // No leadInDays (preseason-played path) lands exactly on the opener.
+    const onOpener = completeStoveLeague(seasonState);
+    expect(onOpener.currentDateKey).toBe("2026-01-14");
+    expect(onOpener.progressStatus).toBe("match-preview");
+    expect(onOpener.nextMatchIds).toHaveLength(2);
   });
 
   it("creates fixed 10-team LCK standings with real team names", () => {

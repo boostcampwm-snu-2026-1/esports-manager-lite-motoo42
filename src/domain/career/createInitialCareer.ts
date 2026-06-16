@@ -117,7 +117,9 @@ function createRealRosterLckCupCareer(career: CareerSave): CareerSave {
     lckPlayers,
     userTeam,
     seasonState: {
-      ...completeStoveLeague(career.seasonState),
+      // Skipping the stove league drops the user a week before the LCK opener so they
+      // still get a short prep window (training/scrims) before the first match.
+      ...completeStoveLeague(career.seasonState, { leadInDays: 7 }),
       offseason: undefined,
     },
   };
