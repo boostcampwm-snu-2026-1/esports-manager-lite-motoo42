@@ -70,11 +70,11 @@ describe("LiveMatchPrototype", () => {
     expect(rows).toHaveLength(10);
   });
 
-  it("jumps to the result when 세트 결과 is pressed", () => {
+  it("jumps to the result when 결과 확인 is pressed", () => {
     const { container } = renderAndStart();
 
     act(() => {
-      fireEvent.click(screen.getByText("세트 결과"));
+      fireEvent.click(screen.getByText("결과 확인"));
     });
 
     const feed = container.querySelector(".live-commentary-feed") as HTMLElement;
@@ -85,7 +85,7 @@ describe("LiveMatchPrototype", () => {
     const { container } = renderAndStart();
 
     act(() => {
-      fireEvent.click(screen.getByText("세트 결과"));
+      fireEvent.click(screen.getByText("결과 확인"));
     });
     const majorCount = container.querySelectorAll(".live-commentary-event").length;
 

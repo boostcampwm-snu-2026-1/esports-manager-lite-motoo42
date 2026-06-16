@@ -182,7 +182,7 @@ export function LiveMatchScreen({
                 빠른 진행
               </button>
               <button type="button" onClick={playback.skipToEnd}>
-                세트 결과
+                결과 확인
               </button>
               <button type="button" onClick={onExit}>
                 허브로
